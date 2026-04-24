@@ -1,65 +1,129 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import Link from 'next/link';
 import type { Map as LeafletMap, Marker } from 'leaflet';
-import { COMMUNES, type Commune } from '@/lib/communes';
+import { COMMUNES } from '@/lib/communes';
 
-interface Agency {
+// ============================================================
+// TYPES
+// ============================================================
+type ActeurType = 'agence' | 'notaire' | 'diagnostiqueur' | 'conciergerie';
+
+interface Acteur {
   id: string;
+  type: ActeurType;
   name: string;
   slug: string;
-  commune: string;
-  type: string;
   plan: string;
   phone: string | null;
   email: string | null;
   website: string | null;
+  address: string | null;
+  commune: string | null;
+  code_postal: string | null;
+  lat: number | null;
+  lng: number | null;
   google_rating: number | null;
   google_reviews: number;
-  lat: number;
-  lng: number;
-  is_recommended: boolean;
+  meta: Record<string, unknown>;
+  is_verified: boolean;
 }
 
-interface MapProps {
-  initialCommune?: string;
+interface StatsBar {
+  agence?: number;
+  notaire?: number;
+  diagnostiqueur?: number;
+  conciergerie?: number;
 }
 
-const BASSIN_CENTER: [number, number] = [44.68, -1.12];
+// ============================================================
+// CONFIG
+// ============================================================
+const BASSIN_CENTER: [number, number] = [44.68, -1.08];
 const BASSIN_ZOOM = 11;
 
-function planBadge(plan: string, is_recommended: boolean) {
-  if (is_recommended) return '⭐ Recommandé';
-  if (plan === 'pro') return 'Pro';
-  return '';
-}
+const TYPE_CONFIG: Record<ActeurType, { label: string; emoji: string; color: string; colorPremium: string }> = {
+  agence:         { label: 'Agences',         emoji: '🏢', color: '#94a3b8', colorPremium: '#6366f1' },
+  notaire:        { label: 'Notaires',         emoji: '⚖️', color: '#10b981', colorPremium: '#059669' },
+  diagnostiqueur: { label: 'Diagnostiqueurs',  emoji: '🔍', color: '#f59e0b', colorPremium: '#d97706' },
+  conciergerie:   { label: 'Conciergeries',   emoji: '🏡', color: '#ec4899', colorPremium: '#db2777' },
+};
 
-export default function TerrimoMap({ initialCommune }: MapProps) {
-  const mapRef = useRef<LeafletMap | null>(null);
-  const mapDivRef = useRef<HTMLDivElement>(null);
-  const markersRef = useRef<Marker[]>([]);
+// ============================================================
+// MAP COMPONENT
+// ============================================================
+export default function TerrimoMap({ initialCommune }: { initialCommune?: string }) {
+  const mapRef        = useRef<LeafletMap | null>(null);
+  const mapDivRef     = useRef<HTMLDivElement>(null);
+  const markersRef    = useRef<Marker[]>([]);
+  const leafletRef    = useRef<typeof import('leaflet')['default'] | null>(null);
 
-  const [agencies, setAgencies] = useState<Agency[]>([]);
+  const [acteurs, setActeurs]             = useState<Acteur[]>([]);
+  const [stats, setStats]                 = useState<StatsBar>({});
   const [selectedCommune, setSelectedCommune] = useState<string | null>(initialCommune || null);
-  const [selectedAgency, setSelectedAgency] = useState<Agency | null>(null);
-  const [activeLayer, setActiveLayer] = useState<'agencies' | 'notaires' | 'diagnostiqueurs'>('agencies');
-  const [loading, setLoading] = useState(true);
+  const [selectedActeur, setSelectedActeur]   = useState<Acteur | null>(null);
+  const [activeType, setActiveType]       = useState<ActeurType | 'all'>('agence');
+  const [loading, setLoading]             = useState(true);
 
-  // Init carte
+  // --------------------------------------------------------
+  // Rendu des marqueurs
+  // --------------------------------------------------------
+  const renderMarkers = useCallback((map: LeafletMap, L: typeof import('leaflet')['default'], data: Acteur[], filterType: ActeurType | 'all', filterCommune: string | null) => {
+    markersRef.current.forEach(m => m.remove());
+    markersRef.current = [];
+
+    const communeObj = filterCommune ? COMMUNES.find(c => c.slug === filterCommune) : null;
+
+    data.forEach((acteur) => {
+      if (!acteur.lat || !acteur.lng) return;
+      if (filterType !== 'all' && acteur.type !== filterType) return;
+      if (communeObj && acteur.commune !== communeObj.name) return;
+
+      const cfg = TYPE_CONFIG[acteur.type] ?? TYPE_CONFIG.agence;
+      const isPremium = acteur.plan === 'premium';
+      const color = isPremium ? cfg.colorPremium : cfg.color;
+      const size = isPremium ? 14 : 10;
+
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="
+          background:${color};
+          border-radius:50%;
+          width:${size}px;height:${size}px;
+          border:2px solid white;
+          box-shadow:0 1px 4px rgba(0,0,0,0.3);
+          cursor:pointer;
+        "></div>`,
+        iconAnchor: [size / 2, size / 2],
+        iconSize: [size, size],
+      });
+
+      const marker = L.marker([acteur.lat, acteur.lng], { icon })
+        .addTo(map)
+        .on('click', () => setSelectedActeur(acteur));
+
+      markersRef.current.push(marker);
+    });
+  }, []);
+
+  // --------------------------------------------------------
+  // Init carte Leaflet
+  // --------------------------------------------------------
   useEffect(() => {
     if (mapRef.current || !mapDivRef.current) return;
 
     const initMap = async () => {
       const L = (await import('leaflet')).default;
-
-      // Fix icônes Leaflet avec Next.js
-      const iconUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png';
-      const icon2x = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png';
-      const iconShadow = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png';
+      leafletRef.current = L;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
-      L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl: icon2x, shadowUrl: iconShadow });
+      L.Icon.Default.mergeOptions({
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      });
 
       const map = L.map(mapDivRef.current!, {
         center: BASSIN_CENTER,
@@ -74,21 +138,15 @@ export default function TerrimoMap({ initialCommune }: MapProps) {
 
       mapRef.current = map;
 
-      // Polygones communes (zones cliquables)
+      // Zones communes
       COMMUNES.forEach((commune) => {
         const tierColors: Record<string, string> = {
-          premium: '#6366f1',
-          equilibre: '#0ea5e9',
-          emergent: '#10b981',
+          premium: '#6366f1', equilibre: '#0ea5e9', emergent: '#10b981',
         };
         const color = tierColors[commune.tier] || '#94a3b8';
 
         const circle = L.circle([commune.lat, commune.lng], {
-          radius: 2500,
-          color,
-          fillColor: color,
-          fillOpacity: 0.08,
-          weight: 1.5,
+          radius: 2500, color, fillColor: color, fillOpacity: 0.07, weight: 1.5,
         }).addTo(map);
 
         const label = L.divIcon({
@@ -98,238 +156,286 @@ export default function TerrimoMap({ initialCommune }: MapProps) {
         });
         L.marker([commune.lat, commune.lng], { icon: label, interactive: true })
           .addTo(map)
-          .on('click', () => setSelectedCommune(commune.slug));
-
-        circle.on('click', () => setSelectedCommune(commune.slug));
+          .on('click', () => setSelectedCommune(c => c === commune.slug ? null : commune.slug));
+        circle.on('click', () => setSelectedCommune(c => c === commune.slug ? null : commune.slug));
       });
-
-      fetchAgencies(map, L);
     };
 
     initMap();
   }, []);
 
-  async function fetchAgencies(map: LeafletMap, L: // eslint-disable-next-line @typescript-eslint/no-explicit-any
-any) {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/agencies');
-      const data: Agency[] = await res.json();
-      setAgencies(data);
-      renderMarkers(map, L, data);
-    } finally {
-      setLoading(false);
+  // --------------------------------------------------------
+  // Fetch acteurs depuis API
+  // --------------------------------------------------------
+  useEffect(() => {
+    const fetchActeurs = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch('/api/acteurs');
+        const data = await res.json();
+        const list: Acteur[] = data.acteurs ?? [];
+        setActeurs(list);
+        setStats(data.stats ?? {});
+        if (mapRef.current && leafletRef.current) {
+          renderMarkers(mapRef.current, leafletRef.current, list, 'agence', null);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchActeurs();
+  }, [renderMarkers]);
+
+  // --------------------------------------------------------
+  // Re-render quand filtre change
+  // --------------------------------------------------------
+  useEffect(() => {
+    if (!mapRef.current || !leafletRef.current || !acteurs.length) return;
+    renderMarkers(mapRef.current, leafletRef.current, acteurs, activeType, selectedCommune);
+    setSelectedActeur(null);
+  }, [activeType, selectedCommune, acteurs, renderMarkers]);
+
+  // --------------------------------------------------------
+  // Helpers
+  // --------------------------------------------------------
+  const communeObj = selectedCommune ? COMMUNES.find(c => c.slug === selectedCommune) : null;
+
+  const filteredActeurs = acteurs.filter(a => {
+    if (activeType !== 'all' && a.type !== activeType) return false;
+    if (communeObj && a.commune !== communeObj.name) return false;
+    return true;
+  });
+
+  const goToCommune = (slug: string) => {
+    const c = COMMUNES.find(x => x.slug === slug);
+    if (c && mapRef.current) {
+      mapRef.current.flyTo([c.lat, c.lng], 13, { duration: 0.8 });
     }
-  }
+    setSelectedCommune(slug);
+  };
 
-  function renderMarkers(map: LeafletMap, L: // eslint-disable-next-line @typescript-eslint/no-explicit-any
-any, data: Agency[]) {
-    // Supprimer anciens marqueurs
-    markersRef.current.forEach(m => m.remove());
-    markersRef.current = [];
-
-    data.forEach((agency) => {
-      if (!agency.lat || !agency.lng) return;
-
-      const bgColor = agency.plan === 'premium'
-        ? '#6366f1'
-        : agency.plan === 'pro'
-        ? '#0ea5e9'
-        : '#94a3b8';
-
-      const icon = L.divIcon({
-        className: '',
-        html: `<div style="
-          background:${bgColor};
-          border-radius:50%;
-          width:${agency.is_recommended ? 14 : 10}px;
-          height:${agency.is_recommended ? 14 : 10}px;
-          border:2px solid white;
-          box-shadow:0 1px 4px rgba(0,0,0,0.3);
-        "></div>`,
-        iconAnchor: [7, 7],
-      });
-
-      const marker = L.marker([agency.lat, agency.lng], { icon })
-        .addTo(map)
-        .on('click', () => setSelectedAgency(agency));
-
-      markersRef.current.push(marker);
-    });
-  }
-
-  const filteredAgencies = selectedCommune
-    ? agencies.filter(a => {
-        const commune = COMMUNES.find(c => c.slug === selectedCommune);
-        return commune && a.commune === commune.name;
-      })
-    : agencies;
-
-  const selectedCommuneData = selectedCommune ? COMMUNES.find(c => c.slug === selectedCommune) : null;
-
+  // --------------------------------------------------------
+  // RENDER
+  // --------------------------------------------------------
   return (
     <div className="relative w-full h-full flex">
-      {/* Panneau latéral */}
-      <div className="w-80 flex-shrink-0 bg-white border-r border-gray-100 flex flex-col overflow-hidden z-10">
-        {/* Header panneau */}
-        <div className="p-4 border-b border-gray-100">
-          {selectedCommuneData ? (
+
+      {/* ======================== PANNEAU GAUCHE ======================== */}
+      <div className="w-72 flex-shrink-0 bg-white border-r border-gray-100 flex flex-col overflow-hidden z-10">
+
+        {/* Header */}
+        <div className="px-4 py-3 border-b border-gray-100">
+          {communeObj ? (
             <div>
-              <button
-                onClick={() => setSelectedCommune(null)}
-                className="text-xs text-gray-400 hover:text-gray-600 mb-2 flex items-center gap-1"
-              >
-                ← Tout le Bassin
+              <button onClick={() => setSelectedCommune(null)}
+                className="text-xs text-gray-400 hover:text-indigo-600 mb-1 flex items-center gap-1">
+                ↩ Vue d'ensemble
               </button>
               <div className="flex items-center gap-2">
-                <span className="text-lg">{selectedCommuneData.tierEmoji}</span>
+                <span className="text-xl">{communeObj.tierEmoji}</span>
                 <div>
-                  <h2 className="font-semibold text-gray-900">{selectedCommuneData.name}</h2>
-                  <p className="text-xs text-gray-500">{selectedCommuneData.tagline}</p>
+                  <h2 className="font-bold text-gray-900 text-sm">{communeObj.name}</h2>
+                  <p className="text-xs text-gray-400 leading-tight">{communeObj.tagline}</p>
                 </div>
               </div>
             </div>
           ) : (
             <div>
-              <h2 className="font-semibold text-gray-900">Bassin d'Arcachon</h2>
-              <p className="text-xs text-gray-500">{agencies.length} professionnels</p>
+              <h2 className="font-bold text-gray-900">Bassin d'Arcachon</h2>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {(stats.agence || 0) + (stats.notaire || 0) + (stats.diagnostiqueur || 0)} professionnels
+              </p>
             </div>
           )}
         </div>
 
-        {/* Onglets */}
-        <div className="flex border-b border-gray-100">
-          {[
-            { key: 'agencies', label: '🏢 Agences' },
-            { key: 'notaires', label: '⚖️ Notaires' },
-            { key: 'diagnostiqueurs', label: '🔍 Diagn.' },
-          ].map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveLayer(tab.key as typeof activeLayer)}
-              className={`flex-1 py-2 text-xs font-medium transition-colors ${
-                activeLayer === tab.key
-                  ? 'text-indigo-600 border-b-2 border-indigo-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Liste agences */}
+        {/* Liste acteurs filtrés */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="p-6 text-center text-sm text-gray-400">Chargement…</div>
-          ) : filteredAgencies.length === 0 ? (
-            <div className="p-6 text-center text-sm text-gray-400">Aucune agence dans cette commune</div>
+            <div className="p-6 text-center">
+              <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"/>
+              <p className="text-xs text-gray-400">Chargement…</p>
+            </div>
+          ) : filteredActeurs.length === 0 ? (
+            <div className="p-6 text-center text-xs text-gray-400">
+              Aucun acteur pour cette sélection
+            </div>
           ) : (
             <div className="divide-y divide-gray-50">
-              {filteredAgencies.map((agency) => (
-                <button
-                  key={agency.id}
-                  onClick={() => setSelectedAgency(agency)}
-                  className="w-full text-left p-3 hover:bg-gray-50 transition-colors"
+              {filteredActeurs.slice(0, 50).map((a) => (
+                <button key={a.id} onClick={() => {
+                  setSelectedActeur(a);
+                  if (a.lat && a.lng && mapRef.current) {
+                    mapRef.current.flyTo([a.lat, a.lng], 15, { duration: 0.6 });
+                  }
+                }}
+                  className={`w-full text-left px-3 py-2.5 hover:bg-gray-50 transition-colors ${selectedActeur?.id === a.id ? 'bg-indigo-50' : ''}`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {agency.is_recommended && (
-                          <span className="text-xs bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded font-medium">
-                            ⭐ Recommandé
-                          </span>
-                        )}
-                        {agency.plan === 'pro' && !agency.is_recommended && (
-                          <span className="text-xs bg-sky-50 text-sky-700 px-1.5 py-0.5 rounded font-medium">Pro</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        {a.plan === 'premium' && (
+                          <span className="text-xs bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-semibold">Premium</span>
                         )}
                       </div>
-                      <p className="text-sm font-medium text-gray-800 mt-0.5 truncate">{agency.name}</p>
-                      <p className="text-xs text-gray-400">{agency.commune}</p>
+                      <p className="text-sm font-medium text-gray-800 truncate leading-tight">{a.name}</p>
+                      <p className="text-xs text-gray-400">{a.commune}</p>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      {agency.google_rating && (
-                        <div className="text-xs text-amber-600 font-medium">★ {agency.google_rating}</div>
-                      )}
-                      <div className="text-xs text-gray-300 mt-0.5">→</div>
-                    </div>
+                    {a.google_rating && (
+                      <div className="text-xs text-amber-500 font-semibold flex-shrink-0">
+                        ★ {Number(a.google_rating).toFixed(1)}
+                      </div>
+                    )}
                   </div>
                 </button>
               ))}
+              {filteredActeurs.length > 50 && (
+                <p className="text-xs text-gray-400 text-center py-3">
+                  +{filteredActeurs.length - 50} autres
+                </p>
+              )}
             </div>
           )}
         </div>
 
-        {/* Communes rapides */}
-        {!selectedCommune && (
-          <div className="border-t border-gray-100 p-3">
-            <p className="text-xs text-gray-400 mb-2 font-medium">Communes</p>
-            <div className="flex flex-wrap gap-1">
-              {COMMUNES.map(c => (
-                <button
-                  key={c.slug}
-                  onClick={() => setSelectedCommune(c.slug)}
-                  className="text-xs px-2 py-1 rounded-full bg-gray-100 hover:bg-indigo-50 hover:text-indigo-700 text-gray-600 transition-colors"
-                >
-                  {c.tierEmoji} {c.name}
-                </button>
-              ))}
-            </div>
+        {/* Communes — organisées par tier */}
+        {!communeObj && (
+          <div className="border-t border-gray-100 px-3 py-3 space-y-2">
+            {[
+              { tier: 'premium',  label: 'PREMIUM',   color: 'text-indigo-600' },
+              { tier: 'equilibre', label: 'ÉQUILIBRÉ', color: 'text-sky-600' },
+              { tier: 'emergent', label: 'ÉMERGENT',  color: 'text-emerald-600' },
+            ].map(({ tier, label, color }) => (
+              <div key={tier}>
+                <p className={`text-xs font-bold ${color} mb-1`}>💎 {label}</p>
+                <div className="flex flex-wrap gap-1">
+                  {COMMUNES.filter(c => c.tier === tier).map(c => (
+                    <button key={c.slug}
+                      onClick={() => goToCommune(c.slug)}
+                      className="text-xs px-2 py-0.5 rounded-full bg-gray-100 hover:bg-indigo-50 hover:text-indigo-700 text-gray-600 transition-colors"
+                    >
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Carte */}
+      {/* ======================== CARTE ======================== */}
       <div className="flex-1 relative">
         <div ref={mapDivRef} className="w-full h-full" />
 
-        {/* Panel agence sélectionnée */}
-        {selectedAgency && (
-          <div className="absolute bottom-4 left-4 right-4 bg-white rounded-xl shadow-xl p-4 z-[1000] max-w-sm">
-            <div className="flex items-start justify-between">
+        {/* Bandeau stats — en haut de la carte */}
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[800] flex gap-2 bg-white rounded-full shadow-md px-3 py-1.5 border border-gray-100">
+          <span className="text-xs text-gray-500 font-medium">📍 {COMMUNES.length} communes</span>
+          <span className="text-gray-200">|</span>
+          <span className="text-xs text-gray-500 font-medium">🏢 {stats.agence || '…'} agences</span>
+          <span className="text-gray-200">|</span>
+          <span className="text-xs text-gray-500 font-medium">🔍 {stats.diagnostiqueur || '…'} diagnostiqueurs</span>
+          <span className="text-gray-200">|</span>
+          <span className="text-xs text-gray-500 font-medium">⚖️ {stats.notaire || '…'} notaires</span>
+        </div>
+
+        {/* Filtres type — droite */}
+        <div className="absolute top-3 right-3 z-[800] flex flex-col gap-2">
+          {(Object.entries(TYPE_CONFIG) as [ActeurType, typeof TYPE_CONFIG[ActeurType]][]).map(([type, cfg]) => (
+            <button key={type}
+              onClick={() => setActiveType(t => t === type ? 'all' : type)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold shadow-md transition-all border-2 ${
+                activeType === type
+                  ? 'bg-white border-indigo-600 text-indigo-700 shadow-indigo-100'
+                  : 'bg-white border-transparent text-gray-600 hover:border-gray-200'
+              }`}
+            >
+              <span>{cfg.emoji}</span>
+              <span>{cfg.label}</span>
+              {stats[type] && (
+                <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">
+                  {stats[type]}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Fiche acteur sélectionné */}
+        {selectedActeur && (
+          <div className="absolute bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 bg-white rounded-2xl shadow-xl p-4 z-[1000] border border-gray-100">
+            <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                {selectedAgency.is_recommended && (
-                  <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-medium">
-                    ⭐ Recommandé
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className="text-xs text-gray-400 font-medium">
+                    {TYPE_CONFIG[selectedActeur.type]?.emoji} {TYPE_CONFIG[selectedActeur.type]?.label.slice(0, -1)}
                   </span>
+                  {selectedActeur.plan === 'premium' && (
+                    <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">Premium</span>
+                  )}
+                </div>
+                <h3 className="font-bold text-gray-900 leading-tight">{selectedActeur.name}</h3>
+                {selectedActeur.commune && (
+                  <p className="text-sm text-gray-500 mt-0.5">{selectedActeur.commune}</p>
                 )}
-                <h3 className="font-semibold text-gray-900 mt-1">{selectedAgency.name}</h3>
-                <p className="text-sm text-gray-500">{selectedAgency.commune}</p>
-                {selectedAgency.google_rating && (
-                  <p className="text-sm text-amber-600 mt-1">
-                    ★ {selectedAgency.google_rating} ({selectedAgency.google_reviews} avis)
+                {selectedActeur.google_rating && (
+                  <p className="text-sm text-amber-500 mt-1 font-semibold">
+                    ★ {Number(selectedActeur.google_rating).toFixed(1)}
+                    <span className="text-gray-400 font-normal ml-1">({selectedActeur.google_reviews} avis)</span>
                   </p>
                 )}
+                {selectedActeur.address && (
+                  <p className="text-xs text-gray-400 mt-1 truncate">{selectedActeur.address}</p>
+                )}
+                {/* Infos spécifiques notaire */}
+                {selectedActeur.type === 'notaire' && selectedActeur.meta?.notaires_names && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {(selectedActeur.meta.notaires_names as string[]).join(', ')}
+                  </p>
+                )}
+                {/* Services diagnostiqueur */}
+                {selectedActeur.type === 'diagnostiqueur' && selectedActeur.meta?.services && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {(selectedActeur.meta.services as string[]).slice(0, 4).map(s => (
+                      <span key={s} className="text-xs bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">{s}</span>
+                    ))}
+                  </div>
+                )}
               </div>
-              <button
-                onClick={() => setSelectedAgency(null)}
-                className="text-gray-300 hover:text-gray-500 ml-2 text-lg leading-none"
-              >
-                ×
-              </button>
+              <button onClick={() => setSelectedActeur(null)}
+                className="text-gray-300 hover:text-gray-500 text-xl leading-none mt-0.5">×</button>
             </div>
             <div className="mt-3 flex gap-2">
-              {selectedAgency.phone && (
-                <a
-                  href={`tel:${selectedAgency.phone}`}
-                  className="flex-1 text-center text-sm bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-                >
+              {selectedActeur.phone && (
+                <a href={`tel:${selectedActeur.phone}`}
+                  className="flex-1 text-center text-sm bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700 transition-colors font-medium">
                   📞 Appeler
                 </a>
               )}
-              {selectedAgency.website && (
-                <a
-                  href={selectedAgency.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 text-center text-sm border border-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-                >
+              {selectedActeur.website && (
+                <a href={selectedActeur.website} target="_blank" rel="noopener noreferrer"
+                  className="flex-1 text-center text-sm border-2 border-gray-200 text-gray-700 py-2.5 rounded-xl hover:bg-gray-50 transition-colors font-medium">
                   Site web →
                 </a>
               )}
             </div>
           </div>
         )}
+
+        {/* CTAs bas — Chercher / Vendre */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[800] flex gap-3">
+          <button
+            onClick={() => setActiveType('agence')}
+            className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg font-semibold text-sm hover:bg-gray-700 transition-colors"
+          >
+            🔍 Chercher un bien
+          </button>
+          <Link href="/evaluer"
+            className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-full shadow-lg font-semibold text-sm hover:bg-indigo-700 transition-colors"
+          >
+            🏡 Vendre mon bien
+          </Link>
+        </div>
       </div>
 
       <style jsx global>{`
@@ -344,6 +450,7 @@ any, data: Agency[]) {
           white-space: nowrap;
           box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           cursor: pointer;
+          pointer-events: auto;
         }
         .commune-label:hover {
           background: #f8fafc;

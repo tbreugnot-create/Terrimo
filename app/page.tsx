@@ -25,6 +25,9 @@ export default function Home() {
           <span className="text-xs text-gray-400 hidden sm:block">Immobilier · Bassin d'Arcachon</span>
         </div>
         <div className="flex items-center gap-3">
+          <Link href="/evaluer" className="text-sm text-indigo-600 font-semibold hover:text-indigo-700 transition-colors hidden sm:flex items-center gap-1.5 bg-indigo-50 px-3 py-1.5 rounded-lg">
+            🏡 Évaluer mon bien
+          </Link>
           <Link href="/business" className="text-sm text-gray-600 hover:text-indigo-600 transition-colors hidden sm:block">
             Professionnels
           </Link>
