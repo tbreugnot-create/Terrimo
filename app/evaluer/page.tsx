@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { COMMUNES } from '@/lib/communes';
 import { ZONES_BY_COMMUNE, Zone } from '@/lib/zones';
@@ -152,6 +152,12 @@ function SliderInput({
 // ============================================================
 export default function EvaluerPage(){
   const [step, setStep] = useState(1);
+  const topRef = useRef<HTMLDivElement>(null);
+
+  // Scroll automatique vers le formulaire à chaque changement d'étape
+  useEffect(() => {
+    topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [step]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<EstimationResult | null>(null);
   const [leadSent, setLeadSent] = useState(false);
@@ -940,7 +946,7 @@ export default function EvaluerPage(){
             <div className="flex-1">
               <h3 className="font-bold text-lg mb-1">Obtenez l'avis d'une agence locale</h3>
               <p className="text-gray-300 text-sm mb-4">
-                Une agence premium du Bassin vous contacte pour affiner cette estimation avec une visite de votre bien. Gratuit et sans engagement.
+                Une agence locale du Bassin vous contacte pour affiner cette estimation avec une visite de votre bien. Gratuit et sans engagement.
               </p>
 
               {leadSent ? (
@@ -1061,19 +1067,8 @@ export default function EvaluerPage(){
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="font-bold text-indigo-600 text-lg">Terrimo</Link>
-          <span className="text-sm text-gray-400 hidden sm:block">Évaluer mon bien</span>
-        </div>
-        <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">
-          ← Carte
-        </Link>
-      </header>
-
-      {/* Contenu */}
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      {/* Contenu — nav globale gérée par layout.tsx */}
+      <div ref={topRef} className="max-w-2xl mx-auto px-4 py-8">
         {/* Hero */}
         {step === 1 && (
           <div className="text-center mb-10">
