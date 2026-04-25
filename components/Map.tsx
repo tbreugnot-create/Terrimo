@@ -67,9 +67,13 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
   const [selectedActeur, setSelectedActeur]   = useState<Acteur | null>(null);
   const [activeType, setActiveType]           = useState<ActeurType | 'all'>('agence');
   const [loading, setLoading]                 = useState(true);
+  const [mapActive, setMapActive]             = useState(false);
+  const [showHint, setShowHint]               = useState(false);
+  const [mobileView, setMobileView]           = useState<'list' | 'map'>('list');
+  const [search, setSearch]                   = useState('');        // ← recherche par nom
 
   // --------------------------------------------------------
-  // Inject CSS pour commune-label
+  // Inject CSS
   // --------------------------------------------------------
   useEffect(() => {
     const style = document.createElement('style');
@@ -113,14 +117,12 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
       if (communeObj && acteur.commune !== communeObj.name) return;
 
       const cfg = TYPE_CONFIG[acteur.type] ?? TYPE_CONFIG.agence;
-      const isPremium = acteur.plan === 'premium';
-      const color = isPremium ? cfg.colorPremium : cfg.color;
-      const size  = isPremium ? 16 : 11;
+      const size = 12; // même taille pour tous — pas de hiérarchie commerciale
 
       const icon = L.divIcon({
         className: '',
         html: `<div style="
-          background:${color};border-radius:50%;
+          background:${cfg.color};border-radius:50%;
           width:${size}px;height:${size}px;
           border:2px solid white;
           box-shadow:0 1px 4px rgba(0,0,0,0.3);
@@ -139,7 +141,7 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
   }, []);
 
   // --------------------------------------------------------
-  // Init carte Leaflet
+  // Init carte Leaflet — scrollWheelZoom OFF par défaut
   // --------------------------------------------------------
   useEffect(() => {
     if (mapRef.current || !mapDivRef.current) return;
@@ -157,7 +159,15 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
         shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
 
-      const map = L.map(mapDivRef.current!, { center: BASSIN_CENTER, zoom: BASSIN_ZOOM, zoomControl: true });
+      const map = L.map(mapDivRef.current!, {
+        center: BASSIN_CENTER,
+        zoom: BASSIN_ZOOM,
+        zoomControl: true,
+        scrollWheelZoom: false,   // ← désactivé par défaut
+        dragging: true,
+        tap: true,
+      });
+
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '© OpenStreetMap © CARTO', maxZoom: 19,
       }).addTo(map);
@@ -190,7 +200,32 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
   }, []);
 
   // --------------------------------------------------------
-  // Fetch acteurs depuis API
+  // Activation/désactivation du zoom à la molette
+  // --------------------------------------------------------
+  const activateMap = useCallback(() => {
+    if (!mapRef.current) return;
+    mapRef.current.scrollWheelZoom.enable();
+    setMapActive(true);
+    setShowHint(false);
+  }, []);
+
+  const deactivateMap = useCallback(() => {
+    if (!mapRef.current) return;
+    mapRef.current.scrollWheelZoom.disable();
+    setMapActive(false);
+  }, []);
+
+  // Hint si l'utilisateur scroll sans avoir activé la carte
+  const handleMapWheel = useCallback(() => {
+    if (!mapActive) {
+      setShowHint(true);
+      const t = setTimeout(() => setShowHint(false), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [mapActive]);
+
+  // --------------------------------------------------------
+  // Fetch acteurs
   // --------------------------------------------------------
   useEffect(() => {
     const fetchActeurs = async () => {
@@ -220,14 +255,23 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
     setSelectedActeur(null);
   }, [activeType, selectedCommune, acteurs, renderMarkers]);
 
+  // Invalidate size quand on bascule sur la vue carte (mobile)
+  useEffect(() => {
+    if (mobileView === 'map' && mapRef.current) {
+      setTimeout(() => mapRef.current.invalidateSize(), 100);
+    }
+  }, [mobileView]);
+
   // --------------------------------------------------------
   // Helpers
   // --------------------------------------------------------
   const communeObj = selectedCommune ? COMMUNES.find(c => c.slug === selectedCommune) : null;
 
+  const searchTerm = search.trim().toLowerCase();
   const filteredActeurs = acteurs.filter(a => {
     if (activeType !== 'all' && a.type !== activeType) return false;
     if (communeObj && a.commune !== communeObj.name) return false;
+    if (searchTerm && !a.name.toLowerCase().includes(searchTerm) && !a.commune?.toLowerCase().includes(searchTerm)) return false;
     return true;
   });
 
@@ -235,93 +279,220 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
     const c = COMMUNES.find(x => x.slug === slug);
     if (c && mapRef.current) mapRef.current.flyTo([c.lat, c.lng], 13, { duration: 0.8 });
     setSelectedCommune(slug);
+    setMobileView('map');
   };
 
   // --------------------------------------------------------
   // RENDER
   // --------------------------------------------------------
   return (
-    <div className="relative w-full h-full flex">
+    <div style={{
+      display: 'flex',
+      width: '100%',
+      height: '100%',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
 
-      {/* ======================== PANNEAU GAUCHE ======================== */}
-      <div className="w-72 flex-shrink-0 bg-white border-r border-gray-100 flex flex-col overflow-hidden z-10">
-
-        {/* Header */}
-        <div className="px-4 py-3 border-b border-gray-100">
+      {/* ═══════════════════════ PANNEAU GAUCHE (liste) ═══════════════════════ */}
+      <div style={{
+        width: '320px',
+        flexShrink: 0,
+        background: 'white',
+        borderRight: '1px solid #e2e8f0',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        zIndex: 10,
+        // Mobile : caché si vue carte active
+        ...(typeof window !== 'undefined' && window.innerWidth < 768 && mobileView === 'map'
+          ? { display: 'none' } : {}),
+      }}
+        className={`map-left-panel ${mobileView === 'map' ? 'hidden-mobile' : ''}`}
+      >
+        {/* ─── Header commune / global ─── */}
+        <div style={{ padding: '16px', borderBottom: '1px solid #f1f5f9' }}>
           {communeObj ? (
             <div>
-              <button onClick={() => setSelectedCommune(null)}
-                className="text-xs text-gray-400 hover:text-indigo-600 mb-1 flex items-center gap-1">
-                ↩ Vue d&apos;ensemble
+              <button onClick={() => setSelectedCommune(null)} style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: '.8125rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px',
+                marginBottom: '10px', padding: 0, minHeight: 'auto',
+              }}>
+                ← Vue d&apos;ensemble
               </button>
-              <div className="flex items-center gap-2">
-                <span className="text-xl">{communeObj.tierEmoji}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.5rem' }}>{communeObj.tierEmoji}</span>
                 <div>
-                  <h2 className="font-bold text-gray-900 text-sm">{communeObj.name}</h2>
-                  <p className="text-xs text-gray-400 leading-tight">{communeObj.tagline}</p>
+                  <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem' }}>{communeObj.name}</div>
+                  <div style={{ fontSize: '.8125rem', color: '#94a3b8', marginTop: '2px' }}>{communeObj.tagline}</div>
                 </div>
               </div>
             </div>
           ) : (
             <div>
-              <h2 className="font-bold text-gray-900">Bassin d&apos;Arcachon</h2>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {(stats.agence || 0) + (stats.notaire || 0) + (stats.diagnostiqueur || 0)} professionnels
-              </p>
+              <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem' }}>Bassin d&apos;Arcachon</div>
+              <div style={{ fontSize: '.8125rem', color: '#94a3b8', marginTop: '4px' }}>
+                {searchTerm
+                  ? `${filteredActeurs.length} résultat${filteredActeurs.length > 1 ? 's' : ''} pour « ${search} »`
+                  : `${(stats.agence || 0) + (stats.notaire || 0) + (stats.diagnostiqueur || 0) + (stats.conciergerie || 0)} professionnels référencés`
+                }
+              </div>
             </div>
           )}
         </div>
 
-        {/* Liste acteurs */}
-        <div className="flex-1 overflow-y-auto">
+        {/* ─── Recherche par nom ─── */}
+        <div style={{ padding: '10px 16px', borderBottom: '1px solid #f1f5f9' }}>
+          <div style={{ position: 'relative' }}>
+            <span style={{
+              position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
+              fontSize: '1rem', pointerEvents: 'none', lineHeight: 1,
+            }}>🔎</span>
+            <input
+              type="text"
+              placeholder="Rechercher une agence, un notaire…"
+              value={search}
+              onChange={e => { setSearch(e.target.value); setSelectedCommune(null); }}
+              style={{
+                width: '100%', padding: '9px 10px 9px 34px',
+                border: '1.5px solid #e2e8f0', borderRadius: '10px',
+                fontSize: '.9375rem', color: '#1e293b',
+                background: '#f8fafc', outline: 'none',
+                transition: 'border-color .15s',
+                minHeight: 'auto', boxSizing: 'border-box',
+              }}
+              onFocus={e => { (e.target as HTMLInputElement).style.borderColor = '#6366f1'; (e.target as HTMLInputElement).style.background = 'white'; }}
+              onBlur={e => { (e.target as HTMLInputElement).style.borderColor = '#e2e8f0'; (e.target as HTMLInputElement).style.background = '#f8fafc'; }}
+            />
+            {search && (
+              <button onClick={() => setSearch('')} style={{
+                position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                background: '#e2e8f0', border: 'none', borderRadius: '50%',
+                width: '20px', height: '20px', cursor: 'pointer', fontSize: '.75rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#64748b', minHeight: 'auto', padding: 0,
+              }}>×</button>
+            )}
+          </div>
+        </div>
+
+        {/* ─── Filtres type ─── */}
+        <div style={{
+          display: 'flex', gap: '6px', padding: '10px 16px',
+          borderBottom: '1px solid #f1f5f9', flexWrap: 'wrap',
+        }}>
+          {(Object.entries(TYPE_CONFIG) as [ActeurType, typeof TYPE_CONFIG[ActeurType]][]).map(([type, cfg]) => (
+            <button key={type}
+              onClick={() => setActiveType(t => t === type ? 'all' : type)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '5px',
+                padding: '5px 10px', borderRadius: '20px',
+                fontSize: '.8125rem', fontWeight: 600,
+                border: activeType === type ? '2px solid #6366f1' : '2px solid #e2e8f0',
+                background: activeType === type ? '#eef2ff' : 'white',
+                color: activeType === type ? '#4338ca' : '#64748b',
+                cursor: 'pointer', transition: 'all .15s ease', minHeight: '32px',
+              }}
+            >
+              <span>{cfg.emoji}</span>
+              <span>{cfg.label}</span>
+              {stats[type] != null && (
+                <span style={{
+                  background: activeType === type ? '#c7d2fe' : '#f1f5f9',
+                  color: activeType === type ? '#3730a3' : '#94a3b8',
+                  borderRadius: '10px', padding: '0 5px', fontSize: '.75rem', fontWeight: 700,
+                }}>{stats[type]}</span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* ─── Liste acteurs (scrollable) ─── */}
+        <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain' }}>
           {loading ? (
-            <div className="p-6 text-center">
-              <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"/>
-              <p className="text-xs text-gray-400">Chargement…</p>
+            <div style={{ padding: '32px', textAlign: 'center' }}>
+              <div style={{
+                width: '28px', height: '28px', margin: '0 auto 12px',
+                border: '2px solid #e2e8f0', borderTop: '2px solid #6366f1',
+                borderRadius: '50%', animation: 'spin 1s linear infinite',
+              }} />
+              <p style={{ fontSize: '.875rem', color: '#94a3b8' }}>Chargement…</p>
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </div>
           ) : filteredActeurs.length === 0 ? (
-            <div className="p-6 text-center text-xs text-gray-400">Aucun acteur pour cette sélection</div>
+            <div style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', fontSize: '.875rem' }}>
+              Aucun acteur pour cette sélection
+            </div>
           ) : (
-            <div className="divide-y divide-gray-50">
-              {filteredActeurs.map((a) => (
-                <button key={a.id} onClick={() => {
-                  setSelectedActeur(a);
-                  if (a.lat && a.lng && mapRef.current) mapRef.current.flyTo([a.lat, a.lng], 15, { duration: 0.6 });
-                }}
-                  className={`w-full text-left px-3 py-2.5 hover:bg-gray-50 transition-colors ${selectedActeur?.id === a.id ? 'bg-indigo-50' : ''}`}
+            filteredActeurs.map((a) => {
+              const cfg = TYPE_CONFIG[a.type];
+              const isSelected = selectedActeur?.id === a.id;
+              return (
+                <button key={a.id}
+                  onClick={() => {
+                    setSelectedActeur(a);
+                    if (a.lat && a.lng && mapRef.current) {
+                      mapRef.current.flyTo([a.lat, a.lng], 15, { duration: 0.6 });
+                      setMobileView('map');
+                    }
+                  }}
+                  style={{
+                    width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
+                    padding: '12px 16px',
+                    background: isSelected ? '#eef2ff' : 'white',
+                    borderBottom: '1px solid #f8fafc',
+                    borderLeft: isSelected ? '3px solid #6366f1' : '3px solid transparent',
+                    transition: 'all .1s ease',
+                  }}
+                  onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
+                  onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'white'; }}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      {a.plan === 'premium' && (
-                        <span className="text-xs bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-semibold mr-1">⭐ Premium</span>
-                      )}
-                      <p className="text-sm font-medium text-gray-800 truncate leading-tight">{a.name}</p>
-                      <p className="text-xs text-gray-400">{a.commune}</p>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                        <span style={{ fontSize: '.75rem' }}>{cfg?.emoji}</span>
+                      </div>
+                      <div style={{
+                        fontWeight: 600, fontSize: '.9375rem', color: '#1e293b',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>{a.name}</div>
+                      <div style={{ fontSize: '.8125rem', color: '#94a3b8', marginTop: '1px' }}>{a.commune}</div>
                     </div>
                     {a.google_rating && (
-                      <div className="text-xs text-amber-500 font-semibold flex-shrink-0">★ {Number(a.google_rating).toFixed(1)}</div>
+                      <div style={{ fontSize: '.8125rem', color: '#f59e0b', fontWeight: 700, flexShrink: 0 }}>
+                        ★ {Number(a.google_rating).toFixed(1)}
+                      </div>
                     )}
                   </div>
                 </button>
-              ))}
-            </div>
+              );
+            })
           )}
         </div>
 
-        {/* Communes par tier */}
+        {/* ─── Communes par tier ─── */}
         {!communeObj && (
-          <div className="border-t border-gray-100 px-3 py-3 space-y-2">
+          <div style={{ borderTop: '1px solid #f1f5f9', padding: '12px 16px' }}>
             {[
-              { tier: 'premium',  label: 'PREMIUM',   color: 'text-indigo-600' },
-              { tier: 'equilibre', label: 'ÉQUILIBRÉ', color: 'text-sky-600' },
-              { tier: 'emergent', label: 'ÉMERGENT',  color: 'text-emerald-600' },
-            ].map(({ tier, label, color }) => (
-              <div key={tier}>
-                <p className={`text-xs font-bold ${color} mb-1`}>💎 {label}</p>
-                <div className="flex flex-wrap gap-1">
+              { tier: 'premium',   label: 'Premium',   color: '#4338ca', bg: '#eef2ff' },
+              { tier: 'equilibre', label: 'Équilibré', color: '#0369a1', bg: '#e0f2fe' },
+              { tier: 'emergent',  label: 'Émergent',  color: '#047857', bg: '#d1fae5' },
+            ].map(({ tier, label, color, bg }) => (
+              <div key={tier} style={{ marginBottom: '10px' }}>
+                <div style={{ fontSize: '.75rem', fontWeight: 700, color, marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                  {label}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                   {COMMUNES.filter(c => c.tier === tier).map(c => (
-                    <button key={c.slug} onClick={() => goToCommune(c.slug)}
-                      className="text-xs px-2 py-0.5 rounded-full bg-gray-100 hover:bg-indigo-50 hover:text-indigo-700 text-gray-600 transition-colors">
+                    <button key={c.slug} onClick={() => goToCommune(c.slug)} style={{
+                      fontSize: '.8125rem', padding: '3px 10px', borderRadius: '20px',
+                      background: bg, color, border: 'none', cursor: 'pointer',
+                      fontWeight: 600, transition: 'opacity .15s', minHeight: 'auto',
+                    }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '.7'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
+                    >
                       {c.name}
                     </button>
                   ))}
@@ -330,117 +501,241 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
             ))}
           </div>
         )}
+
+        {/* ─── CTA bas panneau ─── */}
+        <div style={{
+          padding: '12px 16px', borderTop: '1px solid #f1f5f9',
+          display: 'flex', gap: '8px',
+        }}>
+          <Link href="/evaluer" style={{
+            flex: 1, textAlign: 'center', textDecoration: 'none',
+            background: '#6366f1', color: 'white',
+            fontWeight: 700, fontSize: '.9375rem', padding: '10px 8px',
+            borderRadius: '12px', transition: 'background .15s ease',
+          }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#4338ca'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#6366f1'; }}
+          >
+            🏡 Estimer mon bien
+          </Link>
+          <Link href="/pro/rejoindre" style={{
+            flex: 1, textAlign: 'center', textDecoration: 'none',
+            background: '#f8fafc', color: '#334155',
+            fontWeight: 600, fontSize: '.9375rem', padding: '10px 8px',
+            borderRadius: '12px', border: '1.5px solid #e2e8f0', transition: 'background .15s ease',
+          }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f1f5f9'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
+          >
+            🏢 Espace Pro
+          </Link>
+        </div>
       </div>
 
-      {/* ======================== CARTE ======================== */}
-      <div className="flex-1 relative">
-        <div ref={mapDivRef} className="w-full h-full" />
+      {/* ═══════════════════════ CARTE ═══════════════════════ */}
+      <div
+        style={{ flex: 1, position: 'relative', cursor: mapActive ? 'crosshair' : 'grab' }}
+        className={mobileView === 'list' ? 'hidden-mobile' : ''}
+        onMouseLeave={deactivateMap}
+        onWheel={handleMapWheel}
+      >
+        <div ref={mapDivRef} style={{ width: '100%', height: '100%' }} />
 
-        {/* Bandeau stats */}
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[800] flex gap-2 bg-white rounded-full shadow-md px-3 py-1.5 border border-gray-100">
-          <span className="text-xs text-gray-500 font-medium">📍 {COMMUNES.length} communes</span>
-          <span className="text-gray-200">|</span>
-          <span className="text-xs text-gray-500 font-medium">🏢 {stats.agence ?? '…'} agences</span>
-          <span className="text-gray-200">|</span>
-          <span className="text-xs text-gray-500 font-medium">🔍 {stats.diagnostiqueur ?? '…'} diagnostiqueurs</span>
-          <span className="text-gray-200">|</span>
-          <span className="text-xs text-gray-500 font-medium">⚖️ {stats.notaire ?? '…'} notaires</span>
+        {/* ── Overlay "cliquez pour activer" ── */}
+        {!mapActive && (
+          <div
+            onClick={activateMap}
+            style={{
+              position: 'absolute', inset: 0, zIndex: 500,
+              cursor: 'pointer', background: 'transparent',
+              display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+              paddingBottom: '80px',
+              pointerEvents: 'auto',
+            }}
+          >
+            <div style={{
+              background: 'rgba(15,23,42,0.75)',
+              backdropFilter: 'blur(6px)',
+              color: 'white', borderRadius: '16px', padding: '10px 20px',
+              fontSize: '.9375rem', fontWeight: 600,
+              display: 'flex', alignItems: 'center', gap: '8px',
+              boxShadow: '0 4px 20px rgba(0,0,0,.3)',
+              transition: 'opacity .2s',
+              pointerEvents: 'none',
+            }}>
+              🖱️ Cliquez sur la carte pour zoomer librement
+            </div>
+          </div>
+        )}
+
+        {/* ── Hint Ctrl+scroll ── */}
+        {showHint && (
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'rgba(15,23,42,0.82)', color: 'white',
+            borderRadius: '14px', padding: '12px 22px',
+            fontSize: '1rem', fontWeight: 600, zIndex: 600,
+            pointerEvents: 'none', textAlign: 'center', lineHeight: 1.5,
+          }}>
+            🖱️ Cliquez d&apos;abord sur la carte<br />
+            <span style={{ fontSize: '.875rem', fontWeight: 400, opacity: .8 }}>pour activer le zoom à la molette</span>
+          </div>
+        )}
+
+        {/* ── Stats bar ── */}
+        <div style={{
+          position: 'absolute', top: '12px', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 400, display: 'flex', gap: '10px',
+          background: 'white', borderRadius: '100px',
+          boxShadow: '0 2px 12px rgba(0,0,0,.1)', padding: '6px 16px',
+          border: '1px solid #f1f5f9', whiteSpace: 'nowrap',
+          fontSize: '.8125rem', color: '#64748b', fontWeight: 500,
+          pointerEvents: 'none',
+        }}>
+          <span>📍 {COMMUNES.length} communes</span>
+          <span style={{ color: '#e2e8f0' }}>|</span>
+          <span>🏢 {stats.agence ?? '…'} agences</span>
+          <span style={{ color: '#e2e8f0' }}>|</span>
+          <span>⚖️ {stats.notaire ?? '…'} notaires</span>
         </div>
 
-        {/* Filtres type — droite */}
-        <div className="absolute top-3 right-3 z-[800] flex flex-col gap-2">
-          {(Object.entries(TYPE_CONFIG) as [ActeurType, typeof TYPE_CONFIG[ActeurType]][]).map(([type, cfg]) => (
-            <button key={type}
-              onClick={() => setActiveType(t => t === type ? 'all' : type)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold shadow-md transition-all border-2 ${
-                activeType === type
-                  ? 'bg-white border-indigo-600 text-indigo-700 shadow-indigo-100'
-                  : 'bg-white border-transparent text-gray-600 hover:border-gray-200'
-              }`}
-            >
-              <span>{cfg.emoji}</span>
-              <span>{cfg.label}</span>
-              {stats[type] != null && (
-                <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">{stats[type]}</span>
-              )}
-            </button>
+        {/* ── Légende ── */}
+        <div style={{
+          position: 'absolute', bottom: '70px', right: '12px', zIndex: 400,
+          background: 'white', borderRadius: '12px',
+          boxShadow: '0 2px 12px rgba(0,0,0,.1)', padding: '10px 14px',
+          border: '1px solid #f1f5f9', fontSize: '.8125rem',
+        }}>
+          {(Object.entries(TYPE_CONFIG) as [ActeurType, typeof TYPE_CONFIG[ActeurType]][]).map(([, cfg]) => (
+            <div key={cfg.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+              <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: cfg.color, flexShrink: 0 }} />
+              <span style={{ color: '#475569' }}>{cfg.label}</span>
+            </div>
           ))}
         </div>
 
-        {/* Fiche acteur sélectionné */}
+        {/* ── Fiche acteur sélectionné ── */}
         {selectedActeur && (
-          <div className="absolute bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 bg-white rounded-2xl shadow-xl p-4 z-[1000] border border-gray-100">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <span className="text-xs text-gray-400 font-medium">
+          <div style={{
+            position: 'absolute', bottom: '70px', left: '12px',
+            width: '300px', maxWidth: 'calc(100% - 24px)',
+            background: 'white', borderRadius: '18px',
+            boxShadow: '0 8px 32px rgba(0,0,0,.14)',
+            padding: '18px', zIndex: 600,
+            border: '1px solid #f1f5f9',
+            animation: 'fadeInUp .2s ease both',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '.8125rem', color: '#94a3b8' }}>
                     {TYPE_CONFIG[selectedActeur.type]?.emoji} {TYPE_CONFIG[selectedActeur.type]?.label.slice(0, -1)}
                   </span>
-                  {selectedActeur.plan === 'premium' && (
-                    <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">Premium</span>
-                  )}
                 </div>
-                <h3 className="font-bold text-gray-900 leading-tight">{selectedActeur.name}</h3>
-                {selectedActeur.commune && <p className="text-sm text-gray-500 mt-0.5">{selectedActeur.commune}</p>}
+                <div style={{ fontWeight: 700, fontSize: '1rem', color: '#0f172a', lineHeight: 1.3 }}>
+                  {selectedActeur.name}
+                </div>
+                {selectedActeur.commune && (
+                  <div style={{ fontSize: '.875rem', color: '#64748b', marginTop: '2px' }}>{selectedActeur.commune}</div>
+                )}
                 {selectedActeur.google_rating && (
-                  <p className="text-sm text-amber-500 mt-1 font-semibold">
+                  <div style={{ fontSize: '.875rem', color: '#f59e0b', fontWeight: 700, marginTop: '6px' }}>
                     ★ {Number(selectedActeur.google_rating).toFixed(1)}
-                    <span className="text-gray-400 font-normal ml-1">({selectedActeur.google_reviews} avis)</span>
-                  </p>
+                    <span style={{ color: '#94a3b8', fontWeight: 400, marginLeft: '4px' }}>
+                      ({selectedActeur.google_reviews} avis)
+                    </span>
+                  </div>
                 )}
-                {selectedActeur.address && <p className="text-xs text-gray-400 mt-1 truncate">{selectedActeur.address}</p>}
-
-                {/* Notaires */}
-                {selectedActeur.type === 'notaire' && Array.isArray(selectedActeur.meta?.notaires_names) && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    {(selectedActeur.meta.notaires_names as string[]).join(', ')}
-                  </p>
+                {selectedActeur.address && (
+                  <div style={{ fontSize: '.8125rem', color: '#94a3b8', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    📍 {selectedActeur.address}
+                  </div>
                 )}
-                {/* Diagnostiqueurs */}
                 {selectedActeur.type === 'diagnostiqueur' && Array.isArray(selectedActeur.meta?.services) && (
-                  <div className="flex flex-wrap gap-1 mt-2">
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
                     {(selectedActeur.meta.services as string[]).slice(0, 4).map(s => (
-                      <span key={s} className="text-xs bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">{s}</span>
+                      <span key={s} style={{
+                        fontSize: '.75rem', background: '#fef3c7', color: '#92400e',
+                        padding: '2px 7px', borderRadius: '6px',
+                      }}>{s}</span>
                     ))}
                   </div>
                 )}
               </div>
-              <button onClick={() => setSelectedActeur(null)}
-                className="text-gray-300 hover:text-gray-500 text-xl leading-none mt-0.5">×</button>
+              <button onClick={() => setSelectedActeur(null)} style={{
+                background: '#f1f5f9', border: 'none', borderRadius: '50%',
+                width: '28px', height: '28px', cursor: 'pointer', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '1rem', color: '#64748b', minHeight: 'auto',
+              }}>×</button>
             </div>
-            <div className="mt-3 flex gap-2">
+
+            <div style={{ display: 'flex', gap: '8px', marginTop: '14px' }}>
               {selectedActeur.phone && (
-                <a href={`tel:${selectedActeur.phone}`}
-                  className="flex-1 text-center text-sm bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700 transition-colors font-medium">
+                <a href={`tel:${selectedActeur.phone}`} style={{
+                  flex: 1, textAlign: 'center', textDecoration: 'none',
+                  background: '#6366f1', color: 'white',
+                  fontWeight: 700, fontSize: '.9375rem', padding: '10px',
+                  borderRadius: '12px',
+                }}>
                   📞 Appeler
                 </a>
               )}
               {selectedActeur.website && (
-                <a href={selectedActeur.website} target="_blank" rel="noopener noreferrer"
-                  className="flex-1 text-center text-sm border-2 border-gray-200 text-gray-700 py-2.5 rounded-xl hover:bg-gray-50 transition-colors font-medium">
+                <a href={selectedActeur.website} target="_blank" rel="noopener noreferrer" style={{
+                  flex: 1, textAlign: 'center', textDecoration: 'none',
+                  background: '#f8fafc', color: '#334155',
+                  fontWeight: 600, fontSize: '.9375rem', padding: '10px',
+                  borderRadius: '12px', border: '1.5px solid #e2e8f0',
+                }}>
                   Site web →
                 </a>
               )}
             </div>
           </div>
         )}
-
-        {/* CTAs bas */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[800] flex gap-3 flex-wrap justify-center">
-          <button onClick={() => setActiveType('agence')}
-            className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg font-semibold text-sm hover:bg-gray-700 transition-colors">
-            🔍 Chercher un bien
-          </button>
-          <Link href="/evaluer"
-            className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-full shadow-lg font-semibold text-sm hover:bg-indigo-700 transition-colors">
-            🏡 Vendre mon bien
-          </Link>
-          <Link href="/pro/rejoindre"
-            className="flex items-center gap-2 bg-white text-slate-800 border border-slate-300 px-5 py-3 rounded-full shadow-lg font-semibold text-sm hover:bg-slate-50 transition-colors">
-            🏢 Espace Pro
-          </Link>
-        </div>
       </div>
+
+      {/* ═══════════════════════ MOBILE : toggle Liste / Carte ═══════════════════════ */}
+      <div style={{
+        position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)',
+        zIndex: 700,
+        background: 'white', borderRadius: '100px',
+        boxShadow: '0 4px 20px rgba(0,0,0,.15)',
+        border: '1px solid #e2e8f0',
+        display: 'flex', overflow: 'hidden',
+      }} className="show-mobile-only">
+        <button onClick={() => setMobileView('list')} style={{
+          padding: '12px 24px', border: 'none', cursor: 'pointer', fontWeight: 700,
+          fontSize: '.9375rem', transition: 'all .15s',
+          background: mobileView === 'list' ? '#0f172a' : 'white',
+          color: mobileView === 'list' ? 'white' : '#94a3b8',
+          minHeight: 'auto', borderRadius: 0,
+        }}>
+          ☰ Liste
+        </button>
+        <button onClick={() => { setMobileView('map'); setTimeout(() => mapRef.current?.invalidateSize(), 100); }} style={{
+          padding: '12px 24px', border: 'none', cursor: 'pointer', fontWeight: 700,
+          fontSize: '.9375rem', transition: 'all .15s',
+          background: mobileView === 'map' ? '#0f172a' : 'white',
+          color: mobileView === 'map' ? 'white' : '#94a3b8',
+          minHeight: 'auto', borderRadius: 0,
+        }}>
+          🗺️ Carte
+        </button>
+      </div>
+
+      <style>{`
+        @media (max-width: 767px) {
+          .map-left-panel { width: 100% !important; }
+          .hidden-mobile { display: none !important; }
+        }
+        @media (min-width: 768px) {
+          .show-mobile-only { display: none !important; }
+          .map-left-panel { display: flex !important; }
+        }
+      `}</style>
     </div>
   );
 }
