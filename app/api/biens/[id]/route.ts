@@ -9,9 +9,10 @@ export const revalidate = 300;
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = parseInt(params.id, 10);
+  const { id: idStr } = await params;
+  const id = parseInt(idStr, 10);
   if (isNaN(id)) {
     return NextResponse.json({ error: 'ID invalide' }, { status: 400 });
   }
