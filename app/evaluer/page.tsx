@@ -290,7 +290,26 @@ export default function EvaluerPage(){
   const [step, setStep]         = useState(1);
   const [loading, setLoading]   = useState(false);
   const [result, setResult]     = useState<EstimationResult | null>(null);
+  const [intentionHint, setIntentionHint] = useState<Intention>('');
   const topRef = useRef<HTMLDivElement>(null);
+
+  // Lit ?intention= depuis l'URL pour pré-sélectionner après estimation
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const param = params.get('intention') as Intention | null;
+    if (param && INTENTIONS.find(i => i.value === param)) {
+      setIntentionHint(param);
+    }
+  }, []);
+
+  // Déclenche auto-sélection d'intention quand le résultat apparaît
+  useEffect(() => {
+    if (step === 5 && intentionHint) {
+      handleIntention(intentionHint);
+      setIntentionHint('');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   // Lead form (vendre)
   const [leadSent, setLeadSent]           = useState(false);
@@ -496,6 +515,18 @@ export default function EvaluerPage(){
             </div>
           </div>
         </div>
+
+        {/* Bannière intention pré-sélectionnée depuis l'URL */}
+        {intentionHint && intentionHint !== 'vendre' && (
+          <div className="mt-4 flex items-start gap-3 p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-sm text-indigo-800">
+            <span className="text-base flex-shrink-0">{INTENTIONS.find(i => i.value === intentionHint)?.icon}</span>
+            <div>
+              <span className="font-semibold">{INTENTIONS.find(i => i.value === intentionHint)?.label}</span>
+              {' '}— nous vous mettrons en relation avec les bons professionnels après l&apos;estimation.
+            </div>
+          </div>
+        )}
+
         <div className="mt-8">
           <button
             onClick={() => setStep(2)}

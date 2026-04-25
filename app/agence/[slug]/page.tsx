@@ -2,43 +2,10 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { sql } from '@/lib/db';
 import AgencePageClient from './AgencePageClient';
+import type { ActeurDetail, BienPreview } from '@/lib/terrimo-types';
 
-// ─── Types ────────────────────────────────────────────────
-export interface ActeurDetail {
-  id: number;
-  name: string;
-  type: string;
-  slug: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  address?: string;
-  commune?: string;
-  google_rating?: number;
-  google_reviews?: number;
-  is_verified: boolean;
-  plan: string;
-  meta?: {
-    services?: string[];
-    certifications?: string[];
-    description?: string;
-    zones_couvertes?: string[];
-    tarif_gestion?: string;
-  };
-}
-
-export interface BienPreview {
-  id: number;
-  type_annonce: string;
-  type_bien: string;
-  titre?: string;
-  prix?: number;
-  surface?: number;
-  pieces?: number;
-  commune?: string;
-  photos: { url: string }[];
-  is_featured: boolean;
-}
+// Re-export pour les imports locaux existants
+export type { ActeurDetail, BienPreview };
 
 // ─── Fetch ────────────────────────────────────────────────
 async function fetchActeur(slug: string, types: string[]): Promise<ActeurDetail | null> {

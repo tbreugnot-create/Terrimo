@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ActeurDetail, BienPreview } from '@/app/agence/[slug]/page';
+import type { ActeurDetail, BienPreview } from '@/lib/terrimo-types';
 
 const formatPrix = (n: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);

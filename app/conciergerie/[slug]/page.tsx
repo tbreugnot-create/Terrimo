@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { sql } from '@/lib/db';
 import ConciergiePageClient from './ConciergiePageClient';
-import { ActeurDetail, BienPreview } from '@/app/agence/[slug]/page';
+import type { ActeurDetail, BienPreview } from '@/lib/terrimo-types';
 
 // ─── Fetch ────────────────────────────────────────────────
 async function fetchConciergerie(slug: string): Promise<ActeurDetail | null> {
