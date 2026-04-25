@@ -12,6 +12,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { ZONES_BY_COMMUNE } from '@/lib/zones';
 
 // ============================================================
 // PRIX DE MARCHÉ FALLBACK (médiane 2023/2024 estimée)
@@ -68,6 +69,12 @@ interface EvaluerRequest {
   distance_mer?: number;     // mètres
   vue_mer?: boolean;
   front_de_mer?: boolean;
+  // Micro-zone
+  zone?: string;             // ex: "ville-hiver", "face-ocean", "pyla" …
+  // Spécificités Bassin d'Arcachon
+  quartier_ostreicole?: boolean;
+  villa_dans_les_pins?: boolean;
+  acces_bassin_direct?: boolean;
   // Critères subjectifs (0–5)
   etat_general?: string;     // 'neuf' | 'bon' | 'travaux' | 'renover'
   luminosite?: number;       // 1–5
@@ -100,12 +107,15 @@ interface EvaluerResponse {
   nb_transactions: number;
   source: 'dvf' | 'fallback';
   comparables: Comparable[];
+  zone_label?: string;
   coefficients: {
+    zone: number;
     dpe: number;
     etat: number;
     vue_mer: number;
     distance_mer: number;
     piscine: number;
+    bassin: number;
     subjectif: number;
   };
 }
@@ -120,6 +130,10 @@ export async function POST(request: NextRequest) {
       commune,
       type_local,
       surface,
+      zone,
+      quartier_ostreicole = false,
+      villa_dans_les_pins = false,
+      acces_bassin_direct = false,
       dpe = 'D',
       etat_general = 'bon',
       has_piscine = false,
@@ -207,6 +221,23 @@ export async function POST(request: NextRequest) {
     // 2. Application des coefficients
     // --------------------------------------------------------
 
+    // Micro-zone (Bassin d'Arcachon)
+    let coef_zone = 1.0;
+    let zone_label: string | undefined;
+    if (zone && ZONES_BY_COMMUNE[commune]) {
+      const zoneObj = ZONES_BY_COMMUNE[commune].find((z) => z.value === zone);
+      if (zoneObj) {
+        coef_zone = zoneObj.coef;
+        zone_label = zoneObj.label;
+      }
+    }
+
+    // Spécificités Bassin d'Arcachon
+    let coef_bassin = 1.0;
+    if (acces_bassin_direct) coef_bassin *= 1.18;
+    if (quartier_ostreicole) coef_bassin *= 1.08;
+    if (villa_dans_les_pins) coef_bassin *= 1.06;
+
     // DPE
     const coef_dpe = COEF_DPE[dpe.toUpperCase()] ?? 1.0;
 
@@ -242,6 +273,8 @@ export async function POST(request: NextRequest) {
 
     // Coefficient total
     const coef_total =
+      coef_zone *
+      coef_bassin *
       coef_dpe *
       coef_etat *
       coef_vue *
@@ -274,12 +307,15 @@ export async function POST(request: NextRequest) {
       nb_transactions,
       source,
       comparables,
+      zone_label,
       coefficients: {
+        zone: Math.round(coef_zone * 100) / 100,
         dpe: coef_dpe,
         etat: coef_etat,
         vue_mer: coef_vue,
         distance_mer: coef_distance,
         piscine: coef_piscine,
+        bassin: Math.round(coef_bassin * 100) / 100,
         subjectif: Math.round(coef_subjectif * 100) / 100,
       },
     };

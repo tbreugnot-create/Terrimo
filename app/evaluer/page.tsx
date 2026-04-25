@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { COMMUNES } from '@/lib/communes';
+import { ZONES_BY_COMMUNE, Zone } from '@/lib/zones';
 
 // ============================================================
 // TYPES
@@ -12,6 +13,7 @@ interface FormData {
   commune: string;
   commune_dvf: string;
   type_local: 'Maison' | 'Appartement' | '';
+  zone: string;
   // Étape 2
   surface: string;
   pieces: string;
@@ -23,6 +25,9 @@ interface FormData {
   distance_mer: string;
   vue_mer: boolean;
   front_de_mer: boolean;
+  quartier_ostreicole: boolean;
+  villa_dans_les_pins: boolean;
+  acces_bassin_direct: boolean;
   // Étape 4 — Subjectifs
   etat_general: string;
   luminosite: number;
@@ -45,12 +50,16 @@ interface EstimationResult {
   nb_transactions: number;
   source: 'dvf' | 'fallback';
   coefficients: {
-    dpe: number;
-    etat: number;
-    vue_mer: number;
-    distance_mer: number;
-    piscine: number;
-    subjectif: number;
+    dpe?: number;
+    etat?: number;
+    vue_mer?: number;
+    distance_mer?: number;
+    piscine?: number;
+    subjectif?: number;
+    zone?: number;
+    quartier_ostreicole?: number;
+    villa_dans_les_pins?: number;
+    acces_bassin_direct?: number;
   };
 }
 
@@ -63,17 +72,17 @@ interface LeadForm {
 // ============================================================
 // UTILS
 // ============================================================
-const formatPrix = (n: number) =>
+const formatPrix = (n: number): string =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
 
-const formatM2 = (n: number) =>
+const formatM2 = (n: number): string =>
   new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(n) + ' €/m²';
 
 // ============================================================
 // COMPOSANTS RÉUTILISABLES
 // ============================================================
 
-function StepIndicator({ current, total }: { current: number; total: number }) {
+function StepIndicator({ current, total }: { current: number; total: number }){
   return (
     <div className="flex items-center gap-2 mb-8">
       {Array.from({ length: total }).map((_, i) => (
@@ -111,7 +120,7 @@ function SliderInput({
   onChange: (v: number) => void;
   minLabel: string;
   maxLabel: string;
-}) {
+}){
   const labels = ['', minLabel, '', '', '', maxLabel];
   return (
     <div className="space-y-2">
@@ -140,7 +149,7 @@ function SliderInput({
 // ============================================================
 // PAGE PRINCIPALE
 // ============================================================
-export default function EvaluerPage() {
+export default function EvaluerPage(){
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<EstimationResult | null>(null);
@@ -153,6 +162,7 @@ export default function EvaluerPage() {
     commune: '',
     commune_dvf: '',
     type_local: '',
+    zone: '',
     surface: '',
     pieces: '',
     annee_construction: '',
@@ -162,6 +172,9 @@ export default function EvaluerPage() {
     distance_mer: '',
     vue_mer: false,
     front_de_mer: false,
+    quartier_ostreicole: false,
+    villa_dans_les_pins: false,
+    acces_bassin_direct: false,
     etat_general: 'bon',
     luminosite: 3,
     nuisances: 3,
@@ -171,14 +184,14 @@ export default function EvaluerPage() {
     finitions: 3,
   });
 
-  const updateForm = (key: keyof FormData, value: FormData[keyof FormData]) => {
+  const updateForm = (key: keyof FormData, value: FormData[keyof FormData]): void => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
   // --------------------------------------------------------
   // Soumission estimation
   // --------------------------------------------------------
-  const handleEstimer = async () => {
+  const handleEstimer = async (): Promise<void> => {
     setLoading(true);
     try {
       const payload = {
@@ -190,9 +203,13 @@ export default function EvaluerPage() {
         dpe: form.dpe,
         has_piscine: form.has_piscine,
         garages: parseInt(form.garages) || 0,
+        zone: form.zone,
         distance_mer: form.distance_mer ? parseInt(form.distance_mer) : undefined,
         vue_mer: form.vue_mer,
         front_de_mer: form.front_de_mer,
+        quartier_ostreicole: form.quartier_ostreicole,
+        villa_dans_les_pins: form.villa_dans_les_pins,
+        acces_bassin_direct: form.acces_bassin_direct,
         etat_general: form.etat_general,
         luminosite: form.luminosite,
         nuisances: form.nuisances,
@@ -223,7 +240,7 @@ export default function EvaluerPage() {
   // --------------------------------------------------------
   // Soumission lead agence
   // --------------------------------------------------------
-  const handleLeadSubmit = async () => {
+  const handleLeadSubmit = async (): Promise<void> => {
     if (!result || !leadForm.name || !leadForm.email) return;
     setLeadLoading(true);
     try {
@@ -249,71 +266,100 @@ export default function EvaluerPage() {
   };
 
   // ============================================================
-  // ÉTAPE 1 — Commune & Type
+  // ÉTAPE 1 — Commune & Type + Zones
   // ============================================================
-  const renderStep1 = () => (
-    <div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Votre bien</h2>
-      <p className="text-gray-500 mb-8">Commençons par localiser et identifier votre bien.</p>
+  const renderStep1 = () => {
+    const availableZones = ZONES_BY_COMMUNE[form.commune_dvf] ?? [];
+    const selectedZone = availableZones.find((z) => z.value === form.zone);
 
-      <div className="space-y-6">
-        {/* Commune */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-3">Commune</label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {COMMUNES.map((c) => (
-              <button
-                key={c.slug}
-                onClick={() => {
-                  updateForm('commune', c.name);
-                  updateForm('commune_dvf', c.dvfName);
-                }}
-                className={`p-3 rounded-xl border-2 text-left transition-all ${
-                  form.commune === c.name
-                    ? 'border-indigo-600 bg-indigo-50'
-                    : 'border-gray-200 hover:border-indigo-200 bg-white'
-                }`}
-              >
-                <div className="text-lg mb-0.5">{c.tierEmoji}</div>
-                <div className="font-medium text-sm text-gray-900 leading-tight">{c.name}</div>
-              </button>
-            ))}
+    return (
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Votre bien</h2>
+        <p className="text-gray-500 mb-8">Commençons par localiser et identifier votre bien.</p>
+
+        <div className="space-y-6">
+          {/* Commune */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-3">Commune</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {COMMUNES.map((c) => (
+                <button
+                  key={c.slug}
+                  onClick={() => {
+                    updateForm('commune', c.name);
+                    updateForm('commune_dvf', c.dvfName);
+                    updateForm('zone', '');
+                  }}
+                  className={`p-3 rounded-xl border-2 text-left transition-all ${
+                    form.commune === c.name
+                      ? 'border-indigo-600 bg-indigo-50'
+                      : 'border-gray-200 hover:border-indigo-200 bg-white'
+                  }`}
+                >
+                  <div className="text-lg mb-0.5">{c.tierEmoji}</div>
+                  <div className="font-medium text-sm text-gray-900 leading-tight">{c.name}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Zones (si disponibles) */}
+          {availableZones.length > 0 && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Zone / Quartier micro-local</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {availableZones.map((z: Zone) => (
+                  <button
+                    key={z.value}
+                    onClick={() => updateForm('zone', z.value)}
+                    className={`p-3 rounded-xl border-2 text-left transition-all ${
+                      form.zone === z.value
+                        ? 'border-indigo-600 bg-indigo-50'
+                        : 'border-gray-200 hover:border-indigo-200 bg-white'
+                    }`}
+                  >
+                    <div className="font-medium text-sm text-gray-900 mb-0.5">{z.label}</div>
+                    <div className="text-xs text-gray-500 leading-snug">{z.description}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Type */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-3">Type de bien</label>
+            <div className="grid grid-cols-2 gap-4">
+              {(['Maison', 'Appartement'] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => updateForm('type_local', t)}
+                  className={`p-5 rounded-xl border-2 text-left transition-all ${
+                    form.type_local === t
+                      ? 'border-indigo-600 bg-indigo-50'
+                      : 'border-gray-200 hover:border-indigo-200 bg-white'
+                  }`}
+                >
+                  <div className="text-3xl mb-2">{t === 'Maison' ? '🏡' : '🏢'}</div>
+                  <div className="font-semibold text-gray-900">{t}</div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Type */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-3">Type de bien</label>
-          <div className="grid grid-cols-2 gap-4">
-            {(['Maison', 'Appartement'] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => updateForm('type_local', t)}
-                className={`p-5 rounded-xl border-2 text-left transition-all ${
-                  form.type_local === t
-                    ? 'border-indigo-600 bg-indigo-50'
-                    : 'border-gray-200 hover:border-indigo-200 bg-white'
-                }`}
-              >
-                <div className="text-3xl mb-2">{t === 'Maison' ? '🏡' : '🏢'}</div>
-                <div className="font-semibold text-gray-900">{t}</div>
-              </button>
-            ))}
-          </div>
+        <div className="mt-8">
+          <button
+            onClick={() => setStep(2)}
+            disabled={!form.commune || !form.type_local || (availableZones.length > 0 && !form.zone)}
+            className="w-full py-4 bg-indigo-600 text-white rounded-xl font-semibold text-lg hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Continuer →
+          </button>
         </div>
       </div>
-
-      <div className="mt-8">
-        <button
-          onClick={() => setStep(2)}
-          disabled={!form.commune || !form.type_local}
-          className="w-full py-4 bg-indigo-600 text-white rounded-xl font-semibold text-lg hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Continuer →
-        </button>
-      </div>
-    </div>
-  );
+    );
+  };
 
   // ============================================================
   // ÉTAPE 2 — Caractéristiques
@@ -526,6 +572,92 @@ export default function EvaluerPage() {
             ))}
           </div>
         </div>
+
+        {/* Spécificités Bassin d'Arcachon */}
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+            🌊 Spécificités Bassin d'Arcachon
+          </h3>
+          <div className="space-y-3">
+            {/* Quartier ostréicole */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+              <div>
+                <label className="text-sm font-medium text-gray-900">🦪 Quartier ostréicole</label>
+                <p className="text-xs text-gray-500 mt-0.5">Port de pêche / ostréiculture à proximité</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded">+8%</span>
+                <div className="flex gap-2">
+                  {[true, false].map((v) => (
+                    <button
+                      key={String(v)}
+                      onClick={() => updateForm('quartier_ostreicole', v)}
+                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                        form.quartier_ostreicole === v
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                      }`}
+                    >
+                      {v ? 'Oui' : 'Non'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Villa dans les pins */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+              <div>
+                <label className="text-sm font-medium text-gray-900">🌲 Villa dans les pins</label>
+                <p className="text-xs text-gray-500 mt-0.5">Architecture typique Arcachon, jardin arboré</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded">+6%</span>
+                <div className="flex gap-2">
+                  {[true, false].map((v) => (
+                    <button
+                      key={String(v)}
+                      onClick={() => updateForm('villa_dans_les_pins', v)}
+                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                        form.villa_dans_les_pins === v
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                      }`}
+                    >
+                      {v ? 'Oui' : 'Non'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Accès direct bassin */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+              <div>
+                <label className="text-sm font-medium text-gray-900">⚓ Accès direct bassin / ponton</label>
+                <p className="text-xs text-gray-500 mt-0.5">Accès à l'eau directement depuis le bien</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded">+18%</span>
+                <div className="flex gap-2">
+                  {[true, false].map((v) => (
+                    <button
+                      key={String(v)}
+                      onClick={() => updateForm('acces_bassin_direct', v)}
+                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                        form.acces_bassin_direct === v
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                      }`}
+                    >
+                      {v ? 'Oui' : 'Non'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="flex gap-3 mt-8">
@@ -668,8 +800,12 @@ export default function EvaluerPage() {
   const renderResult = () => {
     if (!result) return null;
 
+    const availableZones = ZONES_BY_COMMUNE[form.commune_dvf] ?? [];
+    const selectedZone = availableZones.find((z) => z.value === form.zone);
+    const selectedZoneLabel = selectedZone?.label ?? form.zone;
+
     const coefImpact = Object.entries(result.coefficients)
-      .filter(([, v]) => v !== 1.0)
+      .filter(([, v]) => v !== 1.0 && v !== undefined)
       .map(([k, v]) => {
         const labels: Record<string, string> = {
           dpe: `DPE ${form.dpe}`,
@@ -678,14 +814,46 @@ export default function EvaluerPage() {
           distance_mer: 'Distance mer',
           piscine: 'Piscine',
           subjectif: 'Qualité subjective',
+          zone: `Zone ${selectedZoneLabel}`,
+          quartier_ostreicole: 'Quartier ostréicole',
+          villa_dans_les_pins: 'Villa dans les pins',
+          acces_bassin_direct: 'Accès direct bassin',
         };
-        const pct = Math.round((v - 1) * 100);
+        const pct = Math.round(((v ?? 1) - 1) * 100);
         return { label: labels[k] || k, pct };
       })
       .filter((c) => c.pct !== 0);
 
     return (
       <div className="space-y-8">
+        {/* Bannière "Notre méthode" */}
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+          <h3 className="text-sm font-semibold text-blue-900 mb-4">🔬 Notre méthode</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="flex items-start gap-3">
+              <span className="text-lg">📊</span>
+              <div>
+                <div className="text-sm font-medium text-blue-900">DVF officielles</div>
+                <div className="text-xs text-blue-700 mt-0.5">Transactions réelles de la commune (ou Prix marché 2024)</div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-lg">📍</span>
+              <div>
+                <div className="text-sm font-medium text-blue-900">Zone micro-locale</div>
+                <div className="text-xs text-blue-700 mt-0.5">Coefficient selon le quartier spécifique</div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-lg">✨</span>
+              <div>
+                <div className="text-sm font-medium text-blue-900">Critères Bassin</div>
+                <div className="text-xs text-blue-700 mt-0.5">Distance mer, vue, pins, ostréiculture, accès eau</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* En-tête résultat */}
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -819,6 +987,37 @@ export default function EvaluerPage() {
                   Recevoir l'avis d'une agence →
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Section "Ce que voit l'agence" */}
+        <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">👁 Ce que voit l'agence contactée</h3>
+          <p className="text-xs text-gray-500 mb-4">Transparence — voici exactement les informations transmises à l'agence.</p>
+          <div className="space-y-3 text-sm text-gray-600">
+            <div>
+              <span className="font-medium">Type & surface :</span> {result.type_local} · {result.surface} m²
+            </div>
+            <div>
+              <span className="font-medium">Commune :</span> {form.commune}
+              {form.zone && <span> · {selectedZoneLabel}</span>}
+            </div>
+            <div>
+              <span className="font-medium">Critères principaux :</span>
+              <div className="mt-1 space-y-1 ml-2">
+                {form.distance_mer && <div>• Distance mer : {form.distance_mer}m</div>}
+                {form.vue_mer && <div>• Vue mer{form.front_de_mer && ' (front de mer)'}</div>}
+                {form.quartier_ostreicole && <div>• Quartier ostréicole</div>}
+                {form.villa_dans_les_pins && <div>• Villa dans les pins</div>}
+                {form.acces_bassin_direct && <div>• Accès direct bassin</div>}
+              </div>
+            </div>
+            <div>
+              <span className="font-medium">Fourchette :</span> {formatPrix(result.estimation_min)} – {formatPrix(result.estimation_max)}
+            </div>
+            <div className="pt-2 border-t border-gray-200 mt-3 text-xs">
+              Vos coordonnées seront transmises après votre accord explicite.
             </div>
           </div>
         </div>
