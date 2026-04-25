@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -60,7 +61,7 @@ const PRO_ITEMS = [
 ];
 
 // ─── Styles inline partagés ──────────────────────────────
-const PANEL: React.CSSProperties = {
+const PANEL: CSSProperties = {
   position: 'absolute',
   top: 'calc(100% + 10px)',
   left: '50%',
@@ -75,7 +76,7 @@ const PANEL: React.CSSProperties = {
   animation: 'dropIn .15s ease both',
 };
 
-const ITEM_BASE: React.CSSProperties = {
+const ITEM_BASE: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: '12px',
@@ -227,7 +228,7 @@ export default function Nav() {
   const toggleDropdown = (key: 'proprio' | 'pro') =>
     setOpenDropdown(prev => prev === key ? null : key);
 
-  const linkStyle = (active: boolean): React.CSSProperties => ({
+  const linkStyle = (active: boolean): CSSProperties => ({
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
