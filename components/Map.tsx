@@ -44,7 +44,7 @@ const BASSIN_CENTER: [number, number] = [44.68, -1.08];
 const BASSIN_ZOOM = 11;
 
 const TYPE_CONFIG: Record<ActeurType, { label: string; emoji: string; color: string; colorPremium: string }> = {
-  agence:         { label: 'Agences',         emoji: '🏢', color: '#94a3b8', colorPremium: '#6366f1' },
+  agence:         { label: 'Agences',         emoji: '🏢', color: '#6366f1', colorPremium: '#4338ca' },
   notaire:        { label: 'Notaires',         emoji: '⚖️', color: '#10b981', colorPremium: '#059669' },
   diagnostiqueur: { label: 'Diagnostiqueurs',  emoji: '🔍', color: '#f59e0b', colorPremium: '#d97706' },
   conciergerie:   { label: 'Conciergeries',   emoji: '🏡', color: '#ec4899', colorPremium: '#db2777' },
@@ -82,8 +82,9 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
 
       const cfg = TYPE_CONFIG[acteur.type] ?? TYPE_CONFIG.agence;
       const isPremium = acteur.plan === 'premium';
-      const color = isPremium ? cfg.colorPremium : cfg.color;
-      const size = isPremium ? 14 : 10;
+      const isPro = acteur.plan === 'pro';
+      const color = isPremium ? cfg.colorPremium : isPro ? cfg.color : cfg.color;
+      const size = isPremium ? 16 : isPro ? 13 : 11;
 
       const icon = L.divIcon({
         className: '',
@@ -262,7 +263,7 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
             </div>
           ) : (
             <div className="divide-y divide-gray-50">
-              {filteredActeurs.slice(0, 50).map((a) => (
+              {filteredActeurs.map((a) => (
                 <button key={a.id} onClick={() => {
                   setSelectedActeur(a);
                   if (a.lat && a.lng && mapRef.current) {
@@ -273,11 +274,9 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1 mb-0.5">
-                        {a.plan === 'premium' && (
-                          <span className="text-xs bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-semibold">Premium</span>
-                        )}
-                      </div>
+                      {a.plan === 'premium' && (
+                        <span className="text-xs bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-semibold mr-1">⭐ Premium</span>
+                      )}
                       <p className="text-sm font-medium text-gray-800 truncate leading-tight">{a.name}</p>
                       <p className="text-xs text-gray-400">{a.commune}</p>
                     </div>
@@ -289,11 +288,6 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
                   </div>
                 </button>
               ))}
-              {filteredActeurs.length > 50 && (
-                <p className="text-xs text-gray-400 text-center py-3">
-                  +{filteredActeurs.length - 50} autres
-                </p>
-              )}
             </div>
           )}
         </div>
