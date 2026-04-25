@@ -48,9 +48,10 @@ async function fetchBiens(acteurId: number): Promise<BienPreview[]> {
 
 // ─── Metadata ─────────────────────────────────────────────
 export async function generateMetadata(
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
-  const acteur = await fetchActeur(params.slug, ['agence']);
+  const { slug } = await params;
+  const acteur = await fetchActeur(slug, ['agence']);
   if (!acteur) return { title: 'Agence introuvable — Terrimo' };
 
   const desc = acteur.meta?.description
@@ -70,8 +71,9 @@ export async function generateMetadata(
 }
 
 // ─── Page ─────────────────────────────────────────────────
-export default async function AgencePage({ params }: { params: { slug: string } }) {
-  const acteur = await fetchActeur(params.slug, ['agence']);
+export default async function AgencePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const acteur = await fetchActeur(slug, ['agence']);
   if (!acteur) notFound();
 
   const biens = await fetchBiens(acteur.id);

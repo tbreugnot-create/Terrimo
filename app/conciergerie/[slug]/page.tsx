@@ -45,9 +45,10 @@ async function fetchBiensGeres(acteurId: number): Promise<BienPreview[]> {
 
 // ─── Metadata ─────────────────────────────────────────────
 export async function generateMetadata(
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
-  const c = await fetchConciergerie(params.slug);
+  const { slug } = await params;
+  const c = await fetchConciergerie(slug);
   if (!c) return { title: 'Conciergerie introuvable — Terrimo' };
 
   const services = c.meta?.services ?? [];
@@ -68,8 +69,9 @@ export async function generateMetadata(
 }
 
 // ─── Page ─────────────────────────────────────────────────
-export default async function ConciergiePage({ params }: { params: { slug: string } }) {
-  const conciergerie = await fetchConciergerie(params.slug);
+export default async function ConciergiePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const conciergerie = await fetchConciergerie(slug);
   if (!conciergerie) notFound();
 
   const biensGeres = await fetchBiensGeres(conciergerie.id);

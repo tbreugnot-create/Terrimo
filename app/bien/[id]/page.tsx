@@ -87,9 +87,10 @@ async function fetchBien(id: number): Promise<BienDetail | null> {
 // Metadata SEO
 // ─────────────────────────────────────────────────────────────
 export async function generateMetadata(
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<Metadata> {
-  const id = parseInt(params.id, 10);
+  const { id: idStr } = await params;
+  const id = parseInt(idStr, 10);
   if (isNaN(id)) return { title: 'Bien introuvable — Terrimo' };
 
   const bien = await fetchBien(id);
@@ -121,8 +122,9 @@ export async function generateMetadata(
 // ─────────────────────────────────────────────────────────────
 // Page
 // ─────────────────────────────────────────────────────────────
-export default async function BienPage({ params }: { params: { id: string } }) {
-  const id = parseInt(params.id, 10);
+export default async function BienPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: idStr } = await params;
+  const id = parseInt(idStr, 10);
   if (isNaN(id)) notFound();
 
   const bien = await fetchBien(id);
