@@ -601,22 +601,37 @@ export default function ProRejoindre() {
                       : 'border-slate-200 bg-white hover:border-indigo-300'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
+                  {/* En-tête plan */}
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${plan.badge}`}>
                         {plan.name}
                       </span>
-                      <span className="text-sm text-slate-600">{plan.features.filter(f => !f.startsWith('❌')).length} fonctionnalités</span>
+                      {'popular' in plan && plan.popular && (
+                        <span className="text-xs text-indigo-600 font-semibold">⭐ Le plus choisi</span>
+                      )}
                     </div>
-                    <span className="font-bold text-slate-900">{plan.price}<span className="text-xs text-slate-400 font-normal"> {plan.sub}</span></span>
+                    <span className="font-bold text-slate-900 text-lg">{plan.price}<span className="text-xs text-slate-400 font-normal ml-1">{plan.sub}</span></span>
                   </div>
+                  {/* Features */}
+                  <ul className="space-y-1">
+                    {plan.features.map((f, i) => (
+                      <li key={i} className={`text-sm flex items-start gap-2 ${f.startsWith('❌') ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                        <span className="flex-shrink-0 mt-0.5">{f.slice(0, 2)}</span>
+                        <span>{f.slice(2).trim()}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </button>
               ))}
             </div>
 
             {/* Contact */}
             <div className="bg-slate-100 rounded-2xl p-5 space-y-4">
-              <p className="text-sm font-semibold text-slate-700">👤 Votre contact chez Terrimo</p>
+              <div>
+                <p className="text-sm font-semibold text-slate-700">👤 Qui gère ce compte ?</p>
+                <p className="text-xs text-slate-500 mt-0.5">Le responsable au sein de votre structure — c'est lui que nous contacterons.</p>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">Prénom *</label>
