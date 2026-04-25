@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
-import type { Map as LeafletMap, Marker } from 'leaflet';
 import { COMMUNES } from '@/lib/communes';
 
 // ============================================================
@@ -44,33 +43,66 @@ const BASSIN_CENTER: [number, number] = [44.68, -1.08];
 const BASSIN_ZOOM = 11;
 
 const TYPE_CONFIG: Record<ActeurType, { label: string; emoji: string; color: string; colorPremium: string }> = {
-  agence:         { label: 'Agences',         emoji: '🏢', color: '#6366f1', colorPremium: '#4338ca' },
-  notaire:        { label: 'Notaires',         emoji: '⚖️', color: '#10b981', colorPremium: '#059669' },
-  diagnostiqueur: { label: 'Diagnostiqueurs',  emoji: '🔍', color: '#f59e0b', colorPremium: '#d97706' },
-  conciergerie:   { label: 'Conciergeries',   emoji: '🏡', color: '#ec4899', colorPremium: '#db2777' },
+  agence:         { label: 'Agences',        emoji: '🏢', color: '#6366f1', colorPremium: '#4338ca' },
+  notaire:        { label: 'Notaires',        emoji: '⚖️', color: '#10b981', colorPremium: '#059669' },
+  diagnostiqueur: { label: 'Diagnostiqueurs', emoji: '🔍', color: '#f59e0b', colorPremium: '#d97706' },
+  conciergerie:   { label: 'Conciergeries',  emoji: '🏡', color: '#ec4899', colorPremium: '#db2777' },
 };
 
 // ============================================================
 // MAP COMPONENT
 // ============================================================
 export default function TerrimoMap({ initialCommune }: { initialCommune?: string }) {
-  const mapRef        = useRef<LeafletMap | null>(null);
-  const mapDivRef     = useRef<HTMLDivElement>(null);
-  const markersRef    = useRef<Marker[]>([]);
-  const leafletRef    = useRef<typeof import('leaflet')['default'] | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapRef     = useRef<any>(null);
+  const mapDivRef  = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const markersRef = useRef<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const leafletRef = useRef<any>(null);
 
-  const [acteurs, setActeurs]             = useState<Acteur[]>([]);
-  const [stats, setStats]                 = useState<StatsBar>({});
+  const [acteurs, setActeurs]                 = useState<Acteur[]>([]);
+  const [stats, setStats]                     = useState<StatsBar>({});
   const [selectedCommune, setSelectedCommune] = useState<string | null>(initialCommune || null);
   const [selectedActeur, setSelectedActeur]   = useState<Acteur | null>(null);
-  const [activeType, setActiveType]       = useState<ActeurType | 'all'>('agence');
-  const [loading, setLoading]             = useState(true);
+  const [activeType, setActiveType]           = useState<ActeurType | 'all'>('agence');
+  const [loading, setLoading]                 = useState(true);
+
+  // --------------------------------------------------------
+  // Inject CSS pour commune-label
+  // --------------------------------------------------------
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .commune-label {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #475569;
+        white-space: nowrap;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        cursor: pointer;
+        pointer-events: auto;
+      }
+      .commune-label:hover {
+        background: #f8fafc;
+        border-color: #6366f1;
+        color: #6366f1;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => { document.head.removeChild(style); };
+  }, []);
 
   // --------------------------------------------------------
   // Rendu des marqueurs
   // --------------------------------------------------------
-  const renderMarkers = useCallback((map: LeafletMap, L: typeof import('leaflet')['default'], data: Acteur[], filterType: ActeurType | 'all', filterCommune: string | null) => {
-    markersRef.current.forEach(m => m.remove());
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const renderMarkers = useCallback((map: any, L: any, data: Acteur[], filterType: ActeurType | 'all', filterCommune: string | null) => {
+    markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
 
     const communeObj = filterCommune ? COMMUNES.find(c => c.slug === filterCommune) : null;
@@ -82,15 +114,13 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
 
       const cfg = TYPE_CONFIG[acteur.type] ?? TYPE_CONFIG.agence;
       const isPremium = acteur.plan === 'premium';
-      const isPro = acteur.plan === 'pro';
-      const color = isPremium ? cfg.colorPremium : isPro ? cfg.color : cfg.color;
-      const size = isPremium ? 16 : isPro ? 13 : 11;
+      const color = isPremium ? cfg.colorPremium : cfg.color;
+      const size  = isPremium ? 16 : 11;
 
       const icon = L.divIcon({
         className: '',
         html: `<div style="
-          background:${color};
-          border-radius:50%;
+          background:${color};border-radius:50%;
           width:${size}px;height:${size}px;
           border:2px solid white;
           box-shadow:0 1px 4px rgba(0,0,0,0.3);
@@ -115,28 +145,22 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
     if (mapRef.current || !mapDivRef.current) return;
 
     const initMap = async () => {
-      const L = (await import('leaflet')).default;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const L = (await import('leaflet') as any).default ?? await import('leaflet');
       leafletRef.current = L;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
-        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
         iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
 
-      const map = L.map(mapDivRef.current!, {
-        center: BASSIN_CENTER,
-        zoom: BASSIN_ZOOM,
-        zoomControl: true,
-      });
-
+      const map = L.map(mapDivRef.current!, { center: BASSIN_CENTER, zoom: BASSIN_ZOOM, zoomControl: true });
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap © CARTO',
-        maxZoom: 19,
+        attribution: '© OpenStreetMap © CARTO', maxZoom: 19,
       }).addTo(map);
-
       mapRef.current = map;
 
       // Zones communes
@@ -172,7 +196,7 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
     const fetchActeurs = async () => {
       setLoading(true);
       try {
-        const res = await fetch('/api/acteurs');
+        const res  = await fetch('/api/acteurs');
         const data = await res.json();
         const list: Acteur[] = data.acteurs ?? [];
         setActeurs(list);
@@ -209,9 +233,7 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
 
   const goToCommune = (slug: string) => {
     const c = COMMUNES.find(x => x.slug === slug);
-    if (c && mapRef.current) {
-      mapRef.current.flyTo([c.lat, c.lng], 13, { duration: 0.8 });
-    }
+    if (c && mapRef.current) mapRef.current.flyTo([c.lat, c.lng], 13, { duration: 0.8 });
     setSelectedCommune(slug);
   };
 
@@ -230,7 +252,7 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
             <div>
               <button onClick={() => setSelectedCommune(null)}
                 className="text-xs text-gray-400 hover:text-indigo-600 mb-1 flex items-center gap-1">
-                ↩ Vue d'ensemble
+                ↩ Vue d&apos;ensemble
               </button>
               <div className="flex items-center gap-2">
                 <span className="text-xl">{communeObj.tierEmoji}</span>
@@ -242,7 +264,7 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
             </div>
           ) : (
             <div>
-              <h2 className="font-bold text-gray-900">Bassin d'Arcachon</h2>
+              <h2 className="font-bold text-gray-900">Bassin d&apos;Arcachon</h2>
               <p className="text-xs text-gray-400 mt-0.5">
                 {(stats.agence || 0) + (stats.notaire || 0) + (stats.diagnostiqueur || 0)} professionnels
               </p>
@@ -250,7 +272,7 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
           )}
         </div>
 
-        {/* Liste acteurs filtrés */}
+        {/* Liste acteurs */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="p-6 text-center">
@@ -258,17 +280,13 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
               <p className="text-xs text-gray-400">Chargement…</p>
             </div>
           ) : filteredActeurs.length === 0 ? (
-            <div className="p-6 text-center text-xs text-gray-400">
-              Aucun acteur pour cette sélection
-            </div>
+            <div className="p-6 text-center text-xs text-gray-400">Aucun acteur pour cette sélection</div>
           ) : (
             <div className="divide-y divide-gray-50">
               {filteredActeurs.map((a) => (
                 <button key={a.id} onClick={() => {
                   setSelectedActeur(a);
-                  if (a.lat && a.lng && mapRef.current) {
-                    mapRef.current.flyTo([a.lat, a.lng], 15, { duration: 0.6 });
-                  }
+                  if (a.lat && a.lng && mapRef.current) mapRef.current.flyTo([a.lat, a.lng], 15, { duration: 0.6 });
                 }}
                   className={`w-full text-left px-3 py-2.5 hover:bg-gray-50 transition-colors ${selectedActeur?.id === a.id ? 'bg-indigo-50' : ''}`}
                 >
@@ -281,9 +299,7 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
                       <p className="text-xs text-gray-400">{a.commune}</p>
                     </div>
                     {a.google_rating && (
-                      <div className="text-xs text-amber-500 font-semibold flex-shrink-0">
-                        ★ {Number(a.google_rating).toFixed(1)}
-                      </div>
+                      <div className="text-xs text-amber-500 font-semibold flex-shrink-0">★ {Number(a.google_rating).toFixed(1)}</div>
                     )}
                   </div>
                 </button>
@@ -292,7 +308,7 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
           )}
         </div>
 
-        {/* Communes — organisées par tier */}
+        {/* Communes par tier */}
         {!communeObj && (
           <div className="border-t border-gray-100 px-3 py-3 space-y-2">
             {[
@@ -304,10 +320,8 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
                 <p className={`text-xs font-bold ${color} mb-1`}>💎 {label}</p>
                 <div className="flex flex-wrap gap-1">
                   {COMMUNES.filter(c => c.tier === tier).map(c => (
-                    <button key={c.slug}
-                      onClick={() => goToCommune(c.slug)}
-                      className="text-xs px-2 py-0.5 rounded-full bg-gray-100 hover:bg-indigo-50 hover:text-indigo-700 text-gray-600 transition-colors"
-                    >
+                    <button key={c.slug} onClick={() => goToCommune(c.slug)}
+                      className="text-xs px-2 py-0.5 rounded-full bg-gray-100 hover:bg-indigo-50 hover:text-indigo-700 text-gray-600 transition-colors">
                       {c.name}
                     </button>
                   ))}
@@ -322,15 +336,15 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
       <div className="flex-1 relative">
         <div ref={mapDivRef} className="w-full h-full" />
 
-        {/* Bandeau stats — en haut de la carte */}
+        {/* Bandeau stats */}
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[800] flex gap-2 bg-white rounded-full shadow-md px-3 py-1.5 border border-gray-100">
           <span className="text-xs text-gray-500 font-medium">📍 {COMMUNES.length} communes</span>
           <span className="text-gray-200">|</span>
-          <span className="text-xs text-gray-500 font-medium">🏢 {stats.agence || '…'} agences</span>
+          <span className="text-xs text-gray-500 font-medium">🏢 {stats.agence ?? '…'} agences</span>
           <span className="text-gray-200">|</span>
-          <span className="text-xs text-gray-500 font-medium">🔍 {stats.diagnostiqueur || '…'} diagnostiqueurs</span>
+          <span className="text-xs text-gray-500 font-medium">🔍 {stats.diagnostiqueur ?? '…'} diagnostiqueurs</span>
           <span className="text-gray-200">|</span>
-          <span className="text-xs text-gray-500 font-medium">⚖️ {stats.notaire || '…'} notaires</span>
+          <span className="text-xs text-gray-500 font-medium">⚖️ {stats.notaire ?? '…'} notaires</span>
         </div>
 
         {/* Filtres type — droite */}
@@ -346,10 +360,8 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
             >
               <span>{cfg.emoji}</span>
               <span>{cfg.label}</span>
-              {stats[type] && (
-                <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">
-                  {stats[type]}
-                </span>
+              {stats[type] != null && (
+                <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">{stats[type]}</span>
               )}
             </button>
           ))}
@@ -369,26 +381,23 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
                   )}
                 </div>
                 <h3 className="font-bold text-gray-900 leading-tight">{selectedActeur.name}</h3>
-                {selectedActeur.commune && (
-                  <p className="text-sm text-gray-500 mt-0.5">{selectedActeur.commune}</p>
-                )}
+                {selectedActeur.commune && <p className="text-sm text-gray-500 mt-0.5">{selectedActeur.commune}</p>}
                 {selectedActeur.google_rating && (
                   <p className="text-sm text-amber-500 mt-1 font-semibold">
                     ★ {Number(selectedActeur.google_rating).toFixed(1)}
                     <span className="text-gray-400 font-normal ml-1">({selectedActeur.google_reviews} avis)</span>
                   </p>
                 )}
-                {selectedActeur.address && (
-                  <p className="text-xs text-gray-400 mt-1 truncate">{selectedActeur.address}</p>
-                )}
-                {/* Infos spécifiques notaire */}
-                {selectedActeur.type === 'notaire' && selectedActeur.meta?.notaires_names && (
+                {selectedActeur.address && <p className="text-xs text-gray-400 mt-1 truncate">{selectedActeur.address}</p>}
+
+                {/* Notaires */}
+                {selectedActeur.type === 'notaire' && Array.isArray(selectedActeur.meta?.notaires_names) && (
                   <p className="text-xs text-gray-500 mt-1">
                     {(selectedActeur.meta.notaires_names as string[]).join(', ')}
                   </p>
                 )}
-                {/* Services diagnostiqueur */}
-                {selectedActeur.type === 'diagnostiqueur' && selectedActeur.meta?.services && (
+                {/* Diagnostiqueurs */}
+                {selectedActeur.type === 'diagnostiqueur' && Array.isArray(selectedActeur.meta?.services) && (
                   <div className="flex flex-wrap gap-1 mt-2">
                     {(selectedActeur.meta.services as string[]).slice(0, 4).map(s => (
                       <span key={s} className="text-xs bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">{s}</span>
@@ -416,42 +425,18 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
           </div>
         )}
 
-        {/* CTAs bas — Chercher / Vendre */}
+        {/* CTAs bas */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[800] flex gap-3">
-          <button
-            onClick={() => setActiveType('agence')}
-            className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg font-semibold text-sm hover:bg-gray-700 transition-colors"
-          >
+          <button onClick={() => setActiveType('agence')}
+            className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg font-semibold text-sm hover:bg-gray-700 transition-colors">
             🔍 Chercher un bien
           </button>
           <Link href="/evaluer"
-            className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-full shadow-lg font-semibold text-sm hover:bg-indigo-700 transition-colors"
-          >
+            className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-full shadow-lg font-semibold text-sm hover:bg-indigo-700 transition-colors">
             🏡 Vendre mon bien
           </Link>
         </div>
       </div>
-
-      <style jsx global>{`
-        .commune-label {
-          background: white;
-          border: 1px solid #e2e8f0;
-          border-radius: 6px;
-          padding: 2px 8px;
-          font-size: 11px;
-          font-weight: 600;
-          color: #475569;
-          white-space: nowrap;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-          cursor: pointer;
-          pointer-events: auto;
-        }
-        .commune-label:hover {
-          background: #f8fafc;
-          border-color: #6366f1;
-          color: #6366f1;
-        }
-      `}</style>
     </div>
   );
 }
