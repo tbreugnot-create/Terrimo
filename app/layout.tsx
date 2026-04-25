@@ -9,6 +9,7 @@ const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Terrimo — Immobilier Bassin d'Arcachon | Carte interactive",
   description: "Explorez les communes du Bassin d'Arcachon sur une carte interactive. Découvrez les agences, transactions DVF et prix au m². D'Arcachon au Cap Ferret.",
+  metadataBase: new URL('https://terrimo.homes'),
   openGraph: {
     title: "Terrimo — Immobilier Bassin d'Arcachon",
     description: "La carte interactive de l'immobilier sur le Bassin d'Arcachon",
@@ -16,6 +17,15 @@ export const metadata: Metadata = {
     siteName: "Terrimo",
     locale: "fr_FR",
     type: "website",
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Terrimo — Immobilier Bassin d'Arcachon",
+    description: "La carte interactive de l'immobilier sur le Bassin d'Arcachon",
+  },
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
   },
 };
 
