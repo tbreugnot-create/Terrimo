@@ -247,13 +247,20 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
   }, [renderMarkers]);
 
   // --------------------------------------------------------
-  // Re-render quand filtre change
+  // Re-render quand filtre OU recherche change
   // --------------------------------------------------------
   useEffect(() => {
     if (!mapRef.current || !leafletRef.current || !acteurs.length) return;
-    renderMarkers(mapRef.current, leafletRef.current, acteurs, activeType, selectedCommune);
+    const term = search.trim().toLowerCase();
+    const filtered = term
+      ? acteurs.filter(a =>
+          a.name.toLowerCase().includes(term) ||
+          a.commune?.toLowerCase().includes(term)
+        )
+      : acteurs;
+    renderMarkers(mapRef.current, leafletRef.current, filtered, activeType, selectedCommune);
     setSelectedActeur(null);
-  }, [activeType, selectedCommune, acteurs, renderMarkers]);
+  }, [activeType, selectedCommune, acteurs, search, renderMarkers]);
 
   // Invalidate size quand on bascule sur la vue carte (mobile)
   useEffect(() => {
@@ -475,9 +482,9 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
         {!communeObj && (
           <div style={{ borderTop: '1px solid #f1f5f9', padding: '12px 16px' }}>
             {[
-              { tier: 'premium',   label: 'Premium',   color: '#4338ca', bg: '#eef2ff' },
-              { tier: 'equilibre', label: 'Équilibré', color: '#0369a1', bg: '#e0f2fe' },
-              { tier: 'emergent',  label: 'Émergent',  color: '#047857', bg: '#d1fae5' },
+              { tier: 'premium',   label: 'Côte & Bassin', color: '#4338ca', bg: '#eef2ff' },
+              { tier: 'equilibre', label: 'Pourtour',       color: '#0369a1', bg: '#e0f2fe' },
+              { tier: 'emergent',  label: 'Intérieur',      color: '#047857', bg: '#d1fae5' },
             ].map(({ tier, label, color, bg }) => (
               <div key={tier} style={{ marginBottom: '10px' }}>
                 <div style={{ fontSize: '.75rem', fontWeight: 700, color, marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
