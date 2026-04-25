@@ -17,17 +17,19 @@ import { ZONES_BY_COMMUNE } from '@/lib/zones';
 // ============================================================
 // PRIX DE MARCHÉ FALLBACK (médiane 2023/2024 estimée)
 // ============================================================
+// Médiane marché 2024-2025 (correction -8 à -15% vs pic 2021-2022)
+// Sources: notaires.fr, MeilleursAgents, DVF annualisé
 const PRIX_FALLBACK: Record<string, Record<string, number>> = {
-  'ARCACHON':           { Maison: 8500,  Appartement: 7000 },
-  'LA TESTE-DE-BUCH':   { Maison: 9200,  Appartement: 6800 },
-  'LEGE-CAP-FERRET':    { Maison: 11500, Appartement: 8000 },
-  'ANDERNOS-LES-BAINS': { Maison: 5500,  Appartement: 4500 },
-  'ARES':               { Maison: 5200,  Appartement: 4200 },
-  'GUJAN-MESTRAS':      { Maison: 5000,  Appartement: 4500 },
-  'LANTON':             { Maison: 4500,  Appartement: 3800 },
-  'BIGANOS':            { Maison: 4000,  Appartement: 3500 },
-  'AUDENGE':            { Maison: 4300,  Appartement: 3700 },
-  'LE TEICH':           { Maison: 4100,  Appartement: 3500 },
+  'ARCACHON':           { Maison: 7500,  Appartement: 6200 },  // -12% vs 2022
+  'LA TESTE-DE-BUCH':   { Maison: 8200,  Appartement: 6000 },  // -11% (Pyla hors zone)
+  'LEGE-CAP-FERRET':    { Maison: 10500, Appartement: 7200 },  // -9% (marché très tendu)
+  'ANDERNOS-LES-BAINS': { Maison: 4900,  Appartement: 4000 },  // -11%
+  'ARES':               { Maison: 4700,  Appartement: 3800 },  // -10%
+  'GUJAN-MESTRAS':      { Maison: 4500,  Appartement: 4000 },  // -10%
+  'LANTON':             { Maison: 4100,  Appartement: 3500 },  // -9%
+  'BIGANOS':            { Maison: 3700,  Appartement: 3200 },  // -8%
+  'AUDENGE':            { Maison: 3900,  Appartement: 3300 },  // -9%
+  'LE TEICH':           { Maison: 3800,  Appartement: 3200 },  // -7%
 };
 
 // ============================================================

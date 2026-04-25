@@ -49,6 +49,7 @@ interface EstimationResult {
   type_local: string;
   nb_transactions: number;
   source: 'dvf' | 'fallback';
+  zone_label?: string;
   coefficients: {
     dpe?: number;
     etat?: number;
@@ -248,12 +249,19 @@ export default function EvaluerPage(){
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: leadForm.name,
-          email: leadForm.email,
-          phone: leadForm.phone,
+          name:    leadForm.name,
+          email:   leadForm.email,
+          phone:   leadForm.phone,
           commune: form.commune,
-          source: 'evaluer',
-          message: `Estimation bien: ${form.type_local} ${form.surface}m² à ${form.commune}. Fourchette: ${formatPrix(result.estimation_min)} – ${formatPrix(result.estimation_max)}`,
+          source:  'evaluer',
+          // Snapshot complet de l'estimation
+          estimation_min:      result.estimation_min,
+          estimation_centrale: result.estimation_centrale,
+          estimation_max:      result.estimation_max,
+          prix_m2_final:       result.prix_m2_final,
+          surface:             parseFloat(form.surface),
+          type_local:          form.type_local,
+          zone_label:          result.zone_label ?? '',
         }),
       });
       setLeadSent(true);
