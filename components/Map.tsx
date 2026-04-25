@@ -426,7 +426,7 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
         )}
 
         {/* CTAs bas */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[800] flex gap-3">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[800] flex gap-3 flex-wrap justify-center">
           <button onClick={() => setActiveType('agence')}
             className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg font-semibold text-sm hover:bg-gray-700 transition-colors">
             🔍 Chercher un bien
@@ -434,6 +434,10 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
           <Link href="/evaluer"
             className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-full shadow-lg font-semibold text-sm hover:bg-indigo-700 transition-colors">
             🏡 Vendre mon bien
+          </Link>
+          <Link href="/pro/rejoindre"
+            className="flex items-center gap-2 bg-white text-slate-800 border border-slate-300 px-5 py-3 rounded-full shadow-lg font-semibold text-sm hover:bg-slate-50 transition-colors">
+            🏢 Espace Pro
           </Link>
         </div>
       </div>
