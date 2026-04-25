@@ -1,26 +1,250 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════
+   TERRIMO — Design System
+   Palette : Bassin d'Arcachon — océan, sable, pins, nuit
+   Accessibilité : WCAG AA minimum, texte ≥16px, touch ≥44px
+═══════════════════════════════════════════════════════════ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ── Marque ─────────────────────────────────────────────── */
+  --brand-ocean:   #0369a1;   /* indigo/ocean profond */
+  --brand-sky:     #38bdf8;   /* ciel bassin */
+  --brand-sand:    #f5e6d0;   /* sable fin */
+  --brand-pine:    #1e4d2b;   /* forêt de pins */
+  --brand-night:   #0c1a2e;   /* nuit sur le bassin */
+  --brand-gold:    #d97706;   /* dune dorée */
+
+  /* ── Couleurs UI ────────────────────────────────────────── */
+  --color-primary:      #1d4ed8;  /* bleu fort, AA sur blanc */
+  --color-primary-dark: #1e3a8a;
+  --color-accent:       #0ea5e9;
+  --color-success:      #059669;
+  --color-warning:      #d97706;
+  --color-danger:       #dc2626;
+
+  /* ── Neutres ────────────────────────────────────────────── */
+  --gray-50:   #f8fafc;
+  --gray-100:  #f1f5f9;
+  --gray-200:  #e2e8f0;
+  --gray-300:  #cbd5e1;
+  --gray-400:  #94a3b8;
+  --gray-500:  #64748b;
+  --gray-700:  #334155;
+  --gray-900:  #0f172a;
+
+  /* ── Typographie ────────────────────────────────────────── */
+  --font-sans: var(--font-geist-sans, system-ui, -apple-system, sans-serif);
+  --text-base: 17px;          /* légèrement plus grand que standard */
+  --leading:   1.65;
+
+  /* ── Espacements ────────────────────────────────────────── */
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  18px;
+  --radius-xl:  24px;
+
+  /* ── Ombres ─────────────────────────────────────────────── */
+  --shadow-card: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+  --shadow-float: 0 8px 32px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.06);
+
+  /* ── Transitions ────────────────────────────────────────── */
+  --t-fast:   150ms ease;
+  --t-normal: 250ms ease;
+  --t-slow:   400ms cubic-bezier(.4,0,.2,1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* ── Reset & base ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  font-size: var(--text-base);
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--gray-50);
+  color: var(--gray-900);
+  font-family: var(--font-sans);
+  line-height: var(--leading);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100dvh;
 }
+
+/* ── Accessibilité ──────────────────────────────────────────── */
+/* Focus visible net et fort — important pour seniors */
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Touch targets minimum 44×44px (WCAG 2.5.5) */
+button, a, [role="button"], input, select, textarea {
+  min-height: 44px;
+}
+
+/* Liens toujours identifiables */
+a:not([class]) {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── Typographie hiérarchique ───────────────────────────────── */
+h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; line-height: 1.1; letter-spacing: -.02em; }
+h2 { font-size: clamp(1.5rem, 3.5vw, 2.5rem); font-weight: 700; line-height: 1.2; letter-spacing: -.015em; }
+h3 { font-size: clamp(1.2rem, 2.5vw, 1.75rem); font-weight: 700; line-height: 1.3; }
+h4 { font-size: 1.125rem; font-weight: 600; line-height: 1.4; }
+p  { font-size: 1rem; line-height: var(--leading); }
+
+/* Texte de légende/helper lisible */
+small, .text-sm { font-size: .9375rem; }  /* 15px sur base 17px */
+
+/* ── Composants réutilisables ───────────────────────────────── */
+
+/* Bouton primaire */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  background: var(--color-primary);
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: .75rem 1.75rem;
+  border-radius: var(--radius-lg);
+  border: none;
+  cursor: pointer;
+  transition: background var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
+  text-decoration: none;
+  min-height: 52px;
+}
+.btn-primary:hover { background: var(--color-primary-dark); box-shadow: 0 4px 16px rgba(29,78,216,.35); transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+
+/* Bouton secondaire */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  background: white;
+  color: var(--gray-900);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: .75rem 1.75rem;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--gray-200);
+  cursor: pointer;
+  transition: border-color var(--t-fast), background var(--t-fast);
+  text-decoration: none;
+  min-height: 52px;
+}
+.btn-secondary:hover { border-color: var(--gray-400); background: var(--gray-50); }
+
+/* Carte */
+.card {
+  background: white;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-card);
+  padding: 1.5rem;
+}
+
+/* Badge plan */
+.badge-free    { background: var(--gray-100); color: var(--gray-700); }
+.badge-pro     { background: #ede9fe; color: #4c1d95; }
+.badge-premium { background: #fef3c7; color: #92400e; }
+
+/* ── Nav ─────────────────────────────────────────────────────── */
+.nav-terrimo {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: rgba(12, 26, 46, .96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  height: 68px;
+  display: flex;
+  align-items: center;
+  padding: 0 1.5rem;
+}
+
+/* ── Mobile ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  :root { --text-base: 16px; }
+  .hide-mobile { display: none !important; }
+  .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
+
+  /* Bottom sheet pattern */
+  .bottom-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 800;
+    background: white;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 32px rgba(0,0,0,.15);
+    max-height: 75dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transition: transform var(--t-slow);
+  }
+  .bottom-sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--gray-300);
+    border-radius: 2px;
+    margin: .75rem auto .5rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .show-mobile-only { display: none !important; }
+}
+
+/* ── Animations ─────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .6; }
+}
+
+.animate-fade-up   { animation: fadeInUp .4s ease both; }
+.animate-slide-in  { animation: slideInRight .3s ease both; }
+.animate-pulse-soft { animation: pulse-soft 2s ease infinite; }
+
+/* ── Leaflet overrides ──────────────────────────────────────── */
+.leaflet-container { font-family: var(--font-sans) !important; }
+.leaflet-popup-content-wrapper {
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-float) !important;
+  border: 1px solid var(--gray-200) !important;
+  padding: 0 !important;
+}
+.leaflet-popup-content { margin: 0 !important; }
+.leaflet-popup-tip { background: white !important; }
+
+/* ── Scrollbar discrète ─────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+
+/* ── Sélection de texte ─────────────────────────────────────── */
+::selection { background: #bfdbfe; color: var(--gray-900); }

@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { emailProMagicLink } from '@/lib/email';
 
 interface RegisterBody {
   type:           string;
@@ -220,15 +221,30 @@ export async function POST(request: NextRequest) {
       acteurId = rows[0].id;
     }
 
-    // Sync Odoo (fire & forget — on ne bloque pas la réponse)
+    // Sync Odoo (fire & forget)
     syncToOdoo(body, acteurId).catch(err =>
       console.error('Odoo sync error (non-bloquant):', err)
     );
+
+    // Récupérer le token d'accès généré par la migration
+    const tokenRows = await sql`SELECT access_token FROM acteurs WHERE id = ${acteurId}`;
+    const token = tokenRows[0]?.access_token as string | null;
+
+    // Email magic link au pro
+    if (token) {
+      emailProMagicLink({
+        pro_email: email,
+        pro_name:  name,
+        plan,
+        token,
+      }).catch(() => {});
+    }
 
     return NextResponse.json({
       success: true,
       id: acteurId,
       message: `Votre fiche a été enregistrée. Elle sera visible après validation.`,
+      dashboard_url: token ? `/pro/dashboard/${token}` : null,
     });
 
   } catch (error) {

@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { emailLeadConfirmation, emailAdminNewLead, emailProNewLead } from '@/lib/email';
 
 interface LeadRequest {
   // Contact
@@ -154,11 +155,57 @@ export async function POST(request: NextRequest) {
     syncLeadToOdoo(body, leadId)
       .then(odooId => {
         if (odooId) {
-          // Mise à jour silencieuse de l'odoo_lead_id
           sql`UPDATE leads SET odoo_lead_id = ${odooId} WHERE id = ${leadId}`.catch(() => {});
         }
       })
       .catch(() => {});
+
+    // Emails (tous asynchrones, non-bloquants)
+    // Confirmation au propriétaire
+    emailLeadConfirmation({
+      name, email,
+      commune:             commune ?? '',
+      type_local,
+      surface,
+      estimation_min,
+      estimation_max,
+    }).catch(() => {});
+
+    // Alerte admin
+    emailAdminNewLead({
+      lead_id: leadId, name, email, phone, commune, type_local, surface, estimation_centrale,
+    }).catch(() => {});
+
+    // Alerte aux agences pro/premium de la même commune
+    if (commune) {
+      sql`
+        SELECT email, name, access_token, plan
+        FROM acteurs
+        WHERE commune = ${commune}
+          AND plan IN ('pro','premium')
+          AND is_active = true
+          AND email IS NOT NULL
+      `
+      .then(pros => {
+        for (const pro of pros as Array<{email: string; name: string; access_token: string; plan: string}>) {
+          if (pro.email && pro.access_token) {
+            emailProNewLead({
+              pro_email:  pro.email,
+              pro_name:   pro.name,
+              lead_name:  name,
+              lead_phone: phone,
+              commune,
+              estimation_min,
+              estimation_max,
+              type_local,
+              surface,
+              dashboard_token: pro.access_token,
+            }).catch(() => {});
+          }
+        }
+      })
+      .catch(() => {});
+    }
 
     return NextResponse.json({
       success: true,
