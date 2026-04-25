@@ -7,7 +7,7 @@ import { COMMUNES } from '@/lib/communes';
 // ─────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────
-type ProType = 'agence' | 'notaire' | 'diagnostiqueur' | '';
+type ProType = 'agence' | 'notaire' | 'diagnostiqueur' | 'conciergerie' | '';
 type Plan    = 'free' | 'pro' | 'premium';
 
 interface SearchResult {
@@ -109,6 +109,7 @@ const TYPE_LABELS: Record<string, string> = {
   agence:         '🏢 Agence immobilière',
   notaire:        '⚖️ Office notarial',
   diagnostiqueur: '🔬 Cabinet de diagnostic',
+  conciergerie:   '🏡 Conciergerie',
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -239,7 +240,7 @@ export default function ProRejoindre() {
           </h1>
           <p className="text-xl text-slate-300 mb-4 max-w-2xl mx-auto">
             Terrimo est la carte interactive de référence du Bassin d'Arcachon.
-            Agences, notaires et diagnostiqueurs — rejoignez la plateforme et recevez des leads qualifiés.
+            Agences, notaires, diagnostiqueurs et conciergeries — rejoignez la plateforme et recevez des leads qualifiés.
           </p>
           <p className="text-slate-400 mb-10 text-sm">
             135 professionnels déjà référencés · Bassin d'Arcachon · Extension France en 2026
@@ -499,7 +500,7 @@ export default function ProRejoindre() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Nom {form.type === 'agence' ? "de l'agence" : form.type === 'notaire' ? "de l'office" : 'du cabinet'} *
+                  Nom {form.type === 'agence' ? "de l'agence" : form.type === 'notaire' ? "de l'office" : form.type === 'conciergerie' ? 'de la conciergerie' : 'du cabinet'} *
                 </label>
                 <input
                   type="text"
