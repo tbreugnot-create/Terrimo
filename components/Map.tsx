@@ -301,241 +301,281 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
       overflow: 'hidden',
     }}>
 
-      {/* ═══════════════════════ PANNEAU GAUCHE (liste) ═══════════════════════ */}
-      <div style={{
-        width: '320px',
-        flexShrink: 0,
-        background: 'white',
-        borderRight: '1px solid #e2e8f0',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        zIndex: 10,
-        // Mobile : caché si vue carte active
-        ...(typeof window !== 'undefined' && window.innerWidth < 768 && mobileView === 'map'
-          ? { display: 'none' } : {}),
-      }}
+      {/* ═══════════════════════ PANNEAU GAUCHE ═══════════════════════ */}
+      <div
         className={`map-left-panel ${mobileView === 'map' ? 'hidden-mobile' : ''}`}
+        style={{
+          width: '340px', flexShrink: 0, background: 'white',
+          borderRight: '1px solid #e2e8f0', display: 'flex',
+          flexDirection: 'column', overflow: 'hidden', zIndex: 10,
+        }}
       >
-        {/* ─── Header commune / global ─── */}
-        <div style={{ padding: '16px', borderBottom: '1px solid #f1f5f9' }}>
-          {communeObj ? (
-            <div>
-              <button onClick={() => setSelectedCommune(null)} style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: '.8125rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px',
-                marginBottom: '10px', padding: 0, minHeight: 'auto',
-              }}>
-                ← Vue d&apos;ensemble
-              </button>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '1.5rem' }}>{communeObj.tierEmoji}</span>
-                <div>
-                  <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem' }}>{communeObj.name}</div>
-                  <div style={{ fontSize: '.8125rem', color: '#94a3b8', marginTop: '2px' }}>{communeObj.tagline}</div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem' }}>Bassin d&apos;Arcachon</div>
-              <div style={{ fontSize: '.8125rem', color: '#94a3b8', marginTop: '4px' }}>
-                {searchTerm
-                  ? `${filteredActeurs.length} résultat${filteredActeurs.length > 1 ? 's' : ''} pour « ${search} »`
-                  : `${(stats.agence || 0) + (stats.notaire || 0) + (stats.diagnostiqueur || 0) + (stats.conciergerie || 0)} professionnels référencés`
-                }
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ─── Recherche par nom ─── */}
-        <div style={{ padding: '10px 16px', borderBottom: '1px solid #f1f5f9' }}>
+        {/* ── Barre de recherche (toujours visible, prominent) ── */}
+        <div style={{ padding: '14px 14px 10px', background: 'white' }}>
           <div style={{ position: 'relative' }}>
-            <span style={{
-              position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
-              fontSize: '1rem', pointerEvents: 'none', lineHeight: 1,
-            }}>🔎</span>
+            <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+              width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
             <input
               type="text"
-              placeholder="Rechercher une agence, un notaire…"
+              placeholder="Rechercher par nom, commune…"
               value={search}
               onChange={e => { setSearch(e.target.value); setSelectedCommune(null); }}
               style={{
-                width: '100%', padding: '9px 10px 9px 34px',
-                border: '1.5px solid #e2e8f0', borderRadius: '10px',
-                fontSize: '.9375rem', color: '#1e293b',
-                background: '#f8fafc', outline: 'none',
-                transition: 'border-color .15s',
-                minHeight: 'auto', boxSizing: 'border-box',
+                width: '100%', padding: '11px 36px 11px 36px',
+                border: '2px solid', borderColor: search ? '#6366f1' : '#e2e8f0',
+                borderRadius: '12px', fontSize: '1rem', color: '#1e293b',
+                background: search ? 'white' : '#f8fafc', outline: 'none',
+                transition: 'all .15s', boxSizing: 'border-box', minHeight: 'auto',
               }}
               onFocus={e => { (e.target as HTMLInputElement).style.borderColor = '#6366f1'; (e.target as HTMLInputElement).style.background = 'white'; }}
-              onBlur={e => { (e.target as HTMLInputElement).style.borderColor = '#e2e8f0'; (e.target as HTMLInputElement).style.background = '#f8fafc'; }}
+              onBlur={e => {
+                if (!search) {
+                  (e.target as HTMLInputElement).style.borderColor = '#e2e8f0';
+                  (e.target as HTMLInputElement).style.background = '#f8fafc';
+                }
+              }}
             />
-            {search && (
-              <button onClick={() => setSearch('')} style={{
-                position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
-                background: '#e2e8f0', border: 'none', borderRadius: '50%',
-                width: '20px', height: '20px', cursor: 'pointer', fontSize: '.75rem',
+            {search ? (
+              <button onClick={() => { setSearch(''); setSelectedCommune(null); }} style={{
+                position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+                background: '#6366f1', border: 'none', borderRadius: '50%',
+                width: '22px', height: '22px', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#64748b', minHeight: 'auto', padding: 0,
+                color: 'white', fontSize: '.875rem', fontWeight: 700, minHeight: 'auto', padding: 0,
               }}>×</button>
+            ) : (
+              <svg style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: .4 }}
+                width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2">
+                <path d="M3 6h18M7 12h10M11 18h2"/>
+              </svg>
             )}
           </div>
         </div>
 
-        {/* ─── Filtres type ─── */}
-        <div style={{
-          display: 'flex', gap: '6px', padding: '10px 16px',
-          borderBottom: '1px solid #f1f5f9', flexWrap: 'wrap',
-        }}>
-          {(Object.entries(TYPE_CONFIG) as [ActeurType, typeof TYPE_CONFIG[ActeurType]][]).map(([type, cfg]) => (
-            <button key={type}
-              onClick={() => setActiveType(t => t === type ? 'all' : type)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '5px',
-                padding: '5px 10px', borderRadius: '20px',
-                fontSize: '.8125rem', fontWeight: 600,
-                border: activeType === type ? '2px solid #6366f1' : '2px solid #e2e8f0',
-                background: activeType === type ? '#eef2ff' : 'white',
-                color: activeType === type ? '#4338ca' : '#64748b',
-                cursor: 'pointer', transition: 'all .15s ease', minHeight: '32px',
-              }}
-            >
-              <span>{cfg.emoji}</span>
-              <span>{cfg.label}</span>
-              {stats[type] != null && (
-                <span style={{
-                  background: activeType === type ? '#c7d2fe' : '#f1f5f9',
-                  color: activeType === type ? '#3730a3' : '#94a3b8',
-                  borderRadius: '10px', padding: '0 5px', fontSize: '.75rem', fontWeight: 700,
-                }}>{stats[type]}</span>
-              )}
-            </button>
-          ))}
-        </div>
+        {/* ══ MODE SEARCH : résultats filtrés uniquement ══ */}
+        {searchTerm ? (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {/* Compteur */}
+            <div style={{ padding: '6px 14px 10px', fontSize: '.8125rem', color: '#64748b', fontWeight: 500 }}>
+              {filteredActeurs.length === 0
+                ? `Aucun résultat pour « ${search} »`
+                : `${filteredActeurs.length} résultat${filteredActeurs.length > 1 ? 's' : ''} pour « ${search} »`
+              }
+            </div>
+            {/* Liste résultats */}
+            <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain' }}>
+              {filteredActeurs.length === 0 ? (
+                <div style={{ padding: '32px 20px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🔍</div>
+                  <p style={{ color: '#94a3b8', fontSize: '.9375rem' }}>Essayez un nom différent ou une commune</p>
+                </div>
+              ) : filteredActeurs.map((a) => {
+                const cfg = TYPE_CONFIG[a.type];
+                const isSelected = selectedActeur?.id === a.id;
+                return (
+                  <button key={a.id}
+                    onClick={() => {
+                      setSelectedActeur(a);
+                      if (a.lat && a.lng && mapRef.current) {
+                        mapRef.current.flyTo([a.lat, a.lng], 15, { duration: 0.6 });
+                        setMobileView('map');
+                      }
+                    }}
+                    style={{
+                      width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
+                      padding: '12px 14px',
+                      background: isSelected ? '#eef2ff' : 'white',
+                      borderBottom: '1px solid #f1f5f9',
+                      borderLeft: isSelected ? '3px solid #6366f1' : '3px solid transparent',
+                      transition: 'background .1s ease',
+                    }}
+                    onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
+                    onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'white'; }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      {/* Icône type */}
+                      <div style={{
+                        width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
+                        background: isSelected ? '#c7d2fe' : '#f1f5f9',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '1.1rem',
+                      }}>{cfg?.emoji}</div>
+                      {/* Infos */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{
+                          fontWeight: 700, fontSize: '.9375rem', color: isSelected ? '#3730a3' : '#1e293b',
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>{a.name}</div>
+                        <div style={{ fontSize: '.8125rem', color: '#94a3b8', marginTop: '1px' }}>
+                          {cfg?.label.slice(0, -1)} · {a.commune}
+                        </div>
+                      </div>
+                      {/* Rating + flèche */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px', flexShrink: 0 }}>
+                        {a.google_rating && (
+                          <span style={{ fontSize: '.8125rem', color: '#f59e0b', fontWeight: 700 }}>
+                            ★ {Number(a.google_rating).toFixed(1)}
+                          </span>
+                        )}
+                        <span style={{ fontSize: '.75rem', color: '#c7d2fe' }}>→</span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-        {/* ─── Liste acteurs (scrollable) ─── */}
-        <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain' }}>
-          {loading ? (
-            <div style={{ padding: '32px', textAlign: 'center' }}>
-              <div style={{
-                width: '28px', height: '28px', margin: '0 auto 12px',
-                border: '2px solid #e2e8f0', borderTop: '2px solid #6366f1',
-                borderRadius: '50%', animation: 'spin 1s linear infinite',
-              }} />
-              <p style={{ fontSize: '.875rem', color: '#94a3b8' }}>Chargement…</p>
-              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        ) : (
+        /* ══ MODE BROWSE : filtres + communes ══ */
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
+            {/* Filtre type — ligne horizontale compacte */}
+            <div style={{ padding: '0 14px 10px', display: 'flex', gap: '6px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+              {(Object.entries(TYPE_CONFIG) as [ActeurType, typeof TYPE_CONFIG[ActeurType]][]).map(([type, cfg]) => {
+                const active = activeType === type;
+                return (
+                  <button key={type}
+                    onClick={() => setActiveType(t => t === type ? 'all' : type)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0,
+                      padding: '6px 12px', borderRadius: '20px', fontSize: '.8125rem', fontWeight: 600,
+                      border: active ? '2px solid #6366f1' : '2px solid #e2e8f0',
+                      background: active ? '#6366f1' : 'white',
+                      color: active ? 'white' : '#64748b',
+                      cursor: 'pointer', transition: 'all .15s', minHeight: 'auto',
+                    }}
+                  >
+                    <span>{cfg.emoji}</span>
+                    <span>{cfg.label}</span>
+                    <span style={{
+                      background: active ? 'rgba(255,255,255,.25)' : '#f1f5f9',
+                      color: active ? 'white' : '#94a3b8',
+                      borderRadius: '10px', padding: '0 5px', fontSize: '.6875rem', fontWeight: 700,
+                    }}>{stats[type] ?? 0}</span>
+                  </button>
+                );
+              })}
             </div>
-          ) : filteredActeurs.length === 0 ? (
-            <div style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', fontSize: '.875rem' }}>
-              Aucun acteur pour cette sélection
-            </div>
-          ) : (
-            filteredActeurs.map((a) => {
-              const cfg = TYPE_CONFIG[a.type];
-              const isSelected = selectedActeur?.id === a.id;
-              return (
-                <button key={a.id}
-                  onClick={() => {
-                    setSelectedActeur(a);
-                    if (a.lat && a.lng && mapRef.current) {
-                      mapRef.current.flyTo([a.lat, a.lng], 15, { duration: 0.6 });
-                      setMobileView('map');
-                    }
-                  }}
-                  style={{
-                    width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
-                    padding: '12px 16px',
-                    background: isSelected ? '#eef2ff' : 'white',
-                    borderBottom: '1px solid #f8fafc',
-                    borderLeft: isSelected ? '3px solid #6366f1' : '3px solid transparent',
-                    transition: 'all .1s ease',
-                  }}
-                  onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
-                  onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'white'; }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                        <span style={{ fontSize: '.75rem' }}>{cfg?.emoji}</span>
+
+            {/* Si une commune est sélectionnée → afficher ses acteurs */}
+            {communeObj ? (
+              <>
+                <div style={{ padding: '10px 14px', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <button onClick={() => setSelectedCommune(null)} style={{
+                    background: 'none', border: 'none', cursor: 'pointer', fontSize: '.8125rem',
+                    color: '#6366f1', fontWeight: 600, padding: 0, minHeight: 'auto',
+                  }}>← Retour</button>
+                  <span style={{ color: '#e2e8f0' }}>|</span>
+                  <span style={{ fontSize: '1.125rem' }}>{communeObj.tierEmoji}</span>
+                  <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '.9375rem' }}>{communeObj.name}</span>
+                  <span style={{ fontSize: '.8125rem', color: '#94a3b8', marginLeft: 'auto' }}>
+                    {filteredActeurs.length} pro
+                  </span>
+                </div>
+                <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain' }}>
+                  {filteredActeurs.map((a) => {
+                    const cfg = TYPE_CONFIG[a.type];
+                    const isSelected = selectedActeur?.id === a.id;
+                    return (
+                      <button key={a.id}
+                        onClick={() => {
+                          setSelectedActeur(a);
+                          if (a.lat && a.lng && mapRef.current) {
+                            mapRef.current.flyTo([a.lat, a.lng], 15, { duration: 0.6 });
+                            setMobileView('map');
+                          }
+                        }}
+                        style={{
+                          width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
+                          padding: '11px 14px', background: isSelected ? '#eef2ff' : 'white',
+                          borderBottom: '1px solid #f1f5f9',
+                          borderLeft: isSelected ? '3px solid #6366f1' : '3px solid transparent',
+                          transition: 'background .1s',
+                        }}
+                        onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
+                        onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'white'; }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{
+                            width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0,
+                            background: isSelected ? '#c7d2fe' : '#f1f5f9',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem',
+                          }}>{cfg?.emoji}</div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 700, fontSize: '.9375rem', color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</div>
+                            <div style={{ fontSize: '.8125rem', color: '#94a3b8' }}>{cfg?.label.slice(0, -1)}</div>
+                          </div>
+                          {a.google_rating && <span style={{ fontSize: '.8125rem', color: '#f59e0b', fontWeight: 700, flexShrink: 0 }}>★ {Number(a.google_rating).toFixed(1)}</span>}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              /* Vue d'ensemble — navigation par commune */
+              <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain', padding: '10px 14px' }}>
+                <div style={{ fontSize: '.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '10px' }}>
+                  Choisir une commune
+                </div>
+                {COMMUNES.map(c => {
+                  const count = acteurs.filter(a =>
+                    a.commune === c.name &&
+                    (activeType === 'all' || a.type === activeType)
+                  ).length;
+                  return (
+                    <button key={c.slug} onClick={() => goToCommune(c.slug)} style={{
+                      width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
+                      padding: '10px 12px', borderRadius: '12px', marginBottom: '4px',
+                      background: 'white', transition: 'background .1s', display: 'flex',
+                      alignItems: 'center', gap: '10px', minHeight: 'auto',
+                    }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f1f5f9'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'white'; }}
+                    >
+                      <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>{c.tierEmoji}</span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: '.9375rem', color: '#1e293b' }}>{c.name}</div>
+                        <div style={{ fontSize: '.8125rem', color: '#94a3b8', marginTop: '1px' }}>{c.tagline}</div>
                       </div>
                       <div style={{
-                        fontWeight: 600, fontSize: '.9375rem', color: '#1e293b',
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      }}>{a.name}</div>
-                      <div style={{ fontSize: '.8125rem', color: '#94a3b8', marginTop: '1px' }}>{a.commune}</div>
-                    </div>
-                    {a.google_rating && (
-                      <div style={{ fontSize: '.8125rem', color: '#f59e0b', fontWeight: 700, flexShrink: 0 }}>
-                        ★ {Number(a.google_rating).toFixed(1)}
-                      </div>
-                    )}
-                  </div>
-                </button>
-              );
-            })
-          )}
-        </div>
-
-        {/* ─── Communes par tier ─── */}
-        {!communeObj && (
-          <div style={{ borderTop: '1px solid #f1f5f9', padding: '12px 16px' }}>
-            {[
-              { tier: 'premium',   label: 'Côte & Bassin', color: '#4338ca', bg: '#eef2ff' },
-              { tier: 'equilibre', label: 'Pourtour',       color: '#0369a1', bg: '#e0f2fe' },
-              { tier: 'emergent',  label: 'Intérieur',      color: '#047857', bg: '#d1fae5' },
-            ].map(({ tier, label, color, bg }) => (
-              <div key={tier} style={{ marginBottom: '10px' }}>
-                <div style={{ fontSize: '.75rem', fontWeight: 700, color, marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                  {label}
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                  {COMMUNES.filter(c => c.tier === tier).map(c => (
-                    <button key={c.slug} onClick={() => goToCommune(c.slug)} style={{
-                      fontSize: '.8125rem', padding: '3px 10px', borderRadius: '20px',
-                      background: bg, color, border: 'none', cursor: 'pointer',
-                      fontWeight: 600, transition: 'opacity .15s', minHeight: 'auto',
-                    }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '.7'; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
-                    >
-                      {c.name}
+                        background: '#f1f5f9', color: '#64748b', borderRadius: '20px',
+                        padding: '2px 10px', fontSize: '.8125rem', fontWeight: 700, flexShrink: 0,
+                      }}>{count}</div>
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-            ))}
+            )}
           </div>
         )}
 
-        {/* ─── CTA bas panneau ─── */}
+        {/* ── CTA bas panneau ── */}
         <div style={{
-          padding: '12px 16px', borderTop: '1px solid #f1f5f9',
-          display: 'flex', gap: '8px',
+          padding: '10px 14px', borderTop: '1px solid #f1f5f9',
+          display: 'flex', gap: '8px', flexShrink: 0,
         }}>
           <Link href="/evaluer" style={{
             flex: 1, textAlign: 'center', textDecoration: 'none',
             background: '#6366f1', color: 'white',
             fontWeight: 700, fontSize: '.9375rem', padding: '10px 8px',
-            borderRadius: '12px', transition: 'background .15s ease',
+            borderRadius: '12px', transition: 'background .15s',
           }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#4338ca'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#6366f1'; }}
-          >
-            🏡 Estimer mon bien
-          </Link>
+          >🏡 Estimer mon bien</Link>
           <Link href="/pro/rejoindre" style={{
             flex: 1, textAlign: 'center', textDecoration: 'none',
             background: '#f8fafc', color: '#334155',
             fontWeight: 600, fontSize: '.9375rem', padding: '10px 8px',
-            borderRadius: '12px', border: '1.5px solid #e2e8f0', transition: 'background .15s ease',
+            borderRadius: '12px', border: '1.5px solid #e2e8f0', transition: 'background .15s',
           }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f1f5f9'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
-          >
-            🏢 Espace Pro
-          </Link>
+          >🏢 Espace Pro</Link>
         </div>
       </div>
 
