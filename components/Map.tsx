@@ -96,6 +96,8 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const markersRef = useRef<any[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const markersByIdRef = useRef<Record<string, { marker: any; acteur: Acteur }>>({});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const leafletRef = useRef<any>(null);
 
   const [acteurs, setActeurs]                 = useState<Acteur[]>([]);
@@ -150,9 +152,29 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
   // Rendu des marqueurs
   // --------------------------------------------------------
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const makeActeurIcon = useCallback((L: any, acteur: Acteur, selected: boolean) => {
+    const cfg = TYPE_CONFIG[acteur.type] ?? TYPE_CONFIG.agence;
+    const size = selected ? 20 : 12;
+    return L.divIcon({
+      className: '',
+      html: `<div style="
+        background:${cfg.color};border-radius:50%;
+        width:${size}px;height:${size}px;
+        border:${selected ? '3px solid white' : '2px solid white'};
+        box-shadow:${selected ? '0 0 0 3px ' + cfg.color + ',0 2px 8px rgba(0,0,0,0.45)' : '0 1px 4px rgba(0,0,0,0.3)'};
+        cursor:pointer;
+        transition:all .15s;
+      "></div>`,
+      iconAnchor: [size / 2, size / 2],
+      iconSize: [size, size],
+    });
+  }, []);
+
   const renderMarkers = useCallback((map: any, L: any, data: Acteur[], filterType: ActeurType | 'all', filterCommune: string | null) => {
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
+    markersByIdRef.current = {};
 
     const communeObj = filterCommune ? COMMUNES.find(c => c.slug === filterCommune) : null;
 
@@ -161,29 +183,16 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
       if (filterType !== 'all' && acteur.type !== filterType) return;
       if (communeObj && acteur.commune !== communeObj.name) return;
 
-      const cfg = TYPE_CONFIG[acteur.type] ?? TYPE_CONFIG.agence;
-      const size = 12; // même taille pour tous — pas de hiérarchie commerciale
-
-      const icon = L.divIcon({
-        className: '',
-        html: `<div style="
-          background:${cfg.color};border-radius:50%;
-          width:${size}px;height:${size}px;
-          border:2px solid white;
-          box-shadow:0 1px 4px rgba(0,0,0,0.3);
-          cursor:pointer;
-        "></div>`,
-        iconAnchor: [size / 2, size / 2],
-        iconSize: [size, size],
-      });
+      const icon = makeActeurIcon(L, acteur, false);
 
       const marker = L.marker([acteur.lat, acteur.lng], { icon })
         .addTo(map)
         .on('click', () => { setSelectedActeur(acteur); setSelectedBien(null); });
 
       markersRef.current.push(marker);
+      markersByIdRef.current[acteur.id] = { marker, acteur };
     });
-  }, []);
+  }, [makeActeurIcon]);
 
   // --------------------------------------------------------
   // Rendu des marqueurs biens (carrés, colorés par type_annonce)
@@ -373,6 +382,16 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
     };
     fetchBiens();
   }, [layerMode, renderBienMarkers]);
+
+  // Surbrillance du marqueur acteur sélectionné
+  useEffect(() => {
+    if (!leafletRef.current) return;
+    const L = leafletRef.current;
+    Object.entries(markersByIdRef.current).forEach(([id, { marker, acteur }]) => {
+      const isSelected = selectedActeur?.id === id;
+      marker.setIcon(makeActeurIcon(L, acteur, isSelected));
+    });
+  }, [selectedActeur, makeActeurIcon]);
 
   // Invalidate size quand on bascule sur la vue carte (mobile)
   useEffect(() => {
@@ -1046,6 +1065,16 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
                     📍 {selectedActeur.address}
                   </div>
                 )}
+                {selectedActeur.phone && (
+                  <div style={{ fontSize: '.8125rem', color: '#475569', marginTop: '3px' }}>
+                    📞 <a href={`tel:${selectedActeur.phone}`} style={{ color: '#475569', textDecoration: 'none', fontWeight: 600 }}>{selectedActeur.phone}</a>
+                  </div>
+                )}
+                {selectedActeur.email && (
+                  <div style={{ fontSize: '.8125rem', color: '#475569', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    ✉️ <a href={`mailto:${selectedActeur.email}`} style={{ color: '#6366f1', textDecoration: 'none' }}>{selectedActeur.email}</a>
+                  </div>
+                )}
                 {selectedActeur.type === 'diagnostiqueur' && Array.isArray(selectedActeur.meta?.services) && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
                     {(selectedActeur.meta.services as string[]).slice(0, 4).map(s => (
@@ -1065,6 +1094,7 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
               }}>×</button>
             </div>
 
+            {/* CTAs principaux */}
             <div style={{ display: 'flex', gap: '8px', marginTop: '14px' }}>
               {selectedActeur.phone && (
                 <a href={`tel:${selectedActeur.phone}`} style={{
@@ -1076,7 +1106,17 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
                   📞 Appeler
                 </a>
               )}
-              {selectedActeur.website && (
+              {selectedActeur.email && (
+                <a href={`mailto:${selectedActeur.email}`} style={{
+                  flex: 1, textAlign: 'center', textDecoration: 'none',
+                  background: '#f8fafc', color: '#334155',
+                  fontWeight: 600, fontSize: '.9375rem', padding: '10px',
+                  borderRadius: '12px', border: '1.5px solid #e2e8f0',
+                }}>
+                  ✉️ Email
+                </a>
+              )}
+              {!selectedActeur.email && selectedActeur.website && (
                 <a href={selectedActeur.website} target="_blank" rel="noopener noreferrer" style={{
                   flex: 1, textAlign: 'center', textDecoration: 'none',
                   background: '#f8fafc', color: '#334155',
@@ -1087,6 +1127,37 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
                 </a>
               )}
             </div>
+            {/* Directions */}
+            {selectedActeur.lat && selectedActeur.lng && (
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${selectedActeur.lat},${selectedActeur.lng}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{
+                    flex: 1, textAlign: 'center', textDecoration: 'none',
+                    background: '#f0fdf4', color: '#166534',
+                    fontWeight: 600, fontSize: '.8125rem', padding: '8px 6px',
+                    borderRadius: '10px', border: '1.5px solid #bbf7d0',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                  }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                  Google Maps
+                </a>
+                <a
+                  href={`https://waze.com/ul?ll=${selectedActeur.lat},${selectedActeur.lng}&navigate=yes`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{
+                    flex: 1, textAlign: 'center', textDecoration: 'none',
+                    background: '#fdf4ff', color: '#7e22ce',
+                    fontWeight: 600, fontSize: '.8125rem', padding: '8px 6px',
+                    borderRadius: '10px', border: '1.5px solid #e9d5ff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                  }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                  Waze
+                </a>
+              </div>
+            )}
           </div>
         )}
       </div>
