@@ -43,7 +43,7 @@ export const VILLAGES: Village[] = [
   { slug: 'audenge',         name: 'Audenge',             communeSlug: 'audenge',         communeName: 'Audenge' },
 
   // ── LANTON & hameaux ─────────────────────────────────────
-  { slug: 'lanton',          name: 'Lanton',              communeSlug: 'lanton',          communeName: 'Lanton' },
+  { slug: 'lanton',          name: 'Lanton (bourg)',      communeSlug: 'lanton',          communeName: 'Lanton',          lat: 44.7108, lng: -1.0444 },
   { slug: 'cassy',           name: 'Cassy',               communeSlug: 'lanton',          communeName: 'Lanton',          lat: 44.7194, lng: -1.0303 },
   { slug: 'taussat',         name: 'Taussat',             communeSlug: 'lanton',          communeName: 'Lanton',          lat: 44.7297, lng: -1.0531 },
 
