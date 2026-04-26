@@ -334,7 +334,7 @@ export default function Nav() {
                 onClick={() => toggleDropdown('proprio')}
                 className="nav-dropdown-btn"
                 style={{
-                  ...linkStyle(openDropdown === 'proprio' || isActive('/evaluer')),
+                  ...linkStyle(openDropdown === 'proprio' || isActive('/evaluer') || isActive('/proprietaire')),
                   gap: '6px',
                 }}
               >
@@ -407,7 +407,7 @@ export default function Nav() {
           {/* ── CTA unique ── */}
           <div className="hide-mobile" style={{ flexShrink: 0 }}>
             <Link
-              href="/evaluer"
+              href="/proprietaire"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -543,7 +543,7 @@ export default function Nav() {
 
           {/* CTA mobile */}
           <Link
-            href="/evaluer"
+            href="/proprietaire"
             onClick={() => setMenuOpen(false)}
             style={{
               display: 'flex',

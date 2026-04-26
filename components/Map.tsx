@@ -37,7 +37,7 @@ interface StatsBar {
 }
 
 type TypeAnnonce = 'vente' | 'location' | 'viager' | 'neuf' | 'commercial';
-type LayerMode = 'pros' | 'biens' | 'both';
+type LayerMode = 'pros' | 'biens';
 
 interface Bien {
   id: number;
@@ -330,8 +330,7 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
   // --------------------------------------------------------
   useEffect(() => {
     if (!mapRef.current || !leafletRef.current) return;
-    const showPros = layerMode === 'pros' || layerMode === 'both';
-    if (!showPros) {
+    if (layerMode !== 'pros') {
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
       return;
@@ -352,8 +351,7 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
   // Fetch + render biens quand layerMode inclut 'biens'
   // --------------------------------------------------------
   useEffect(() => {
-    const showBiens = layerMode === 'biens' || layerMode === 'both';
-    if (!showBiens) {
+    if (layerMode !== 'biens') {
       biensMarkersRef.current.forEach(m => m.remove());
       biensMarkersRef.current = [];
       setSelectedBien(null);
@@ -393,6 +391,12 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
     if (activeType !== 'all' && a.type !== activeType) return false;
     if (communeObj && a.commune !== communeObj.name) return false;
     if (searchTerm && !a.name.toLowerCase().includes(searchTerm) && !a.commune?.toLowerCase().includes(searchTerm)) return false;
+    return true;
+  });
+
+  const filteredBiens = biens.filter(b => {
+    if (communeObj && b.commune !== communeObj.name) return false;
+    if (searchTerm && !b.titre?.toLowerCase().includes(searchTerm) && !b.commune?.toLowerCase().includes(searchTerm) && !b.type_bien?.toLowerCase().includes(searchTerm)) return false;
     return true;
   });
 
@@ -468,22 +472,21 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
           </div>
         </div>
 
-        {/* ── Layer toggle : Pros / Biens / Les deux ── */}
+        {/* ── Layer toggle : Pros / Biens (exclusif) ── */}
         <div style={{ padding: '4px 14px 10px', display: 'flex', gap: '6px' }}>
           {([
-            { key: 'pros',  label: '👥 Pros' },
-            { key: 'biens', label: '🏠 Biens' },
-            { key: 'both',  label: '✦ Les deux' },
-          ] as { key: LayerMode; label: string }[]).map(({ key, label }) => (
+            { key: 'pros',  label: '👥 Professionnels', color: '#6366f1', bg: '#eef2ff' },
+            { key: 'biens', label: '🏠 Biens',          color: '#f97316', bg: '#fff7ed' },
+          ] as { key: LayerMode; label: string; color: string; bg: string }[]).map(({ key, label, color, bg }) => (
             <button key={key}
               onClick={() => setLayerMode(key)}
               style={{
-                flex: 1, padding: '6px 4px', fontSize: '.78125rem', fontWeight: 600,
+                flex: 1, padding: '7px 4px', fontSize: '.8125rem', fontWeight: 700,
                 border: '1.5px solid',
-                borderColor: layerMode === key ? '#6366f1' : '#e2e8f0',
-                borderRadius: '8px', cursor: 'pointer',
-                background: layerMode === key ? '#eef2ff' : 'white',
-                color: layerMode === key ? '#4f46e5' : '#64748b',
+                borderColor: layerMode === key ? color : '#e2e8f0',
+                borderRadius: '10px', cursor: 'pointer',
+                background: layerMode === key ? bg : 'white',
+                color: layerMode === key ? color : '#94a3b8',
                 transition: 'all .12s', minHeight: 'auto',
               }}>
               {label}
@@ -491,17 +494,104 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
           ))}
         </div>
 
-        {/* ══ MODE SEARCH : résultats filtrés uniquement ══ */}
-        {searchTerm ? (
+        {/* ══ MODE BIENS ══ */}
+        {layerMode === 'biens' ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {/* Compteur */}
+            {/* Header compteur */}
+            <div style={{ padding: '4px 14px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              {communeObj && (
+                <button onClick={() => setSelectedCommune(null)} style={{
+                  background: 'none', border: 'none', cursor: 'pointer', fontSize: '.8125rem',
+                  color: '#f97316', fontWeight: 600, padding: 0, minHeight: 'auto',
+                }}>← Toutes les communes</button>
+              )}
+              <span style={{ fontSize: '.8125rem', color: '#94a3b8', fontWeight: 500, marginLeft: 'auto' }}>
+                {loadingBiens ? 'Chargement…' : `${filteredBiens.length} bien${filteredBiens.length > 1 ? 's' : ''}`}
+                {communeObj ? ` · ${communeObj.name}` : ''}
+              </span>
+            </div>
+            {/* Liste biens */}
+            <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain' }}>
+              {loadingBiens ? (
+                <div style={{ padding: '32px 20px', textAlign: 'center' }}>
+                  <div style={{ width: 28, height: 28, border: '3px solid #f97316', borderTop: '3px solid transparent', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto' }} />
+                </div>
+              ) : filteredBiens.length === 0 ? (
+                <div style={{ padding: '32px 20px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🏠</div>
+                  <p style={{ color: '#94a3b8', fontSize: '.9375rem' }}>Aucun bien{searchTerm ? ` pour « ${search} »` : ' disponible'}</p>
+                </div>
+              ) : filteredBiens.map(b => {
+                const cfg = ANNONCE_CONFIG[b.type_annonce] ?? ANNONCE_CONFIG.vente;
+                const isSelected = selectedBien?.id === b.id;
+                return (
+                  <button key={b.id}
+                    onClick={() => {
+                      setSelectedBien(b); setSelectedActeur(null);
+                      if (b.lat && b.lng && mapRef.current) {
+                        mapRef.current.flyTo([b.lat, b.lng], 15, { duration: 0.6 });
+                        setMobileView('map');
+                      }
+                    }}
+                    style={{
+                      width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
+                      padding: '11px 14px',
+                      background: isSelected ? '#fff7ed' : 'white',
+                      borderBottom: '1px solid #f1f5f9',
+                      borderLeft: isSelected ? `3px solid ${cfg.color}` : '3px solid transparent',
+                      transition: 'background .1s',
+                    }}
+                    onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = '#fafafa'; }}
+                    onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'white'; }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                      {/* Icône type_annonce */}
+                      <div style={{
+                        width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
+                        background: cfg.color + '15',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem',
+                      }}>{cfg.emoji}</div>
+                      {/* Infos */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                          <span style={{ fontSize: '.6875rem', fontWeight: 700, color: cfg.color, letterSpacing: '.04em' }}>
+                            {cfg.label.toUpperCase()}
+                          </span>
+                          <span style={{ fontSize: '.75rem', color: '#94a3b8' }}>· {b.type_bien}</span>
+                        </div>
+                        <div style={{ fontWeight: 700, fontSize: '.9375rem', color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {b.titre ?? `${b.type_bien}${b.commune ? ` · ${b.commune}` : ''}`}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
+                          {b.prix && (
+                            <span style={{ fontSize: '.875rem', fontWeight: 700, color: '#0f172a' }}>
+                              {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(b.prix)}
+                            </span>
+                          )}
+                          {b.surface && <span style={{ fontSize: '.75rem', color: '#64748b' }}>{b.surface} m²</span>}
+                          {b.pieces && <span style={{ fontSize: '.75rem', color: '#64748b' }}>{b.pieces}p</span>}
+                        </div>
+                        <div style={{ fontSize: '.75rem', color: '#94a3b8', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          Via {b.acteur_name}
+                          {b.commune ? ` · ${b.commune}` : ''}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+        ) : searchTerm ? (
+        /* ══ MODE PROS + SEARCH ══ */
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ padding: '6px 14px 10px', fontSize: '.8125rem', color: '#64748b', fontWeight: 500 }}>
               {filteredActeurs.length === 0
                 ? `Aucun résultat pour « ${search} »`
                 : `${filteredActeurs.length} résultat${filteredActeurs.length > 1 ? 's' : ''} pour « ${search} »`
               }
             </div>
-            {/* Liste résultats */}
             <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain' }}>
               {filteredActeurs.length === 0 ? (
                 <div style={{ padding: '32px 20px', textAlign: 'center' }}>
@@ -532,14 +622,11 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
                     onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'white'; }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      {/* Icône type */}
                       <div style={{
                         width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
                         background: isSelected ? '#c7d2fe' : '#f1f5f9',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '1.1rem',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem',
                       }}>{cfg?.emoji}</div>
-                      {/* Infos */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{
                           fontWeight: 700, fontSize: '.9375rem', color: isSelected ? '#3730a3' : '#1e293b',
@@ -549,7 +636,6 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
                           {cfg?.label.slice(0, -1)} · {a.commune}
                         </div>
                       </div>
-                      {/* Rating + flèche */}
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px', flexShrink: 0 }}>
                         {a.google_rating && (
                           <span style={{ fontSize: '.8125rem', color: '#f59e0b', fontWeight: 700 }}>
@@ -566,7 +652,7 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
           </div>
 
         ) : (
-        /* ══ MODE BROWSE : filtres + communes ══ */
+        /* ══ MODE PROS BROWSE : filtres + communes ══ */
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
             {/* Filtre type — ligne horizontale compacte */}
@@ -695,16 +781,16 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
           padding: '10px 14px', borderTop: '1px solid #f1f5f9',
           display: 'flex', gap: '8px', flexShrink: 0,
         }}>
-          <Link href="/evaluer" style={{
+          <Link href="/proprietaire" style={{
             flex: 1, textAlign: 'center', textDecoration: 'none',
-            background: '#6366f1', color: 'white',
+            background: '#10b981', color: 'white',
             fontWeight: 700, fontSize: '.9375rem', padding: '10px 8px',
             borderRadius: '12px', transition: 'background .15s',
           }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#4338ca'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#6366f1'; }}
-          >🏡 Estimer mon bien</Link>
-          <Link href="/pro/rejoindre" style={{
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#059669'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#10b981'; }}
+          >🏡 J&apos;ai un bien</Link>
+          <Link href="/rechercher" style={{
             flex: 1, textAlign: 'center', textDecoration: 'none',
             background: '#f8fafc', color: '#334155',
             fontWeight: 600, fontSize: '.9375rem', padding: '10px 8px',
@@ -712,7 +798,7 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
           }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f1f5f9'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
-          >🏢 Espace Pro</Link>
+          >🔍 Je cherche</Link>
         </div>
       </div>
 
@@ -778,25 +864,42 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
           pointerEvents: 'none',
         }}>
           <span>📍 {COMMUNES.length} communes</span>
-          <span style={{ color: '#e2e8f0' }}>|</span>
-          <span>🏢 {stats.agence ?? '…'} agences</span>
-          <span style={{ color: '#e2e8f0' }}>|</span>
-          <span>⚖️ {stats.notaire ?? '…'} notaires</span>
+          {layerMode === 'biens' ? (
+            <>
+              <span style={{ color: '#e2e8f0' }}>|</span>
+              <span>🏠 {biens.length} bien{biens.length > 1 ? 's' : ''}</span>
+            </>
+          ) : (
+            <>
+              <span style={{ color: '#e2e8f0' }}>|</span>
+              <span>🏢 {stats.agence ?? '…'} agences</span>
+              <span style={{ color: '#e2e8f0' }}>|</span>
+              <span>⚖️ {stats.notaire ?? '…'} notaires</span>
+            </>
+          )}
         </div>
 
-        {/* ── Légende ── */}
+        {/* ── Légende (dynamique selon layerMode) ── */}
         <div style={{
           position: 'absolute', bottom: '70px', right: '12px', zIndex: 400,
           background: 'white', borderRadius: '12px',
           boxShadow: '0 2px 12px rgba(0,0,0,.1)', padding: '10px 14px',
           border: '1px solid #f1f5f9', fontSize: '.8125rem',
         }}>
-          {(Object.entries(TYPE_CONFIG) as [ActeurType, typeof TYPE_CONFIG[ActeurType]][]).map(([, cfg]) => (
-            <div key={cfg.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-              <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: cfg.color, flexShrink: 0 }} />
-              <span style={{ color: '#475569' }}>{cfg.label}</span>
-            </div>
-          ))}
+          {layerMode === 'biens'
+            ? (Object.entries(ANNONCE_CONFIG) as [TypeAnnonce, typeof ANNONCE_CONFIG[TypeAnnonce]][]).map(([, cfg]) => (
+                <div key={cfg.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: cfg.color, flexShrink: 0 }} />
+                  <span style={{ color: '#475569' }}>{cfg.label}</span>
+                </div>
+              ))
+            : (Object.entries(TYPE_CONFIG) as [ActeurType, typeof TYPE_CONFIG[ActeurType]][]).map(([, cfg]) => (
+                <div key={cfg.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: cfg.color, flexShrink: 0 }} />
+                  <span style={{ color: '#475569' }}>{cfg.label}</span>
+                </div>
+              ))
+          }
         </div>
 
         {/* ── Fiche bien sélectionné ── */}

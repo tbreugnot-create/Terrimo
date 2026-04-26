@@ -3,28 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
-
-// ─── Constantes ───────────────────────────────────────────
-const COMMUNES = [
-  'Arcachon', 'La Teste-de-Buch', 'Gujan-Mestras', 'Le Teich',
-  'Biganos', 'Audenge', 'Lège-Cap Ferret', 'Andernos-les-Bains',
-  'Arès', 'Lanton', 'Mios', 'Salles',
-];
-
-const COMMUNE_SLUGS: Record<string, string> = {
-  'Arcachon': 'arcachon',
-  'La Teste-de-Buch': 'la-teste-de-buch',
-  'Gujan-Mestras': 'gujan-mestras',
-  'Le Teich': 'le-teich',
-  'Biganos': 'biganos',
-  'Audenge': 'audenge',
-  'Lège-Cap Ferret': 'lege-cap-ferret',
-  'Andernos-les-Bains': 'andernos-les-bains',
-  'Arès': 'ares',
-  'Lanton': 'lanton',
-  'Mios': 'mios',
-  'Salles': 'salles',
-};
+import { VILLAGES, VILLAGES_BY_COMMUNE } from '@/lib/villages';
 
 const CARACTERISTIQUES = [
   { value: 'piscine', label: '🏊 Piscine' },
@@ -184,7 +163,7 @@ export default function RechercherPage() {
     try {
       const payload = {
         ...form,
-        communes: form.communes.map(c => COMMUNE_SLUGS[c] ?? c.toLowerCase()),
+        communes: form.communes.map(c => VILLAGES.find(v => v.name === c)?.slug ?? c.toLowerCase().replace(/\s+/g, '-')),
         budget_max: parseInt(form.budget_max) || null,
         surface_min: parseInt(form.surface_min) || null,
         chambres_min: parseInt(form.chambres_min) || null,
@@ -324,14 +303,23 @@ export default function RechercherPage() {
               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'white', margin: 0 }}>Localisation souhaitée</h2>
 
               <div>
-                <p style={{ color: 'rgba(255,255,255,.5)', fontSize: '.8125rem', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>Communes (plusieurs possibles)</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {COMMUNES.map(c => (
-                    <ChipToggle key={c} value={c} label={c}
-                      active={form.communes.includes(c)}
-                      onClick={() => toggleArray('communes', c)} />
-                  ))}
-                </div>
+                <p style={{ color: 'rgba(255,255,255,.5)', fontSize: '.8125rem', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                  Villages & communes ({form.communes.length} sélectionné{form.communes.length > 1 ? 's' : ''})
+                </p>
+                {Object.entries(VILLAGES_BY_COMMUNE).map(([communeName, villages]) => (
+                  <div key={communeName} style={{ marginBottom: 16 }}>
+                    <p style={{ color: 'rgba(255,255,255,.35)', fontSize: '.75rem', fontWeight: 600, marginBottom: 8, letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                      {communeName}
+                    </p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {villages.map(v => (
+                        <ChipToggle key={v.slug} value={v.name} label={v.name}
+                          active={form.communes.includes(v.name)}
+                          onClick={() => toggleArray('communes', v.name)} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div>
