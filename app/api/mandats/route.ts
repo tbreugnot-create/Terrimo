@@ -3,8 +3,8 @@ import { sql } from '@/lib/db';
 import { Resend } from 'resend';
 import { syncAcquereurToOdoo } from '@/lib/odoo';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM   = 'Terrimo <notifications@terrimo.homes>';
+const FROM = 'Terrimo <notifications@terrimo.homes>';
+const getResend = () => new Resend(process.env.RESEND_API_KEY ?? 'placeholder');
 
 // ─── POST /api/mandats — créer un mandat de recherche ────
 export async function POST(request: NextRequest) {
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     }).catch(() => {});
 
     // Email de confirmation à l'acquéreur
-    await resend.emails.send({
+    await getResend().emails.send({
       from: FROM,
       to: email,
       subject: 'Votre alerte de recherche est active — Terrimo',
@@ -149,7 +149,7 @@ async function notifyAgencies(mandatId: number, data: Record<string, unknown>) {
     // Envoi groupé (max 30 agences)
     await Promise.allSettled(
       agences.map((a: Record<string, unknown>) =>
-        resend.emails.send({
+        getResend().emails.send({
           from: FROM,
           to: a.email as string,
           subject: `🔔 Nouveau profil acquéreur sur votre secteur — Terrimo`,
