@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import type { CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 
 // ─── Constantes ───────────────────────────────────────────
@@ -202,7 +203,7 @@ export default function RechercherPage() {
     }
   };
 
-  const S: React.CSSProperties = {
+  const S: CSSProperties = {
     minHeight: '100vh',
     background: 'linear-gradient(160deg, #071625 0%, #0c2340 60%, #0a1e35 100%)',
     padding: '40px 20px 80px',

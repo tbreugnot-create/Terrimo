@@ -33,6 +33,27 @@ interface Bien {
   created_at: string;
 }
 
+interface Acquereur {
+  id: number;
+  communes: string[];
+  types_bien?: string[];
+  surface_min?: number;
+  surface_max?: number;
+  chambres_min?: number;
+  budget_max?: number;
+  mode_financement?: string;
+  accord_bancaire?: boolean;
+  type_acquisition?: string;
+  horizon?: string;
+  description?: string;
+  caracteristiques?: string[];
+  created_at: string;
+  // Premium uniquement
+  prenom?: string;
+  email?: string;
+  phone?: string;
+}
+
 interface Acteur {
   id: number;
   type: string;
@@ -73,13 +94,16 @@ export default function ProDashboard() {
   const params   = useParams();
   const token    = params.token as string;
 
-  const [acteur,   setActeur]   = useState<Acteur | null>(null);
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState('');
-  const [tab,      setTab]      = useState<'leads' | 'fiche' | 'biens'>('leads');
-  const [saving,   setSaving]   = useState(false);
-  const [saveOk,   setSaveOk]   = useState(false);
-  const [saveErr,  setSaveErr]  = useState('');
+  const [acteur,      setActeur]      = useState<Acteur | null>(null);
+  const [loading,     setLoading]     = useState(true);
+  const [error,       setError]       = useState('');
+  const [tab,         setTab]         = useState<'acquereurs' | 'leads' | 'fiche' | 'biens'>('acquereurs');
+  const [saving,      setSaving]      = useState(false);
+  const [saveOk,      setSaveOk]      = useState(false);
+  const [saveErr,     setSaveErr]     = useState('');
+  const [acquereurs,  setAcquereurs]  = useState<Acquereur[]>([]);
+  const [acqTotal,    setAcqTotal]    = useState(0);
+  const [acqLoading,  setAcqLoading]  = useState(false);
 
   // Form édition fiche
   const [editForm, setEditForm] = useState({
@@ -106,6 +130,20 @@ export default function ProDashboard() {
       })
       .catch(() => setError('Impossible de charger votre fiche'))
       .finally(() => setLoading(false));
+  }, [token]);
+
+  // Charger les acquéreurs
+  useEffect(() => {
+    if (!token) return;
+    setAcqLoading(true);
+    fetch(`/api/pro/acquereurs?token=${token}`)
+      .then(r => r.json())
+      .then(d => {
+        setAcquereurs(d.acquereurs ?? []);
+        setAcqTotal(d.total ?? 0);
+      })
+      .catch(() => {})
+      .finally(() => setAcqLoading(false));
   }, [token]);
 
   const handleSave = async () => {
@@ -225,16 +263,17 @@ export default function ProDashboard() {
         )}
 
         {/* Onglets */}
-        <div className="flex gap-1 bg-slate-100 rounded-xl p-1 mb-6 w-fit">
+        <div className="flex gap-1 bg-slate-100 rounded-xl p-1 mb-6 overflow-x-auto">
           {[
-            { id: 'leads', label: `🔔 Leads${leads.length ? ` (${leads.length})` : ''}`, locked: plan === 'free' },
-            { id: 'fiche', label: '✏️ Ma fiche',  locked: false },
-            { id: 'biens', label: `🏠 Mes biens${biens.length ? ` (${biens.length})` : ''}`, locked: plan === 'free' },
+            { id: 'acquereurs', label: `🔍 Acquéreurs${acqTotal ? ` (${acqTotal})` : ''}`, locked: false },
+            { id: 'leads',      label: `🔔 Leads${leads.length ? ` (${leads.length})` : ''}`,  locked: plan === 'free' },
+            { id: 'fiche',      label: '✏️ Ma fiche',  locked: false },
+            { id: 'biens',      label: `🏠 Mes biens${biens.length ? ` (${biens.length})` : ''}`, locked: plan === 'free' },
           ].map(t => (
             <button
               key={t.id}
-              onClick={() => setTab(t.id as 'leads' | 'fiche' | 'biens')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition relative ${
+              onClick={() => setTab(t.id as 'acquereurs' | 'leads' | 'fiche' | 'biens')}
+              className={`shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition relative ${
                 tab === t.id ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -243,6 +282,179 @@ export default function ProDashboard() {
             </button>
           ))}
         </div>
+
+        {/* ── ONGLET ACQUÉREURS ─────────────────────────────────── */}
+        {tab === 'acquereurs' && (
+          <div>
+            {acqLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="w-7 h-7 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : plan === 'free' && acqTotal === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
+                <div className="text-4xl mb-3">🔍</div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Aucun acquéreur sur votre secteur</h3>
+                <p className="text-slate-500 text-sm">Dès qu'un acquéreur créera une alerte sur votre commune, il apparaîtra ici.</p>
+              </div>
+            ) : plan === 'free' ? (
+              /* FREE avec acquéreurs disponibles */
+              <div>
+                <div className="bg-gradient-to-br from-sky-600 to-indigo-600 rounded-2xl p-6 mb-6 text-white">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sky-100 text-sm font-medium mb-1">Acquéreurs actifs sur votre commune</p>
+                      <p className="text-5xl font-black mb-2">{acqTotal}</p>
+                      <p className="text-sky-100 text-sm">profil{acqTotal > 1 ? 's' : ''} en recherche active, coordonnées accessibles en Pro</p>
+                    </div>
+                    <div className="text-5xl opacity-30">🔍</div>
+                  </div>
+                  <Link href="/pro/rejoindre"
+                    className="mt-5 inline-block bg-white text-indigo-700 font-bold px-6 py-3 rounded-xl text-sm hover:bg-indigo-50 transition">
+                    Accéder aux profils — Pro 49€/mois →
+                  </Link>
+                </div>
+                {/* Cards fantômes pour illustrer */}
+                <div className="space-y-3 opacity-40 pointer-events-none select-none blur-sm">
+                  {[1,2].map(i => (
+                    <div key={i} className="bg-white rounded-xl border border-slate-200 p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-slate-200" />
+                          <div>
+                            <div className="h-4 w-24 bg-slate-200 rounded mb-1" />
+                            <div className="h-3 w-16 bg-slate-100 rounded" />
+                          </div>
+                        </div>
+                        <div className="h-6 w-20 bg-sky-100 rounded-full" />
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        <div className="h-6 w-24 bg-slate-100 rounded-full" />
+                        <div className="h-6 w-32 bg-slate-100 rounded-full" />
+                        <div className="h-6 w-20 bg-slate-100 rounded-full" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : acquereurs.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
+                <div className="text-4xl mb-3">📭</div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Aucun acquéreur pour l'instant</h3>
+                <p className="text-slate-500 text-sm">Les profils d'acquéreurs actifs sur votre commune apparaîtront ici.</p>
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-sm text-slate-500">
+                    {acqTotal} profil{acqTotal > 1 ? 's' : ''} en recherche active sur votre commune
+                    {plan === 'pro' && <span className="ml-2 text-amber-600">· Coordonnées complètes avec <Link href="/pro/rejoindre" className="underline">Premium</Link></span>}
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  {acquereurs.map(a => (
+                    <div key={a.id} className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition">
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold text-sm shrink-0">
+                            {a.prenom ? a.prenom[0].toUpperCase() : '?'}
+                          </div>
+                          <div>
+                            {plan === 'premium' && a.prenom ? (
+                              <p className="font-semibold text-slate-900">{a.prenom}</p>
+                            ) : (
+                              <p className="text-slate-400 text-sm italic">Identité masquée · Plan Pro</p>
+                            )}
+                            <p className="text-xs text-slate-400">{new Date(a.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap justify-end">
+                          {a.mode_financement === 'comptant' && (
+                            <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">💰 Comptant</span>
+                          )}
+                          {a.accord_bancaire && (
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">✅ Accord bancaire</span>
+                          )}
+                          {a.type_acquisition && (
+                            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                              {a.type_acquisition === 'résidence_principale' ? '🏠 RP' :
+                               a.type_acquisition === 'résidence_secondaire' ? '🏖️ RS' : '📈 Invest.'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Critères */}
+                      <div className="flex gap-2 flex-wrap text-xs mb-3">
+                        {a.budget_max && (
+                          <span className="bg-sky-50 text-sky-700 border border-sky-200 px-2.5 py-1 rounded-full font-semibold">
+                            Budget {fmt(a.budget_max)} max
+                          </span>
+                        )}
+                        {a.types_bien?.length ? (
+                          <span className="bg-slate-50 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-full">
+                            {a.types_bien.join(' / ')}
+                          </span>
+                        ) : null}
+                        {(a.surface_min || a.surface_max) && (
+                          <span className="bg-slate-50 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-full">
+                            {a.surface_min ? `${a.surface_min}` : '?'}{a.surface_max ? `–${a.surface_max}` : '+'} m²
+                          </span>
+                        )}
+                        {a.chambres_min && (
+                          <span className="bg-slate-50 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-full">
+                            {a.chambres_min}+ ch.
+                          </span>
+                        )}
+                        {a.horizon && (
+                          <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full">
+                            ⏱ {a.horizon === 'immediat' ? 'Immédiat' : a.horizon === '3mois' ? '3 mois' : a.horizon === '6mois' ? '6 mois' : '1 an'}
+                          </span>
+                        )}
+                        {a.communes?.length > 1 && (
+                          <span className="bg-slate-50 text-slate-600 border border-slate-200 px-2.5 py-1 rounded-full">
+                            +{a.communes.length - 1} commune{a.communes.length > 2 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+
+                      {a.description && (
+                        <p className="text-sm text-slate-500 italic border-l-2 border-slate-200 pl-3 mb-3">
+                          &ldquo;{a.description}&rdquo;
+                        </p>
+                      )}
+
+                      {/* Coordonnées (premium seulement) */}
+                      {plan === 'premium' ? (
+                        <div className="flex items-center gap-4 pt-3 border-t border-slate-100">
+                          {a.email && (
+                            <a href={`mailto:${a.email}`}
+                              className="text-sm text-indigo-600 hover:underline font-medium">
+                              ✉️ {a.email}
+                            </a>
+                          )}
+                          {a.phone && (
+                            <a href={`tel:${a.phone}`}
+                              className="text-sm text-emerald-600 hover:underline font-medium">
+                              📞 {a.phone}
+                            </a>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                          <p className="text-xs text-slate-400">🔒 Coordonnées disponibles avec Premium</p>
+                          <Link href="/pro/rejoindre"
+                            className="text-xs text-indigo-600 font-semibold hover:underline">
+                            Upgrader →
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── ONGLET LEADS ──────────────────────────────────────── */}
         {tab === 'leads' && (

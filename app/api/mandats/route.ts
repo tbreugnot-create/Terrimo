@@ -123,7 +123,7 @@ async function notifyAgencies(mandatId: number, data: Record<string, unknown>) {
   try {
     // Récupérer les agences et notaires actifs dans les communes concernées
     const agences = await sql`
-      SELECT DISTINCT name, email, commune
+      SELECT DISTINCT name, email, commune, access_token
       FROM acteurs
       WHERE is_active = true
         AND type IN ('agence', 'notaire')
@@ -174,7 +174,7 @@ async function notifyAgencies(mandatId: number, data: Record<string, unknown>) {
                   Si vous avez un bien correspondant à ce profil, connectez-vous à votre espace Terrimo pour accéder aux coordonnées de l'acquéreur.
                 </p>
               </div>
-              <a href="https://terrimo.homes/pro/dashboard"
+              <a href="${a.access_token ? `https://terrimo.homes/pro/dashboard/${a.access_token as string}` : 'https://terrimo.homes/pro/dashboard'}"
                  style="display:inline-block;padding:12px 24px;background:#0ea5e9;color:white;border-radius:10px;text-decoration:none;font-weight:700;font-size:.9375rem">
                 Voir les profils acquéreurs →
               </a>

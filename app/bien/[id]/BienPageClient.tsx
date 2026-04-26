@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import type { CSSProperties } from 'react';
 import type { BienDetail } from './page';
 
 // ─────────────────────────────────────────────────────────────
@@ -439,7 +440,7 @@ export default function BienPageClient({ bien }: { bien: BienDetail }) {
   );
 }
 
-const optTag: React.CSSProperties = {
+const optTag: CSSProperties = {
   fontSize: '.875rem', fontWeight: 600, color: '#475569',
   background: '#f1f5f9', padding: '6px 14px', borderRadius: '20px',
 };
