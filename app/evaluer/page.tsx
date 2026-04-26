@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { COMMUNES } from '@/lib/communes';
-import { ZONES_BY_COMMUNE, Zone } from '@/lib/zones';
+import { ZONES_BY_COMMUNE, VILLAGE_ZONE_MAP, Zone } from '@/lib/zones';
+import { VILLAGES } from '@/lib/villages';
 
 // ============================================================
 // TYPES
@@ -322,6 +323,8 @@ export default function EvaluerPage(){
   const [localPros, setLocalPros]         = useState<LocalPro[]>([]);
   const [loadingPros, setLoadingPros]     = useState(false);
 
+  const [selectedVillage, setSelectedVillage] = useState<string>('');
+
   const [form, setForm] = useState<FormData>({
     commune: '', commune_dvf: '', type_local: '', zone: '',
     surface: '', pieces: '', annee_construction: '', dpe: 'D',
@@ -456,20 +459,34 @@ export default function EvaluerPage(){
   // ÉTAPE 1 — Commune & Type
   // ============================================================
   const renderStep1 = () => {
-    const availableZones = ZONES_BY_COMMUNE[form.commune_dvf] ?? [];
+    const availableZones    = ZONES_BY_COMMUNE[form.commune_dvf] ?? [];
+    // Villages de la commune sélectionnée ayant des coordonnées (sous-secteurs connus)
+    const communeVillages   = form.commune
+      ? VILLAGES.filter(v => v.communeName === form.commune && v.lat && v.lng && VILLAGE_ZONE_MAP[v.slug])
+      : [];
+    const hasVillages       = communeVillages.length > 1; // > 1 = commune avec vrais sous-secteurs
+    // Zone sélectionnée (pour affichage du label sous le village)
+    const selectedZoneObj   = availableZones.find((z: Zone) => z.value === form.zone);
+
     return (
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Votre bien</h2>
         <p className="text-gray-500 mb-8">Commençons par localiser et identifier votre bien.</p>
         <div className="space-y-6">
-          {/* Commune */}
+
+          {/* ── Commune ───────────────────────────────────────── */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-3">Commune</label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {COMMUNES.map((c) => (
                 <button
                   key={c.slug}
-                  onClick={() => { updateForm('commune', c.name); updateForm('commune_dvf', c.dvfName); updateForm('zone', ''); }}
+                  onClick={() => {
+                    updateForm('commune', c.name);
+                    updateForm('commune_dvf', c.dvfName);
+                    updateForm('zone', '');
+                    setSelectedVillage('');
+                  }}
                   className={`p-3 rounded-xl border-2 text-left transition-all ${
                     form.commune === c.name ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-indigo-200 bg-white'
                   }`}
@@ -480,10 +497,63 @@ export default function EvaluerPage(){
               ))}
             </div>
           </div>
-          {/* Zones */}
-          {availableZones.length > 0 && (
+
+          {/* ── Village / Quartier ────────────────────────────── */}
+          {form.commune && hasVillages && (
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Zone / Quartier micro-local</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Village / Quartier
+              </label>
+              <p className="text-xs text-gray-400 mb-3">
+                Impact direct sur le prix — chaque village a son propre marché.
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {communeVillages.map((v) => {
+                  const zoneVal  = VILLAGE_ZONE_MAP[v.slug];
+                  const zone     = availableZones.find((z: Zone) => z.value === zoneVal);
+                  const isActive = selectedVillage === v.slug;
+                  const coefPct  = zone ? Math.round((zone.coef - 1) * 100) : 0;
+                  return (
+                    <button
+                      key={v.slug}
+                      onClick={() => {
+                        setSelectedVillage(v.slug);
+                        if (zoneVal) updateForm('zone', zoneVal);
+                      }}
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${
+                        isActive ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-indigo-200 bg-white'
+                      }`}
+                    >
+                      <div className="font-semibold text-sm text-gray-900 leading-tight">{v.name}</div>
+                      {zone && (
+                        <div className={`text-xs mt-1 font-medium ${
+                          coefPct > 10 ? 'text-green-600' : coefPct > 0 ? 'text-teal-600' : coefPct < 0 ? 'text-orange-500' : 'text-gray-400'
+                        }`}>
+                          {coefPct > 0 ? `+${coefPct}%` : coefPct < 0 ? `${coefPct}%` : 'Prix de base'}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Affiche la description de la zone déduite du village */}
+              {selectedZoneObj && (
+                <div className="mt-3 flex items-start gap-2 p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-sm text-indigo-800">
+                  <span className="text-base flex-shrink-0">📍</span>
+                  <div>
+                    <span className="font-semibold">{selectedZoneObj.label}</span>
+                    <span className="text-indigo-600"> — </span>
+                    <span className="text-indigo-700">{selectedZoneObj.description}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Zones (communes sans sous-villages) ──────────── */}
+          {form.commune && !hasVillages && availableZones.length > 0 && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Zone / Quartier</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {availableZones.map((z: Zone) => (
                   <button key={z.value} onClick={() => updateForm('zone', z.value)}
@@ -498,7 +568,8 @@ export default function EvaluerPage(){
               </div>
             </div>
           )}
-          {/* Type */}
+
+          {/* ── Type de bien ──────────────────────────────────── */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-3">Type de bien</label>
             <div className="grid grid-cols-2 gap-4">
@@ -516,7 +587,7 @@ export default function EvaluerPage(){
           </div>
         </div>
 
-        {/* Bannière intention pré-sélectionnée depuis l'URL */}
+        {/* Bannière intention pré-sélectionnée */}
         {intentionHint && intentionHint !== 'vendre' && (
           <div className="mt-4 flex items-start gap-3 p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-sm text-indigo-800">
             <span className="text-base flex-shrink-0">{INTENTIONS.find(i => i.value === intentionHint)?.icon}</span>

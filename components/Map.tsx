@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { COMMUNES } from '@/lib/communes';
+import { VILLAGES } from '@/lib/villages';
 
 // ============================================================
 // TYPES
@@ -143,6 +144,24 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
         border-color: #6366f1;
         color: #6366f1;
       }
+      .village-label {
+        background: rgba(255,255,255,0.92);
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        padding: 1px 6px;
+        font-size: 10px;
+        font-weight: 500;
+        color: #64748b;
+        white-space: nowrap;
+        cursor: pointer;
+        pointer-events: auto;
+      }
+      .village-label:hover {
+        background: white;
+        border-color: #6366f1;
+        color: #4338ca;
+        font-weight: 600;
+      }
     `;
     document.head.appendChild(style);
     return () => { document.head.removeChild(style); };
@@ -281,6 +300,36 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
           .addTo(map)
           .on('click', () => setSelectedCommune(c => c === commune.slug ? null : commune.slug));
         circle.on('click', () => setSelectedCommune(c => c === commune.slug ? null : commune.slug));
+      });
+
+      // Labels villages (visibles à zoom ≥ 13)
+      const villageMarkers: any[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
+      VILLAGES.filter(v => v.lat && v.lng).forEach(village => {
+        const commune = COMMUNES.find(c => c.slug === village.communeSlug);
+        if (!commune) return;
+
+        const icon = L.divIcon({
+          className: '',
+          html: `<div class="village-label">· ${village.name}</div>`,
+          iconAnchor: [0, 8],
+        });
+
+        const marker = L.marker([village.lat!, village.lng!], { icon, interactive: true })
+          .addTo(map)
+          .on('click', () => {
+            map.flyTo([village.lat!, village.lng!], 14, { duration: 0.7 });
+            setSelectedCommune(commune.slug);
+            setMobileView('map');
+          });
+
+        // Masquer les labels villages au zoom < 13
+        marker.setOpacity(map.getZoom() >= 13 ? 1 : 0);
+        villageMarkers.push(marker);
+      });
+
+      map.on('zoomend', () => {
+        const z = map.getZoom();
+        villageMarkers.forEach(m => m.setOpacity(z >= 13 ? 1 : 0));
       });
     };
 
@@ -458,7 +507,24 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
               type="text"
               placeholder="Rechercher par nom, commune…"
               value={search}
-              onChange={e => { setSearch(e.target.value); setSelectedCommune(null); }}
+              onChange={e => {
+              const val = e.target.value;
+              setSearch(val);
+              setSelectedCommune(null);
+              // Si on tape un nom de village → zoomer dessus et sélectionner sa commune
+              if (val.trim().length >= 3) {
+                const match = VILLAGES.find(v =>
+                  v.name.toLowerCase().includes(val.trim().toLowerCase()) && v.lat && v.lng
+                );
+                if (match && mapRef.current) {
+                  const commune = COMMUNES.find(c => c.slug === match.communeSlug);
+                  if (commune) {
+                    mapRef.current.flyTo([match.lat, match.lng], 14, { duration: 0.7 });
+                    setSelectedCommune(commune.slug);
+                  }
+                }
+              }
+            }}
               style={{
                 width: '100%', padding: '11px 36px 11px 36px',
                 border: '2px solid', borderColor: search ? '#6366f1' : '#e2e8f0',
