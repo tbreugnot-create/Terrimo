@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
                  phone, email, website, google_rating, google_reviews,
                  lat, lng, is_recommended, description
           FROM agencies
-          WHERE is_active = true AND commune = ${commune}
+          WHERE is_active = true AND commune ILIKE ${'%' + commune + '%'}
           ORDER BY
             CASE plan WHEN 'premium' THEN 1 WHEN 'pro' THEN 2 ELSE 3 END,
             is_recommended DESC,

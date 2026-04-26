@@ -1,6 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
 const INTENTIONS = [
   {
@@ -60,8 +61,11 @@ const INTENTIONS = [
   },
 ];
 
-export default function ProprietairePage() {
+function ProprietaireContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const commune = searchParams.get('commune') || '';
+  const communeParam = commune ? `&commune=${encodeURIComponent(commune)}` : '';
 
   return (
     <div style={{
@@ -100,7 +104,7 @@ export default function ProprietairePage() {
           {INTENTIONS.map(intent => (
             <button
               key={intent.id}
-              onClick={() => router.push(intent.href)}
+              onClick={() => router.push(intent.href + communeParam)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 20,
                 background: intent.bg,
@@ -157,5 +161,13 @@ export default function ProprietairePage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function ProprietairePage() {
+  return (
+    <Suspense fallback={null}>
+      <ProprietaireContent />
+    </Suspense>
   );
 }

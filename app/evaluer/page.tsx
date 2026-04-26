@@ -294,13 +294,23 @@ export default function EvaluerPage(){
   const [intentionHint, setIntentionHint] = useState<Intention>('');
   const topRef = useRef<HTMLDivElement>(null);
 
-  // Lit ?intention= depuis l'URL pour pré-sélectionner après estimation
+  // Lit ?intention= et ?commune= depuis l'URL pour pré-sélectionner
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const param = params.get('intention') as Intention | null;
     if (param && INTENTIONS.find(i => i.value === param)) {
       setIntentionHint(param);
     }
+    // Pré-sélection commune si passée en paramètre (ex: depuis /quartier/arcachon)
+    const communeParam = params.get('commune');
+    if (communeParam) {
+      const match = COMMUNES.find(c => c.slug === communeParam || c.name.toLowerCase() === communeParam.toLowerCase());
+      if (match) {
+        updateForm('commune', match.name);
+        updateForm('commune_dvf', match.dvfName);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Déclenche auto-sélection d'intention quand le résultat apparaît

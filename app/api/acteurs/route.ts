@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
                address, commune, code_postal, lat, lng,
                google_rating, google_reviews, meta, is_verified
         FROM acteurs
-        WHERE is_active = true AND type = ${type} AND commune = ${commune}
+        WHERE is_active = true AND type = ${type} AND commune ILIKE ${'%' + commune + '%'}
         ORDER BY CASE plan WHEN 'premium' THEN 1 WHEN 'pro' THEN 2 ELSE 3 END,
                  google_rating DESC NULLS LAST
       `;
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
                address, commune, code_postal, lat, lng,
                google_rating, google_reviews, meta, is_verified
         FROM acteurs
-        WHERE is_active = true AND commune = ${commune}
+        WHERE is_active = true AND commune ILIKE ${'%' + commune + '%'}
         ORDER BY type, CASE plan WHEN 'premium' THEN 1 WHEN 'pro' THEN 2 ELSE 3 END
       `;
     } else {

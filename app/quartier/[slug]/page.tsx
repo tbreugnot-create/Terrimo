@@ -80,19 +80,35 @@ export default async function QuartierPage({ params }: Props) {
             {/* Stats DVF réelles */}
             <DvfStats dvfName={commune.dvfName} communeName={commune.name} />
 
-            {/* CTA carte */}
+            {/* CTA Estimer */}
             <div className="bg-indigo-600 rounded-xl p-6 text-white">
               <h3 className="font-semibold text-lg mb-1">
-                Explorer {commune.name} sur la carte
+                Estimer votre bien à {commune.name}
               </h3>
               <p className="text-indigo-200 text-sm mb-4">
-                Visualisez les transactions immobilières récentes, les agences et les quartiers de {commune.name} sur notre carte interactive.
+                Obtenez une estimation gratuite basée sur les données DVF réelles de {commune.name}. En 3 minutes.
+              </p>
+              <Link
+                href={`/evaluer?commune=${slug}`}
+                className="inline-block bg-white text-indigo-600 font-semibold text-sm px-5 py-2.5 rounded-lg hover:bg-indigo-50 transition-colors"
+              >
+                Estimer gratuitement →
+              </Link>
+            </div>
+
+            {/* CTA carte */}
+            <div className="border border-indigo-200 rounded-xl p-5">
+              <h3 className="font-semibold text-base mb-1 text-gray-800">
+                Explorer {commune.name} sur la carte
+              </h3>
+              <p className="text-gray-500 text-sm mb-3">
+                Agences, biens disponibles et transactions récentes sur notre carte interactive.
               </p>
               <Link
                 href={`/?commune=${slug}`}
-                className="inline-block bg-white text-indigo-600 font-semibold text-sm px-5 py-2.5 rounded-lg hover:bg-indigo-50 transition-colors"
+                className="inline-block text-indigo-600 font-semibold text-sm hover:underline"
               >
-                Voir la carte de {commune.name} →
+                Voir la carte →
               </Link>
             </div>
           </div>

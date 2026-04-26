@@ -16,18 +16,18 @@ export interface Village {
 export const VILLAGES: Village[] = [
 
   // ── ARCACHON & quartiers ──────────────────────────────────
-  { slug: 'arcachon',        name: 'Arcachon',           communeSlug: 'arcachon',        communeName: 'Arcachon' },
+  { slug: 'arcachon',        name: 'Arcachon (centre)',   communeSlug: 'arcachon',        communeName: 'Arcachon',        lat: 44.6522, lng: -1.1675 },
   { slug: 'moulleau',        name: 'Le Moulleau',         communeSlug: 'arcachon',        communeName: 'Arcachon',        lat: 44.6270, lng: -1.1952 },
   { slug: 'pereire',         name: 'Pereire',             communeSlug: 'arcachon',        communeName: 'Arcachon',        lat: 44.6620, lng: -1.1812 },
   { slug: 'ville-hiver',     name: 'Ville d\'Hiver',      communeSlug: 'arcachon',        communeName: 'Arcachon',        lat: 44.6540, lng: -1.1700 },
 
   // ── LA TESTE-DE-BUCH ──────────────────────────────────────
-  { slug: 'la-teste-de-buch', name: 'La Teste-de-Buch',  communeSlug: 'la-teste-de-buch', communeName: 'La Teste-de-Buch' },
+  { slug: 'la-teste-de-buch', name: 'La Teste (centre)',  communeSlug: 'la-teste-de-buch', communeName: 'La Teste-de-Buch', lat: 44.6272, lng: -1.1333 },
   { slug: 'pyla-sur-mer',    name: 'Pyla-sur-Mer',       communeSlug: 'la-teste-de-buch', communeName: 'La Teste-de-Buch', lat: 44.5894, lng: -1.1922 },
   { slug: 'cazaux',          name: 'Cazaux',              communeSlug: 'la-teste-de-buch', communeName: 'La Teste-de-Buch', lat: 44.5358, lng: -1.0889 },
 
   // ── GUJAN-MESTRAS & 7 ports ───────────────────────────────
-  { slug: 'gujan-mestras',   name: 'Gujan-Mestras',      communeSlug: 'gujan-mestras',   communeName: 'Gujan-Mestras' },
+  { slug: 'gujan-mestras',   name: 'Gujan (centre)',      communeSlug: 'gujan-mestras',   communeName: 'Gujan-Mestras',   lat: 44.6358, lng: -1.0697 },
   { slug: 'la-hume',         name: 'La Hume',             communeSlug: 'gujan-mestras',   communeName: 'Gujan-Mestras',   lat: 44.6203, lng: -1.0822 },
   { slug: 'larros',          name: 'Larros',              communeSlug: 'gujan-mestras',   communeName: 'Gujan-Mestras',   lat: 44.6322, lng: -1.0614 },
   { slug: 'meyran',          name: 'Meyran',              communeSlug: 'gujan-mestras',   communeName: 'Gujan-Mestras',   lat: 44.6389, lng: -1.0564 },
