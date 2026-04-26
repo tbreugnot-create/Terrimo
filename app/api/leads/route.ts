@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { emailLeadConfirmation, emailAdminNewLead, emailProNewLead } from '@/lib/email';
+import { syncVendeurToOdoo } from '@/lib/odoo';
 
 interface LeadRequest {
   // Contact
@@ -150,6 +151,17 @@ export async function POST(request: NextRequest) {
     `;
 
     const leadId = rows[0].id as number;
+
+    // Sync Odoo contact propriétaire/vendeur (fire & forget)
+    syncVendeurToOdoo({
+      email,
+      commune: commune ?? undefined,
+      type_bien: type_local ?? undefined,
+      surface: surface ?? null,
+      estimation: estimation_centrale ?? null,
+      intention: source === 'evaluer' ? 'vendre' : undefined,
+      leadNeonId: leadId,
+    }).catch(() => {});
 
     // Sync Odoo CRM (asynchrone — ne bloque pas la réponse)
     syncLeadToOdoo(body, leadId)

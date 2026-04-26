@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { Resend } from 'resend';
+import { syncAcquereurToOdoo } from '@/lib/odoo';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM   = 'Terrimo <notifications@terrimo.homes>';
@@ -52,6 +53,21 @@ export async function POST(request: NextRequest) {
     `;
 
     const mandat = rows[0];
+
+    // Sync Odoo contact acquéreur (fire & forget)
+    syncAcquereurToOdoo({
+      prenom: prenom ?? undefined,
+      email,
+      phone: phone ?? undefined,
+      communes: communes ?? [],
+      budget_max: budget_max ?? null,
+      type_acquisition: type_acquisition ?? undefined,
+      horizon: horizon ?? undefined,
+      mode_financement: mode_financement ?? undefined,
+      accord_bancaire: accord_bancaire ?? false,
+      description: description ?? undefined,
+      mandatNeonId: mandat.id,
+    }).catch(() => {});
 
     // Email de confirmation à l'acquéreur
     await resend.emails.send({
