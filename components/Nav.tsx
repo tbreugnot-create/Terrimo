@@ -33,6 +33,27 @@ const PROPRIO_ITEMS = [
   },
 ];
 
+const ACQUEREUR_ITEMS = [
+  {
+    href: '/rechercher',
+    icon: '🔍',
+    label: 'Créer mon alerte de recherche',
+    desc: 'Définissez vos critères, les agences vous contactent',
+  },
+  {
+    href: '/',
+    icon: '🗺️',
+    label: 'Explorer la carte',
+    desc: 'Biens disponibles, prix au m², quartiers',
+  },
+  {
+    href: '/rechercher?type=investissement',
+    icon: '📈',
+    label: 'Investissement locatif',
+    desc: 'Rendement saisonnier, conciergeries partenaires',
+  },
+];
+
 const PRO_ITEMS = [
   {
     href: '/pro/rejoindre?type=agence',
@@ -197,7 +218,7 @@ function MobileSection({
 export default function Nav() {
   const pathname = usePathname();
   const [menuOpen,      setMenuOpen]      = useState(false);
-  const [openDropdown,  setOpenDropdown]  = useState<'proprio' | 'pro' | null>(null);
+  const [openDropdown,  setOpenDropdown]  = useState<'proprio' | 'pro' | 'acquéreur' | null>(null);
   const [scrolled,      setScrolled]      = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
 
@@ -225,7 +246,7 @@ export default function Nav() {
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname.startsWith(href.split('?')[0]);
 
-  const toggleDropdown = (key: 'proprio' | 'pro') =>
+  const toggleDropdown = (key: 'proprio' | 'pro' | 'acquéreur') =>
     setOpenDropdown(prev => prev === key ? null : key);
 
   const linkStyle = (active: boolean): CSSProperties => ({
@@ -329,6 +350,31 @@ export default function Nav() {
               </button>
               {openDropdown === 'proprio' && (
                 <DropdownPanel items={PROPRIO_ITEMS} onClose={() => setOpenDropdown(null)} />
+              )}
+            </div>
+
+            {/* Acquéreurs dropdown */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => toggleDropdown('acquéreur')}
+                className="nav-dropdown-btn"
+                style={{
+                  ...linkStyle(openDropdown === 'acquéreur' || isActive('/rechercher')),
+                  gap: '6px',
+                }}
+              >
+                🔍 Acquéreurs
+                <span style={{
+                  fontSize: '.65rem',
+                  color: 'rgba(255,255,255,.5)',
+                  transition: 'transform .15s',
+                  transform: openDropdown === 'acquéreur' ? 'rotate(180deg)' : 'none',
+                  display: 'inline-block',
+                  marginLeft: '2px',
+                }}>▼</span>
+              </button>
+              {openDropdown === 'acquéreur' && (
+                <DropdownPanel items={ACQUEREUR_ITEMS} onClose={() => setOpenDropdown(null)} />
               )}
             </div>
 
@@ -473,6 +519,14 @@ export default function Nav() {
             icon="🏠"
             label="Propriétaires"
             items={PROPRIO_ITEMS}
+            onClose={() => setMenuOpen(false)}
+          />
+
+          {/* Accordéon Acquéreurs */}
+          <MobileSection
+            icon="🔍"
+            label="Acquéreurs"
+            items={ACQUEREUR_ITEMS}
             onClose={() => setMenuOpen(false)}
           />
 
