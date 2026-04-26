@@ -10,6 +10,50 @@ export interface Zone {
   description: string;
 }
 
+/**
+ * Mapping village slug → zone value (pour le formulaire /evaluer)
+ * Permet de sélectionner "Piraillan" et d'appliquer automatiquement le coef "herbe-pira"
+ */
+export const VILLAGE_ZONE_MAP: Record<string, string> = {
+  // Arcachon
+  'ville-hiver':     'ville-hiver',
+  'moulleau':        'moulleau',
+  'pereire':         'pereire',
+  'arcachon':        'centre',
+
+  // La Teste-de-Buch
+  'pyla-sur-mer':    'pyla',
+  'cazaux':          'peripherie',
+  'la-teste-de-buch':'centre-teste',
+
+  // Lège-Cap-Ferret
+  'grand-crohot':    'face-ocean',
+  'cap-ferret':      'cap-village',
+  'la-vigne':        'cap-village',
+  'l-herbe':         'herbe-pira',
+  'piraillan':       'herbe-pira',
+  'le-canon':        'herbe-pira',
+  'le-truc-vert':    'herbe-pira',
+  'petit-piquey':    'face-bassin',
+  'grand-piquey':    'face-bassin',
+  'claouey':         'claouey',
+  'les-jacquets':    'claouey',
+  'le-four':         'claouey',
+  'lege':            'claouey',
+
+  // Lanton
+  'taussat':         'taussat',
+  'cassy':           'cassy',
+  'lanton':          'residentiel',
+
+  // Gujan-Mestras
+  'la-hume':         'centre',
+  'larros':          'ports',
+  'meyran':          'bord-bassin',
+  'le-rocher':       'bord-bassin',
+  'gujan-mestras':   'centre',
+};
+
 export const ZONES_BY_COMMUNE: Record<string, Zone[]> = {
   'ARCACHON': [
     { value: 'ville-hiver',  label: '🌳 Ville d\'Hiver / Thiers',    coef: 1.25, description: 'Villas Belle Époque, calme absolu, cachet historique exceptionnel' },
@@ -68,5 +112,15 @@ export const ZONES_BY_COMMUNE: Record<string, Zone[]> = {
     { value: 'bord-bassin',  label: '🌿 Bord bassin / Réserve',       coef: 1.12, description: 'Réserve ornithologique, nature unique' },
     { value: 'residentiel',  label: '🏘️ Résidentiel',                  coef: 1.00, description: 'Quartiers pavillonnaires, gare SNCF' },
     { value: 'peripherie',   label: '🌲 Périphérie',                   coef: 0.90, description: 'Zones moins centrales' },
+  ],
+  'MIOS': [
+    { value: 'lac-cazaux',   label: '🌊 Bord lac de Cazaux',          coef: 1.10, description: 'Proximité lac, nature, calme' },
+    { value: 'residentiel',  label: '🏘️ Résidentiel',                  coef: 1.00, description: 'Bourg principal, bien desservi' },
+    { value: 'peripherie',   label: '🌲 Périphérie / Forêt',           coef: 0.90, description: 'Zones forestières éloignées' },
+  ],
+  'SALLES': [
+    { value: 'centre',       label: '⛪ Centre bourg',                 coef: 1.05, description: 'Centre-ville, commerces, services' },
+    { value: 'residentiel',  label: '🏘️ Résidentiel',                  coef: 1.00, description: 'Quartiers pavillonnaires calmes' },
+    { value: 'peripherie',   label: '🌲 Périphérie / Forêt',           coef: 0.90, description: 'Zones forestières éloignées' },
   ],
 };

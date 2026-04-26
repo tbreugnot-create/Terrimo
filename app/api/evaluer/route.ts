@@ -30,6 +30,8 @@ const PRIX_FALLBACK: Record<string, Record<string, number>> = {
   'BIGANOS':            { Maison: 3700,  Appartement: 3200 },  // -8%
   'AUDENGE':            { Maison: 3900,  Appartement: 3300 },  // -9%
   'LE TEICH':           { Maison: 3800,  Appartement: 3200 },  // -7%
+  'MIOS':               { Maison: 3200,  Appartement: 2800 },  // marché forestier accessible
+  'SALLES':             { Maison: 3000,  Appartement: 2600 },  // marché périphérique
 };
 
 // ============================================================

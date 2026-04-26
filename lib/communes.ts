@@ -134,6 +134,30 @@ export const COMMUNES: Commune[] = [
     lat: 44.6369,
     lng: -1.0244,
   },
+  {
+    slug: 'mios',
+    name: 'Mios',
+    dvfName: 'MIOS',
+    tier: 'emergent',
+    tierLabel: 'Émergent',
+    tierEmoji: '📈',
+    tagline: 'Forêt & lac de Cazaux — Marché résidentiel calme',
+    description: `Mios est une commune forestière aux portes du Bassin d'Arcachon, entre la forêt des Landes et le lac de Cazaux. Son marché immobilier offre des prix très accessibles, attirant familles et actifs en quête d'espace. La commune bénéficie de la proximité de Gujan-Mestras et du réseau ferroviaire Bordeaux-Arcachon.`,
+    lat: 44.5994,
+    lng: -0.9514,
+  },
+  {
+    slug: 'salles',
+    name: 'Salles',
+    dvfName: 'SALLES',
+    tier: 'emergent',
+    tierLabel: 'Émergent',
+    tierEmoji: '📈',
+    tagline: 'Cœur des Landes girondines — Accès Bassin',
+    description: `Salles est une commune girondine à la lisière du Bassin d'Arcachon, idéale pour ceux qui cherchent un cadre forestier tranquille à prix doux. Sa situation entre Bordeaux et le Bassin en fait une alternative crédible pour les ménages qui souhaitent s'établir dans un environnement naturel tout en restant à moins de 30 minutes des plages.`,
+    lat: 44.5497,
+    lng: -0.8675,
+  },
 ];
 
 export const COMMUNE_BY_SLUG = Object.fromEntries(
