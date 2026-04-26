@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import type { FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -60,7 +61,7 @@ export default function NouveauBienPage() {
     ? Math.round(Number(form.prix) / Number(form.surface))
     : null;
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!form.commune) { setError('Veuillez sélectionner une commune'); return; }
     setSubmitting(true);
