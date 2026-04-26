@@ -461,8 +461,10 @@ export default function EvaluerPage(){
   const renderStep1 = () => {
     const availableZones    = ZONES_BY_COMMUNE[form.commune_dvf] ?? [];
     // Villages de la commune sélectionnée ayant des coordonnées (sous-secteurs connus)
-    const communeVillages   = form.commune
-      ? VILLAGES.filter(v => v.communeName === form.commune && v.lat && v.lng && VILLAGE_ZONE_MAP[v.slug])
+    // On filtre par communeSlug (robuste) plutôt que communeName (sensible à la casse/tirets)
+    const selectedCommuneObj = COMMUNES.find(c => c.name === form.commune);
+    const communeVillages   = selectedCommuneObj
+      ? VILLAGES.filter(v => v.communeSlug === selectedCommuneObj.slug && v.lat && v.lng && VILLAGE_ZONE_MAP[v.slug])
       : [];
     const hasVillages       = communeVillages.length > 1; // > 1 = commune avec vrais sous-secteurs
     // Zone sélectionnée (pour affichage du label sous le village)
