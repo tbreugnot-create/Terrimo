@@ -318,15 +318,6 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
 
       // Zones communes
       COMMUNES.forEach((commune) => {
-        const tierColors: Record<string, string> = {
-          premium: '#6366f1', equilibre: '#0ea5e9', emergent: '#10b981',
-        };
-        const color = tierColors[commune.tier] || '#94a3b8';
-
-        const circle = L.circle([commune.lat, commune.lng], {
-          radius: 2500, color, fillColor: color, fillOpacity: 0.07, weight: 1.5,
-        }).addTo(map);
-
         const label = L.divIcon({
           className: '',
           html: `<div class="commune-label">${commune.tierEmoji} ${commune.name}</div>`,
@@ -335,7 +326,6 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
         L.marker([commune.lat, commune.lng], { icon: label, interactive: true })
           .addTo(map)
           .on('click', () => setSelectedCommune(c => c === commune.slug ? null : commune.slug));
-        circle.on('click', () => setSelectedCommune(c => c === commune.slug ? null : commune.slug));
       });
 
       // Labels villages (visibles à zoom ≥ 13)
@@ -1088,9 +1078,9 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
 
         {/* ── Boutons Draw flottants (toujours visibles) ──────── */}
         <div style={{
-          position: 'absolute', bottom: '16px', left: '12px', zIndex: 600,
+          position: 'absolute', bottom: '16px', left: '12px', zIndex: 550,
           display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start',
-        }} className="draw-btns-float">
+        }} className={`draw-btns-float${mobileView === 'list' ? ' hidden-mobile' : ''}`}>
           {/* Effacer la zone — visible uniquement quand une zone est sélectionnée */}
           {zoneIds !== null && (
             <button

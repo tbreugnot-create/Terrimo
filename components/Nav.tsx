@@ -41,7 +41,7 @@ const ACQUEREUR_ITEMS = [
     desc: 'Définissez vos critères, les agences vous contactent',
   },
   {
-    href: '/',
+    href: '/?ouvre-carte=1',
     icon: '🗺️',
     label: 'Explorer la carte',
     desc: 'Biens disponibles, prix au m², quartiers',
