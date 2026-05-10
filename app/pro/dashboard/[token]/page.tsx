@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 
 // ─────────────────────────────────────────────────────────────
 // TYPES
@@ -91,8 +91,11 @@ const fmtDate = (s: string) =>
 // PAGE PRINCIPALE
 // ─────────────────────────────────────────────────────────────
 export default function ProDashboard() {
-  const params   = useParams();
-  const token    = params.token as string;
+  const params        = useParams();
+  const searchParams  = useSearchParams();
+  const token         = params.token as string;
+  const upgraded      = searchParams.get('upgraded') === '1';
+  const upgradedPlan  = searchParams.get('plan') ?? '';
 
   const [acteur,      setActeur]      = useState<Acteur | null>(null);
   const [loading,     setLoading]     = useState(true);
@@ -268,6 +271,7 @@ export default function ProDashboard() {
 
         {/* ── Stats strip ─────────────────────────────────────── */}
         {stats && (
+          <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             {[
               {
@@ -332,18 +336,34 @@ export default function ProDashboard() {
               ))}
             </div>
           )}
+          </>
+        )}
+
+        {/* ── Succès upgrade post-Stripe ───────────────────────── */}
+        {upgraded && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 mb-6 flex items-center gap-4">
+            <div className="text-3xl">🎉</div>
+            <div>
+              <p className="font-bold text-emerald-800 text-lg">
+                Bienvenue en plan {upgradedPlan.charAt(0).toUpperCase() + upgradedPlan.slice(1)} !
+              </p>
+              <p className="text-emerald-700 text-sm mt-0.5">
+                Votre abonnement est actif. Toutes les fonctionnalités sont débloquées.
+              </p>
+            </div>
+          </div>
         )}
 
         {/* Plan Free → CTA upgrade */}
         {plan === 'free' && (
           <div className="bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-2xl p-5 mb-6 text-white flex items-center justify-between gap-4">
             <div>
-              <p className="font-bold text-lg mb-1">Passez en Pro ou Premium</p>
-              <p className="text-indigo-100 text-sm">Recevez les leads de votre commune · Modifiez votre fiche · Ajoutez vos biens</p>
+              <p className="font-bold text-lg mb-1">🚀 Passez en Pro ou Premium</p>
+              <p className="text-indigo-100 text-sm">Recevez les leads de votre commune · Analytics · Mise en avant prioritaire</p>
             </div>
-            <Link href="/pro/rejoindre"
-              className="shrink-0 bg-white text-indigo-700 font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-indigo-50 transition">
-              Upgrader →
+            <Link href={`/pro/upgrade/${token}`}
+              className="shrink-0 bg-white text-indigo-700 font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-indigo-50 transition whitespace-nowrap">
+              Voir les plans →
             </Link>
           </div>
         )}

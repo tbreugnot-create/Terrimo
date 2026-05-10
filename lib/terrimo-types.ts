@@ -23,6 +23,8 @@ export interface ActeurDetail {
     description?: string;
     zones_couvertes?: string[];
     tarif_gestion?: string;
+    logo?: string;
+    [key: string]: unknown;
   };
 }
 

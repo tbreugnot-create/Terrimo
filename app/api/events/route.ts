@@ -12,7 +12,7 @@ type EventType = (typeof VALID_EVENTS)[number];
 // Hash SHA-256 léger (premiers 16 chars) pour unicité sans IP brute
 async function hashIp(ip: string): Promise<string> {
   const encoder = new TextEncoder();
-  const data = encoder.encode(ip + process.env.CRON_SECRET ?? 'salt_terrimo');
+  const data = encoder.encode(ip + (process.env.CRON_SECRET ?? 'salt_terrimo'));
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
