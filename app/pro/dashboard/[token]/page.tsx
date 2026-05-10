@@ -108,6 +108,18 @@ export default function ProDashboard() {
   const [acqTotal,    setAcqTotal]    = useState(0);
   const [acqLoading,  setAcqLoading]  = useState(false);
 
+  // Import CSV
+  const [csvFile,      setCsvFile]      = useState<File | null>(null);
+  const [csvImporting, setCsvImporting] = useState(false);
+  const [csvDragOver,  setCsvDragOver]  = useState(false);
+  const [csvResult,    setCsvResult]    = useState<{
+    ok?: boolean;
+    inserted: number;
+    errors: { line: number; error: string }[];
+    skipped: number;
+    message: string;
+  } | null>(null);
+
   // Stats
   const [stats, setStats] = useState<{
     biens?: { actifs: number; total: number; featured: number; recents_30j: number };
@@ -189,6 +201,44 @@ export default function ProDashboard() {
       setSaving(false);
     }
   };
+
+  const handleCSVImport = async () => {
+    if (!csvFile) return;
+    setCsvImporting(true);
+    setCsvResult(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', csvFile);
+      const res = await fetch(`/api/pro/import-csv?token=${token}`, { method: 'POST', body: fd });
+      const d = await res.json();
+      setCsvResult(d);
+      if (d.ok && d.inserted > 0) {
+        // Recharger la liste des biens
+        const r2 = await fetch(`/api/pro/fiche?token=${token}`);
+        const d2 = await r2.json();
+        if (!d2.error) {
+          setActeur(d2.acteur);
+        }
+      }
+    } catch {
+      setCsvResult({ inserted: 0, errors: [{ line: 0, error: 'Erreur réseau' }], skipped: 0, message: 'Erreur réseau' });
+    } finally {
+      setCsvImporting(false);
+      setCsvFile(null);
+    }
+  };
+
+  const CSV_TEMPLATE_HEADERS = [
+    'type_annonce', 'type_bien', 'titre', 'prix', 'surface', 'pieces', 'chambres',
+    'commune', 'adresse', 'dpe', 'annee_construction', 'has_piscine', 'has_garage',
+    'has_terrasse', 'description', 'photo_url_1', 'photo_url_2', 'photo_url_3',
+  ].join(',');
+  const CSV_TEMPLATE_EXAMPLE = [
+    'vente', 'maison', 'Belle villa avec piscine', '750000', '180', '7', '4',
+    'Arcachon', '12 avenue de la Plage', 'C', '1995', 'oui', 'oui', 'oui',
+    'Magnifique villa sur les hauteurs d\'Arcachon', 'https://exemple.com/photo1.jpg', '', '',
+  ].join(',');
+  const csvTemplateHref = `data:text/csv;charset=utf-8,${encodeURIComponent(CSV_TEMPLATE_HEADERS + '\n' + CSV_TEMPLATE_EXAMPLE)}`;
 
   // ── États de chargement ──────────────────────────────────────
   if (loading) {
@@ -698,6 +748,128 @@ export default function ProDashboard() {
                     + Ajouter un bien
                   </Link>
                 </div>
+
+                {/* ── Import CSV ───────────────────────────────── */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-5">
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div>
+                      <h4 className="font-semibold text-slate-900 text-sm">📥 Import en masse (CSV)</h4>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {plan === 'premium'
+                          ? 'Jusqu\'à 200 biens par fichier · quota illimité'
+                          : 'Jusqu\'à 20 biens par import · 50 biens actifs max'}
+                      </p>
+                    </div>
+                    <a
+                      href={csvTemplateHref}
+                      download="terrimo-template.csv"
+                      className="shrink-0 text-xs text-indigo-600 border border-indigo-200 hover:bg-indigo-50 px-3 py-1.5 rounded-lg font-medium transition"
+                    >
+                      ⬇ Télécharger le modèle CSV
+                    </a>
+                  </div>
+
+                  {/* Zone de dépôt */}
+                  <div
+                    className={`border-2 border-dashed rounded-xl p-6 text-center transition cursor-pointer ${
+                      csvDragOver
+                        ? 'border-indigo-400 bg-indigo-50'
+                        : csvFile
+                        ? 'border-emerald-400 bg-emerald-50'
+                        : 'border-slate-300 hover:border-slate-400 bg-slate-50'
+                    }`}
+                    onDragOver={e => { e.preventDefault(); setCsvDragOver(true); }}
+                    onDragLeave={() => setCsvDragOver(false)}
+                    onDrop={e => {
+                      e.preventDefault();
+                      setCsvDragOver(false);
+                      setCsvResult(null);
+                      const f = e.dataTransfer.files[0];
+                      if (f?.name.endsWith('.csv')) setCsvFile(f);
+                    }}
+                    onClick={() => document.getElementById('csv-file-input')?.click()}
+                  >
+                    <input
+                      id="csv-file-input"
+                      type="file"
+                      accept=".csv,text/csv"
+                      className="hidden"
+                      onChange={e => {
+                        setCsvResult(null);
+                        setCsvFile(e.target.files?.[0] ?? null);
+                        e.target.value = '';
+                      }}
+                    />
+                    {csvFile ? (
+                      <div>
+                        <div className="text-2xl mb-1">📄</div>
+                        <p className="text-sm font-semibold text-emerald-700">{csvFile.name}</p>
+                        <p className="text-xs text-emerald-600 mt-0.5">{(csvFile.size / 1024).toFixed(1)} Ko · Prêt à importer</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="text-2xl mb-1 text-slate-400">📂</div>
+                        <p className="text-sm text-slate-500">Glisser-déposer un fichier CSV ici</p>
+                        <p className="text-xs text-slate-400 mt-0.5">ou cliquer pour choisir un fichier</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {csvFile && (
+                    <div className="flex items-center gap-3 mt-3">
+                      <button
+                        onClick={handleCSVImport}
+                        disabled={csvImporting}
+                        className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold px-5 py-2 rounded-xl text-sm transition"
+                      >
+                        {csvImporting ? (
+                          <span className="flex items-center gap-2">
+                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+                            Import en cours…
+                          </span>
+                        ) : '⬆ Importer'}
+                      </button>
+                      <button
+                        onClick={() => { setCsvFile(null); setCsvResult(null); }}
+                        className="text-xs text-slate-500 hover:text-slate-700 underline"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Résultat import */}
+                  {csvResult && (
+                    <div className={`mt-4 rounded-xl p-4 border ${
+                      csvResult.inserted > 0
+                        ? 'bg-emerald-50 border-emerald-200'
+                        : 'bg-red-50 border-red-200'
+                    }`}>
+                      <p className={`font-semibold text-sm ${csvResult.inserted > 0 ? 'text-emerald-800' : 'text-red-800'}`}>
+                        {csvResult.inserted > 0 ? '✅' : '⚠️'} {csvResult.message}
+                      </p>
+                      {csvResult.skipped > 0 && (
+                        <p className="text-xs text-amber-700 mt-1">
+                          ⚠ {csvResult.skipped} ligne{csvResult.skipped > 1 ? 's' : ''} ignorée{csvResult.skipped > 1 ? 's' : ''} (quota atteint)
+                        </p>
+                      )}
+                      {csvResult.errors.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {csvResult.errors.slice(0, 5).map((e, i) => (
+                            <p key={i} className="text-xs text-red-700">
+                              Ligne {e.line} : {e.error}
+                            </p>
+                          ))}
+                          {csvResult.errors.length > 5 && (
+                            <p className="text-xs text-red-500">… et {csvResult.errors.length - 5} autre{csvResult.errors.length - 5 > 1 ? 's' : ''} erreur{csvResult.errors.length - 5 > 1 ? 's' : ''}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {/* ── Fin Import CSV ───────────────────────────── */}
+
                 {biens.length === 0 ? (
                   <div className="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-10 text-center">
                     <div className="text-3xl mb-2">🏠</div>
