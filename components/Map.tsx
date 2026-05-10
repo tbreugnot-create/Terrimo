@@ -104,7 +104,7 @@ function ptInPoly(lat: number, lng: number, poly: [number, number][]): boolean {
 // ============================================================
 // MAP COMPONENT
 // ============================================================
-export default function TerrimoMap({ initialCommune, autoScrollZoom }: { initialCommune?: string; autoScrollZoom?: boolean }) {
+export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMode }: { initialCommune?: string; autoScrollZoom?: boolean; autoDrawMode?: boolean }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef     = useRef<any>(null);
   const mapDivRef  = useRef<HTMLDivElement>(null);
@@ -131,7 +131,7 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom }: { initial
   const biensMarkersRef                        = useRef<any[]>([]);
   const [biens, setBiens]                      = useState<Bien[]>([]);
   const [selectedBien, setSelectedBien]        = useState<Bien | null>(null);
-  const [layerMode, setLayerMode]              = useState<LayerMode>('pros');
+  const [layerMode, setLayerMode]              = useState<LayerMode>(autoDrawMode ? 'biens' : 'pros');
   const [loadingBiens, setLoadingBiens]        = useState(false);
 
   // ── Draw Search ───────────────────────────────────────────
@@ -304,6 +304,12 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom }: { initial
         touchZoom: true,  // pinch-to-zoom mobile/tablette
       });
       if (autoScrollZoom) { setMapActive(true); setShowHint(false); }
+      // Auto-activer le mode dessin si demandé (venant du CTA homepage)
+      if (autoDrawMode) {
+        drawModeRef.current = true;
+        setDrawMode(true);
+        setMobileView('map');
+      }
 
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '© OpenStreetMap © CARTO', maxZoom: 19,

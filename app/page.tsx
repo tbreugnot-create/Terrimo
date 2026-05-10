@@ -86,14 +86,15 @@ const STATS = [
 // ─── PAGE ────────────────────────────────────────────────────
 export default function Home() {
   const [mapFullscreen, setMapFullscreen] = useState(false);
+  const [mapDrawMode, setMapDrawMode]     = useState(false);
 
   if (mapFullscreen) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 68px)', overflow: 'hidden' }}>
         <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-          <Suspense><TerrimoMap autoScrollZoom /></Suspense>
+          <Suspense><TerrimoMap autoScrollZoom autoDrawMode={mapDrawMode} /></Suspense>
           <button
-            onClick={() => setMapFullscreen(false)}
+            onClick={() => { setMapFullscreen(false); setMapDrawMode(false); }}
             style={{
               position: 'absolute', top: 16, right: 16, zIndex: 1000,
               background: 'white', border: 'none', borderRadius: 10,
@@ -180,7 +181,7 @@ export default function Home() {
         {/* CTAs */}
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button
-            onClick={() => setMapFullscreen(true)}
+            onClick={() => { setMapDrawMode(true); setMapFullscreen(true); }}
             style={{
               padding: '15px 32px', borderRadius: 14,
               background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
@@ -314,7 +315,7 @@ export default function Home() {
                 Dessinez votre périmètre idéal directement sur la carte du Bassin. Filtrez instantanément tous les biens disponibles dans votre zone — sans saisir d'adresse.
               </p>
               <button
-                onClick={() => setMapFullscreen(true)}
+                onClick={() => { setMapDrawMode(true); setMapFullscreen(true); }}
                 style={{
                   alignSelf: 'flex-start',
                   padding: '12px 24px', borderRadius: 12,
@@ -512,7 +513,7 @@ export default function Home() {
             Cliquez sur la carte, délimitez votre zone idéale, et découvrez tous les biens disponibles dans votre périmètre — en temps réel.
           </p>
           <button
-            onClick={() => setMapFullscreen(true)}
+            onClick={() => { setMapDrawMode(true); setMapFullscreen(true); }}
             style={{
               padding: '15px 36px', borderRadius: 14,
               background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
