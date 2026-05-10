@@ -563,13 +563,15 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
       <div
         className={`map-left-panel ${mobileView === 'map' ? 'hidden-mobile' : ''}`}
         style={{
-          width: '340px', flexShrink: 0, background: 'white',
-          borderRight: '1px solid #e2e8f0', display: 'flex',
+          width: '340px', flexShrink: 0,
+          background: 'rgba(10,20,38,.96)',
+          backdropFilter: 'blur(20px)',
+          borderRight: '1px solid rgba(255,255,255,.08)', display: 'flex',
           flexDirection: 'column', overflow: 'hidden', zIndex: 10,
         }}
       >
         {/* ── Barre de recherche (toujours visible, prominent) ── */}
-        <div style={{ padding: '14px 14px 10px', background: 'white' }}>
+        <div style={{ padding: '14px 14px 10px', background: 'transparent' }}>
           <div style={{ position: 'relative' }}>
             <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
               width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5">
@@ -599,17 +601,14 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
             }}
               style={{
                 width: '100%', padding: '11px 36px 11px 36px',
-                border: '2px solid', borderColor: search ? '#6366f1' : '#e2e8f0',
-                borderRadius: '12px', fontSize: '1rem', color: '#1e293b',
-                background: search ? 'white' : '#f8fafc', outline: 'none',
+                border: '1.5px solid', borderColor: search ? '#6366f1' : 'rgba(255,255,255,.12)',
+                borderRadius: '12px', fontSize: '1rem', color: 'white',
+                background: 'rgba(255,255,255,.07)', outline: 'none',
                 transition: 'all .15s', boxSizing: 'border-box', minHeight: 'auto',
               }}
-              onFocus={e => { (e.target as HTMLInputElement).style.borderColor = '#6366f1'; (e.target as HTMLInputElement).style.background = 'white'; }}
+              onFocus={e => { (e.target as HTMLInputElement).style.borderColor = '#6366f1'; }}
               onBlur={e => {
-                if (!search) {
-                  (e.target as HTMLInputElement).style.borderColor = '#e2e8f0';
-                  (e.target as HTMLInputElement).style.background = '#f8fafc';
-                }
+                if (!search) (e.target as HTMLInputElement).style.borderColor = 'rgba(255,255,255,.12)';
               }}
             />
             {search ? (
@@ -640,10 +639,10 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
               style={{
                 flex: 1, padding: '7px 4px', fontSize: '.8125rem', fontWeight: 700,
                 border: '1.5px solid',
-                borderColor: layerMode === key ? color : '#e2e8f0',
+                borderColor: layerMode === key ? color : 'rgba(255,255,255,.1)',
                 borderRadius: '10px', cursor: 'pointer',
-                background: layerMode === key ? bg : 'white',
-                color: layerMode === key ? color : '#94a3b8',
+                background: layerMode === key ? bg : 'rgba(255,255,255,.05)',
+                color: layerMode === key ? color : 'rgba(255,255,255,.4)',
                 transition: 'all .12s', minHeight: 'auto',
               }}>
               {label}
@@ -668,6 +667,7 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                   {communeObj ? ` · ${communeObj.name}` : ''}
                   {zoneIds !== null ? ' · zone' : ''}
                 </span>
+
               </div>
               {/* Bouton Dessiner une zone */}
               <button
@@ -733,13 +733,13 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                     style={{
                       width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
                       padding: '11px 14px',
-                      background: isSelected ? '#fff7ed' : 'white',
-                      borderBottom: '1px solid #f1f5f9',
+                      background: isSelected ? `${cfg.color}18` : 'transparent',
+                      borderBottom: '1px solid rgba(255,255,255,.05)',
                       borderLeft: isSelected ? `3px solid ${cfg.color}` : '3px solid transparent',
                       transition: 'background .1s',
                     }}
-                    onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = '#fafafa'; }}
-                    onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'white'; }}
+                    onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.05)'; }}
+                    onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                   >
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                       {/* Icône type_annonce */}
@@ -756,19 +756,19 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                           </span>
                           <span style={{ fontSize: '.75rem', color: '#94a3b8' }}>· {b.type_bien}</span>
                         </div>
-                        <div style={{ fontWeight: 700, fontSize: '.9375rem', color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontWeight: 700, fontSize: '.9375rem', color: 'rgba(255,255,255,.9)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {b.titre ?? `${b.type_bien}${b.commune ? ` · ${b.commune}` : ''}`}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
                           {b.prix && (
-                            <span style={{ fontSize: '.875rem', fontWeight: 700, color: '#0f172a' }}>
+                            <span style={{ fontSize: '.875rem', fontWeight: 700, color: 'white' }}>
                               {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(b.prix)}
                             </span>
                           )}
-                          {b.surface && <span style={{ fontSize: '.75rem', color: '#64748b' }}>{b.surface} m²</span>}
-                          {b.pieces && <span style={{ fontSize: '.75rem', color: '#64748b' }}>{b.pieces}p</span>}
+                          {b.surface && <span style={{ fontSize: '.75rem', color: 'rgba(255,255,255,.5)' }}>{b.surface} m²</span>}
+                          {b.pieces && <span style={{ fontSize: '.75rem', color: 'rgba(255,255,255,.5)' }}>{b.pieces}p</span>}
                         </div>
-                        <div style={{ fontSize: '.75rem', color: '#94a3b8', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontSize: '.75rem', color: 'rgba(255,255,255,.3)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           Via {b.acteur_name}
                           {b.commune ? ` · ${b.commune}` : ''}
                         </div>
@@ -783,7 +783,7 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
         ) : searchTerm ? (
         /* ══ MODE PROS + SEARCH ══ */
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <div style={{ padding: '6px 14px 10px', fontSize: '.8125rem', color: '#64748b', fontWeight: 500 }}>
+            <div style={{ padding: '6px 14px 10px', fontSize: '.8125rem', color: 'rgba(255,255,255,.4)', fontWeight: 500 }}>
               {filteredActeurs.length === 0
                 ? `Aucun résultat pour « ${search} »`
                 : `${filteredActeurs.length} résultat${filteredActeurs.length > 1 ? 's' : ''} pour « ${search} »`
@@ -810,13 +810,13 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                     style={{
                       width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
                       padding: '12px 14px',
-                      background: isSelected ? '#eef2ff' : 'white',
-                      borderBottom: '1px solid #f1f5f9',
+                      background: isSelected ? 'rgba(99,102,241,.18)' : 'transparent',
+                      borderBottom: '1px solid rgba(255,255,255,.05)',
                       borderLeft: isSelected ? '3px solid #6366f1' : '3px solid transparent',
                       transition: 'background .1s ease',
                     }}
-                    onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
-                    onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'white'; }}
+                    onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.05)'; }}
+                    onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <div style={{
@@ -862,17 +862,17 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                     style={{
                       display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0,
                       padding: '6px 12px', borderRadius: '20px', fontSize: '.8125rem', fontWeight: 600,
-                      border: active ? '2px solid #6366f1' : '2px solid #e2e8f0',
-                      background: active ? '#6366f1' : 'white',
-                      color: active ? 'white' : '#64748b',
+                      border: active ? '2px solid #6366f1' : '2px solid rgba(255,255,255,.12)',
+                      background: active ? '#6366f1' : 'rgba(255,255,255,.06)',
+                      color: active ? 'white' : 'rgba(255,255,255,.55)',
                       cursor: 'pointer', transition: 'all .15s', minHeight: 'auto',
                     }}
                   >
                     <span>{cfg.emoji}</span>
                     <span>{cfg.label}</span>
                     <span style={{
-                      background: active ? 'rgba(255,255,255,.25)' : '#f1f5f9',
-                      color: active ? 'white' : '#94a3b8',
+                      background: active ? 'rgba(255,255,255,.25)' : 'rgba(255,255,255,.1)',
+                      color: active ? 'white' : 'rgba(255,255,255,.4)',
                       borderRadius: '10px', padding: '0 5px', fontSize: '.6875rem', fontWeight: 700,
                     }}>{stats[type] ?? 0}</span>
                   </button>
@@ -883,15 +883,15 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
             {/* Si une commune est sélectionnée → afficher ses acteurs */}
             {communeObj ? (
               <>
-                <div style={{ padding: '10px 14px', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(255,255,255,.07)', borderBottom: '1px solid rgba(255,255,255,.07)', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <button onClick={() => setSelectedCommune(null)} style={{
                     background: 'none', border: 'none', cursor: 'pointer', fontSize: '.8125rem',
-                    color: '#6366f1', fontWeight: 600, padding: 0, minHeight: 'auto',
+                    color: '#818cf8', fontWeight: 600, padding: 0, minHeight: 'auto',
                   }}>← Retour</button>
-                  <span style={{ color: '#e2e8f0' }}>|</span>
+                  <span style={{ color: 'rgba(255,255,255,.15)' }}>|</span>
                   <span style={{ fontSize: '1.125rem' }}>{communeObj.tierEmoji}</span>
-                  <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '.9375rem' }}>{communeObj.name}</span>
-                  <span style={{ fontSize: '.8125rem', color: '#94a3b8', marginLeft: 'auto' }}>
+                  <span style={{ fontWeight: 700, color: 'rgba(255,255,255,.9)', fontSize: '.9375rem' }}>{communeObj.name}</span>
+                  <span style={{ fontSize: '.8125rem', color: 'rgba(255,255,255,.4)', marginLeft: 'auto' }}>
                     {filteredActeurs.length} pro
                   </span>
                 </div>
@@ -910,23 +910,23 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                         }}
                         style={{
                           width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
-                          padding: '11px 14px', background: isSelected ? '#eef2ff' : 'white',
-                          borderBottom: '1px solid #f1f5f9',
+                          padding: '11px 14px', background: isSelected ? 'rgba(99,102,241,.2)' : 'transparent',
+                          borderBottom: '1px solid rgba(255,255,255,.05)',
                           borderLeft: isSelected ? '3px solid #6366f1' : '3px solid transparent',
                           transition: 'background .1s',
                         }}
-                        onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
-                        onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'white'; }}
+                        onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.05)'; }}
+                        onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <div style={{
                             width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0,
-                            background: isSelected ? '#c7d2fe' : '#f1f5f9',
+                            background: isSelected ? 'rgba(99,102,241,.35)' : 'rgba(255,255,255,.1)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem',
                           }}>{cfg?.emoji}</div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 700, fontSize: '.9375rem', color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</div>
-                            <div style={{ fontSize: '.8125rem', color: '#94a3b8' }}>{cfg?.label.slice(0, -1)}</div>
+                            <div style={{ fontWeight: 700, fontSize: '.9375rem', color: 'rgba(255,255,255,.88)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</div>
+                            <div style={{ fontSize: '.8125rem', color: 'rgba(255,255,255,.4)' }}>{cfg?.label.slice(0, -1)}</div>
                           </div>
                           {a.google_rating && <span style={{ fontSize: '.8125rem', color: '#f59e0b', fontWeight: 700, flexShrink: 0 }}>★ {Number(a.google_rating).toFixed(1)}</span>}
                         </div>
@@ -938,7 +938,7 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
             ) : (
               /* Vue d'ensemble — navigation par commune */
               <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain', padding: '10px 14px' }}>
-                <div style={{ fontSize: '.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '10px' }}>
+                <div style={{ fontSize: '.75rem', fontWeight: 700, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '10px' }}>
                   Choisir une commune
                 </div>
                 {COMMUNES.map(c => {
@@ -950,19 +950,19 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                     <button key={c.slug} onClick={() => goToCommune(c.slug)} style={{
                       width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
                       padding: '10px 12px', borderRadius: '12px', marginBottom: '4px',
-                      background: 'white', transition: 'background .1s', display: 'flex',
+                      background: 'transparent', transition: 'background .1s', display: 'flex',
                       alignItems: 'center', gap: '10px', minHeight: 'auto',
                     }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f1f5f9'; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'white'; }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.07)'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                     >
                       <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>{c.tierEmoji}</span>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 700, fontSize: '.9375rem', color: '#1e293b' }}>{c.name}</div>
-                        <div style={{ fontSize: '.8125rem', color: '#94a3b8', marginTop: '1px' }}>{c.tagline}</div>
+                        <div style={{ fontWeight: 700, fontSize: '.9375rem', color: 'rgba(255,255,255,.88)' }}>{c.name}</div>
+                        <div style={{ fontSize: '.8125rem', color: 'rgba(255,255,255,.4)', marginTop: '1px' }}>{c.tagline}</div>
                       </div>
                       <div style={{
-                        background: '#f1f5f9', color: '#64748b', borderRadius: '20px',
+                        background: 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.55)', borderRadius: '20px',
                         padding: '2px 10px', fontSize: '.8125rem', fontWeight: 700, flexShrink: 0,
                       }}>{count}</div>
                     </button>
@@ -975,7 +975,7 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
 
         {/* ── CTA bas panneau ── */}
         <div style={{
-          padding: '10px 14px', borderTop: '1px solid #f1f5f9',
+          padding: '10px 14px', borderTop: '1px solid rgba(255,255,255,.07)',
           display: 'flex', gap: '8px', flexShrink: 0,
         }}>
           <Link href="/proprietaire" style={{
@@ -989,12 +989,12 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
           >🏡 J&apos;ai un bien</Link>
           <Link href="/rechercher" style={{
             flex: 1, textAlign: 'center', textDecoration: 'none',
-            background: '#f8fafc', color: '#334155',
+            background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.75)',
             fontWeight: 600, fontSize: '.9375rem', padding: '10px 8px',
-            borderRadius: '12px', border: '1.5px solid #e2e8f0', transition: 'background .15s',
+            borderRadius: '12px', border: '1.5px solid rgba(255,255,255,.12)', transition: 'background .15s',
           }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f1f5f9'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.13)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.08)'; }}
           >🔍 Je cherche</Link>
         </div>
       </div>
@@ -1054,23 +1054,24 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
         <div style={{
           position: 'absolute', top: '12px', left: '50%', transform: 'translateX(-50%)',
           zIndex: 400, display: 'flex', gap: '10px',
-          background: 'white', borderRadius: '100px',
-          boxShadow: '0 2px 12px rgba(0,0,0,.1)', padding: '6px 16px',
-          border: '1px solid #f1f5f9', whiteSpace: 'nowrap',
-          fontSize: '.8125rem', color: '#64748b', fontWeight: 500,
+          background: 'rgba(10,20,38,.82)', backdropFilter: 'blur(12px)',
+          borderRadius: '100px',
+          boxShadow: '0 2px 12px rgba(0,0,0,.25)', padding: '6px 16px',
+          border: '1px solid rgba(255,255,255,.1)', whiteSpace: 'nowrap',
+          fontSize: '.8125rem', color: 'rgba(255,255,255,.65)', fontWeight: 500,
           pointerEvents: 'none',
         }}>
           <span>📍 {COMMUNES.length} communes</span>
           {layerMode === 'biens' ? (
             <>
-              <span style={{ color: '#e2e8f0' }}>|</span>
+              <span style={{ color: 'rgba(255,255,255,.2)' }}>|</span>
               <span>🏠 {biens.length} bien{biens.length > 1 ? 's' : ''}</span>
             </>
           ) : (
             <>
-              <span style={{ color: '#e2e8f0' }}>|</span>
+              <span style={{ color: 'rgba(255,255,255,.2)' }}>|</span>
               <span>🏢 {stats.agence ?? '…'} agences</span>
-              <span style={{ color: '#e2e8f0' }}>|</span>
+              <span style={{ color: 'rgba(255,255,255,.2)' }}>|</span>
               <span>⚖️ {stats.notaire ?? '…'} notaires</span>
             </>
           )}
@@ -1096,8 +1097,8 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
               }}
               style={{
                 padding: '9px 16px',
-                background: 'white', color: '#dc2626',
-                border: '1.5px solid #fca5a5',
+                background: 'rgba(10,20,38,.88)', color: '#f87171',
+                border: '1.5px solid rgba(248,113,113,.35)',
                 borderRadius: '12px', cursor: 'pointer',
                 fontSize: '.875rem', fontWeight: 700,
                 boxShadow: '0 2px 14px rgba(0,0,0,.15)',
@@ -1105,8 +1106,8 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                 minHeight: 'auto', whiteSpace: 'nowrap',
                 transition: 'all .15s',
               }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#fef2f2'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'white'; }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(220,38,38,.15)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(10,20,38,.88)'; }}
             >
               ✕ Effacer la zone
             </button>
@@ -1209,21 +1210,22 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
         {/* ── Légende (dynamique selon layerMode) ── */}
         <div style={{
           position: 'absolute', bottom: '70px', right: '12px', zIndex: 400,
-          background: 'white', borderRadius: '12px',
-          boxShadow: '0 2px 12px rgba(0,0,0,.1)', padding: '10px 14px',
-          border: '1px solid #f1f5f9', fontSize: '.8125rem',
+          background: 'rgba(10,20,38,.85)', backdropFilter: 'blur(12px)',
+          borderRadius: '12px',
+          boxShadow: '0 2px 12px rgba(0,0,0,.25)', padding: '10px 14px',
+          border: '1px solid rgba(255,255,255,.1)', fontSize: '.8125rem',
         }}>
           {layerMode === 'biens'
             ? (Object.entries(ANNONCE_CONFIG) as [TypeAnnonce, typeof ANNONCE_CONFIG[TypeAnnonce]][]).map(([, cfg]) => (
                 <div key={cfg.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                   <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: cfg.color, flexShrink: 0 }} />
-                  <span style={{ color: '#475569' }}>{cfg.label}</span>
+                  <span style={{ color: 'rgba(255,255,255,.6)' }}>{cfg.label}</span>
                 </div>
               ))
             : (Object.entries(TYPE_CONFIG) as [ActeurType, typeof TYPE_CONFIG[ActeurType]][]).map(([, cfg]) => (
                 <div key={cfg.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                   <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: cfg.color, flexShrink: 0 }} />
-                  <span style={{ color: '#475569' }}>{cfg.label}</span>
+                  <span style={{ color: 'rgba(255,255,255,.6)' }}>{cfg.label}</span>
                 </div>
               ))
           }
@@ -1234,10 +1236,11 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
           <div style={{
             position: 'absolute', bottom: '70px', left: '12px',
             width: '300px', maxWidth: 'calc(100% - 24px)',
-            background: 'white', borderRadius: '18px',
-            boxShadow: '0 8px 32px rgba(0,0,0,.14)',
+            background: 'rgba(10,20,38,.96)', backdropFilter: 'blur(20px)',
+            borderRadius: '18px',
+            boxShadow: '0 8px 32px rgba(0,0,0,.4)',
             padding: '18px', zIndex: 600,
-            border: '1px solid #f1f5f9',
+            border: '1px solid rgba(255,255,255,.1)',
             animation: 'fadeInUp .2s ease both',
           }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
@@ -1249,38 +1252,38 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                     return (
                       <span style={{
                         fontSize: '.75rem', fontWeight: 700, padding: '2px 8px',
-                        borderRadius: '6px', background: cfg.color + '20', color: cfg.color,
+                        borderRadius: '6px', background: cfg.color + '30', color: cfg.color,
                       }}>
                         {cfg.emoji} {cfg.label.toUpperCase()}
                       </span>
                     );
                   })()}
-                  <span style={{ fontSize: '.8125rem', color: '#94a3b8' }}>{selectedBien.type_bien}</span>
+                  <span style={{ fontSize: '.8125rem', color: 'rgba(255,255,255,.45)' }}>{selectedBien.type_bien}</span>
                 </div>
                 {/* Titre */}
-                <div style={{ fontWeight: 700, fontSize: '1rem', color: '#0f172a', lineHeight: 1.3 }}>
+                <div style={{ fontWeight: 700, fontSize: '1rem', color: 'rgba(255,255,255,.92)', lineHeight: 1.3 }}>
                   {selectedBien.titre ?? `${selectedBien.type_bien} · ${selectedBien.commune}`}
                 </div>
                 {/* Localisation protégée — Précision Progressive Niveau 0 */}
                 {selectedBien.commune && (
                   <div style={{
                     marginTop: '6px', padding: '7px 10px',
-                    background: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a',
+                    background: 'rgba(251,191,36,.1)', borderRadius: '8px', border: '1px solid rgba(251,191,36,.2)',
                   }}>
-                    <div style={{ fontSize: '.8125rem', fontWeight: 700, color: '#92400e', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <div style={{ fontSize: '.8125rem', fontWeight: 700, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '5px' }}>
                       🔒 <span>Zone ~200m · {selectedBien.commune}</span>
                     </div>
-                    <div style={{ fontSize: '.75rem', color: '#b45309', marginTop: '2px' }}>
+                    <div style={{ fontSize: '.75rem', color: 'rgba(251,191,36,.7)', marginTop: '2px' }}>
                       Adresse exacte · <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Créez un compte gratuit</span>
                     </div>
                   </div>
                 )}
                 {/* Prix */}
                 {selectedBien.prix && (
-                  <div style={{ fontSize: '1.125rem', fontWeight: 800, color: '#0f172a', marginTop: '6px' }}>
+                  <div style={{ fontSize: '1.125rem', fontWeight: 800, color: 'white', marginTop: '6px' }}>
                     {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(selectedBien.prix)}
                     {selectedBien.surface && (
-                      <span style={{ fontSize: '.8125rem', fontWeight: 500, color: '#64748b', marginLeft: '6px' }}>
+                      <span style={{ fontSize: '.8125rem', fontWeight: 500, color: 'rgba(255,255,255,.45)', marginLeft: '6px' }}>
                         · {Math.round(selectedBien.prix / selectedBien.surface).toLocaleString('fr-FR')} €/m²
                       </span>
                     )}
@@ -1289,36 +1292,36 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                 {/* Caractéristiques */}
                 <div style={{ display: 'flex', gap: '10px', marginTop: '8px', flexWrap: 'wrap' }}>
                   {selectedBien.surface && (
-                    <span style={{ fontSize: '.8125rem', color: '#475569' }}>🏠 {selectedBien.surface} m²</span>
+                    <span style={{ fontSize: '.8125rem', color: 'rgba(255,255,255,.6)' }}>🏠 {selectedBien.surface} m²</span>
                   )}
                   {selectedBien.pieces && (
-                    <span style={{ fontSize: '.8125rem', color: '#475569' }}>🛋 {selectedBien.pieces} p.</span>
+                    <span style={{ fontSize: '.8125rem', color: 'rgba(255,255,255,.6)' }}>🛋 {selectedBien.pieces} p.</span>
                   )}
                   {selectedBien.chambres && (
-                    <span style={{ fontSize: '.8125rem', color: '#475569' }}>🛏 {selectedBien.chambres} ch.</span>
+                    <span style={{ fontSize: '.8125rem', color: 'rgba(255,255,255,.6)' }}>🛏 {selectedBien.chambres} ch.</span>
                   )}
                   {selectedBien.dpe && (
-                    <span style={{ fontSize: '.8125rem', background: '#f0fdf4', color: '#166534', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                    <span style={{ fontSize: '.8125rem', background: 'rgba(22,163,74,.2)', color: '#4ade80', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
                       DPE {selectedBien.dpe}
                     </span>
                   )}
                 </div>
                 {/* Options */}
                 <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
-                  {selectedBien.has_piscine && <span style={{ fontSize: '.75rem', color: '#0369a1' }}>🏊 Piscine</span>}
-                  {selectedBien.has_garage && <span style={{ fontSize: '.75rem', color: '#475569' }}>🚗 Garage</span>}
-                  {selectedBien.has_terrasse && <span style={{ fontSize: '.75rem', color: '#92400e' }}>☀️ Terrasse</span>}
+                  {selectedBien.has_piscine && <span style={{ fontSize: '.75rem', color: '#38bdf8' }}>🏊 Piscine</span>}
+                  {selectedBien.has_garage && <span style={{ fontSize: '.75rem', color: 'rgba(255,255,255,.55)' }}>🚗 Garage</span>}
+                  {selectedBien.has_terrasse && <span style={{ fontSize: '.75rem', color: '#fbbf24' }}>☀️ Terrasse</span>}
                 </div>
                 {/* Agence */}
-                <div style={{ marginTop: '8px', fontSize: '.8125rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                <div style={{ marginTop: '8px', fontSize: '.8125rem', color: 'rgba(255,255,255,.35)', fontStyle: 'italic' }}>
                   Via {selectedBien.acteur_name}
                 </div>
               </div>
               <button onClick={() => setSelectedBien(null)} style={{
-                background: '#f1f5f9', border: 'none', borderRadius: '50%',
+                background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: '50%',
                 width: '28px', height: '28px', cursor: 'pointer', flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1rem', color: '#64748b', minHeight: 'auto',
+                fontSize: '1rem', color: 'rgba(255,255,255,.6)', minHeight: 'auto',
               }}>×</button>
             </div>
             {/* CTA contact agence */}
@@ -1336,9 +1339,9 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
               {selectedBien.acteur_email && (
                 <a href={`mailto:${selectedBien.acteur_email}`} style={{
                   flex: 1, textAlign: 'center', textDecoration: 'none',
-                  background: '#f8fafc', color: '#334155',
+                  background: 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.8)',
                   fontWeight: 600, fontSize: '.9375rem', padding: '10px',
-                  borderRadius: '12px', border: '1.5px solid #e2e8f0',
+                  borderRadius: '12px', border: '1.5px solid rgba(255,255,255,.15)',
                 }}>
                   ✉️ Email
                 </a>
@@ -1352,53 +1355,54 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
           <div style={{
             position: 'absolute', bottom: '70px', left: '12px',
             width: '300px', maxWidth: 'calc(100% - 24px)',
-            background: 'white', borderRadius: '18px',
-            boxShadow: '0 8px 32px rgba(0,0,0,.14)',
+            background: 'rgba(10,20,38,.96)', backdropFilter: 'blur(20px)',
+            borderRadius: '18px',
+            boxShadow: '0 8px 32px rgba(0,0,0,.4)',
             padding: '18px', zIndex: 600,
-            border: '1px solid #f1f5f9',
+            border: '1px solid rgba(255,255,255,.1)',
             animation: 'fadeInUp .2s ease both',
           }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '.8125rem', color: '#94a3b8' }}>
+                  <span style={{ fontSize: '.8125rem', color: 'rgba(255,255,255,.4)' }}>
                     {TYPE_CONFIG[selectedActeur.type]?.emoji} {TYPE_CONFIG[selectedActeur.type]?.label.slice(0, -1)}
                   </span>
                 </div>
-                <div style={{ fontWeight: 700, fontSize: '1rem', color: '#0f172a', lineHeight: 1.3 }}>
+                <div style={{ fontWeight: 700, fontSize: '1rem', color: 'rgba(255,255,255,.92)', lineHeight: 1.3 }}>
                   {selectedActeur.name}
                 </div>
                 {selectedActeur.commune && (
-                  <div style={{ fontSize: '.875rem', color: '#64748b', marginTop: '2px' }}>{selectedActeur.commune}</div>
+                  <div style={{ fontSize: '.875rem', color: 'rgba(255,255,255,.5)', marginTop: '2px' }}>{selectedActeur.commune}</div>
                 )}
                 {selectedActeur.google_rating && (
                   <div style={{ fontSize: '.875rem', color: '#f59e0b', fontWeight: 700, marginTop: '6px' }}>
                     ★ {Number(selectedActeur.google_rating).toFixed(1)}
-                    <span style={{ color: '#94a3b8', fontWeight: 400, marginLeft: '4px' }}>
+                    <span style={{ color: 'rgba(255,255,255,.35)', fontWeight: 400, marginLeft: '4px' }}>
                       ({selectedActeur.google_reviews} avis)
                     </span>
                   </div>
                 )}
                 {selectedActeur.address && (
-                  <div style={{ fontSize: '.8125rem', color: '#94a3b8', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: '.8125rem', color: 'rgba(255,255,255,.4)', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     📍 {selectedActeur.address}
                   </div>
                 )}
                 {selectedActeur.phone && (
-                  <div style={{ fontSize: '.8125rem', color: '#475569', marginTop: '3px' }}>
-                    📞 <a href={`tel:${selectedActeur.phone}`} style={{ color: '#475569', textDecoration: 'none', fontWeight: 600 }}>{selectedActeur.phone}</a>
+                  <div style={{ fontSize: '.8125rem', color: 'rgba(255,255,255,.6)', marginTop: '3px' }}>
+                    📞 <a href={`tel:${selectedActeur.phone}`} style={{ color: 'rgba(255,255,255,.6)', textDecoration: 'none', fontWeight: 600 }}>{selectedActeur.phone}</a>
                   </div>
                 )}
                 {selectedActeur.email && (
-                  <div style={{ fontSize: '.8125rem', color: '#475569', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    ✉️ <a href={`mailto:${selectedActeur.email}`} style={{ color: '#6366f1', textDecoration: 'none' }}>{selectedActeur.email}</a>
+                  <div style={{ fontSize: '.8125rem', color: 'rgba(255,255,255,.5)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    ✉️ <a href={`mailto:${selectedActeur.email}`} style={{ color: '#818cf8', textDecoration: 'none' }}>{selectedActeur.email}</a>
                   </div>
                 )}
                 {selectedActeur.type === 'diagnostiqueur' && Array.isArray(selectedActeur.meta?.services) && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
                     {(selectedActeur.meta.services as string[]).slice(0, 4).map(s => (
                       <span key={s} style={{
-                        fontSize: '.75rem', background: '#fef3c7', color: '#92400e',
+                        fontSize: '.75rem', background: 'rgba(251,191,36,.15)', color: '#fbbf24',
                         padding: '2px 7px', borderRadius: '6px',
                       }}>{s}</span>
                     ))}
@@ -1406,10 +1410,10 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                 )}
               </div>
               <button onClick={() => setSelectedActeur(null)} style={{
-                background: '#f1f5f9', border: 'none', borderRadius: '50%',
+                background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: '50%',
                 width: '28px', height: '28px', cursor: 'pointer', flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1rem', color: '#64748b', minHeight: 'auto',
+                fontSize: '1rem', color: 'rgba(255,255,255,.6)', minHeight: 'auto',
               }}>×</button>
             </div>
 
@@ -1428,9 +1432,9 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
               {selectedActeur.email && (
                 <a href={`mailto:${selectedActeur.email}`} style={{
                   flex: 1, textAlign: 'center', textDecoration: 'none',
-                  background: '#f8fafc', color: '#334155',
+                  background: 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.8)',
                   fontWeight: 600, fontSize: '.9375rem', padding: '10px',
-                  borderRadius: '12px', border: '1.5px solid #e2e8f0',
+                  borderRadius: '12px', border: '1.5px solid rgba(255,255,255,.15)',
                 }}>
                   ✉️ Email
                 </a>
@@ -1438,9 +1442,9 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
               {!selectedActeur.email && selectedActeur.website && (
                 <a href={selectedActeur.website} target="_blank" rel="noopener noreferrer" style={{
                   flex: 1, textAlign: 'center', textDecoration: 'none',
-                  background: '#f8fafc', color: '#334155',
+                  background: 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.8)',
                   fontWeight: 600, fontSize: '.9375rem', padding: '10px',
-                  borderRadius: '12px', border: '1.5px solid #e2e8f0',
+                  borderRadius: '12px', border: '1.5px solid rgba(255,255,255,.15)',
                 }}>
                   Site web →
                 </a>
@@ -1454,9 +1458,9 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                   target="_blank" rel="noopener noreferrer"
                   style={{
                     flex: 1, textAlign: 'center', textDecoration: 'none',
-                    background: '#f0fdf4', color: '#166534',
+                    background: 'rgba(22,163,74,.15)', color: '#4ade80',
                     fontWeight: 600, fontSize: '.8125rem', padding: '8px 6px',
-                    borderRadius: '10px', border: '1.5px solid #bbf7d0',
+                    borderRadius: '10px', border: '1.5px solid rgba(74,222,128,.2)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
                   }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
@@ -1467,9 +1471,9 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                   target="_blank" rel="noopener noreferrer"
                   style={{
                     flex: 1, textAlign: 'center', textDecoration: 'none',
-                    background: '#fdf4ff', color: '#7e22ce',
+                    background: 'rgba(126,34,206,.15)', color: '#c084fc',
                     fontWeight: 600, fontSize: '.8125rem', padding: '8px 6px',
-                    borderRadius: '10px', border: '1.5px solid #e9d5ff',
+                    borderRadius: '10px', border: '1.5px solid rgba(192,132,252,.2)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
                   }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
