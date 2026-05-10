@@ -3,6 +3,29 @@ import Link from 'next/link';
 import { Metadata } from 'next';
 import { COMMUNES, COMMUNE_BY_SLUG } from '@/lib/communes';
 import DvfStats from '@/components/DvfStats';
+import { sql } from '@/lib/db';
+
+// Fetch biens actifs pour cette commune
+async function fetchBiensCommune(communeName: string) {
+  try {
+    const rows = await sql`
+      SELECT b.id, b.type_annonce, b.type_bien, b.titre, b.prix, b.surface, b.pieces, b.photos,
+             a.name AS acteur_name, a.slug AS acteur_slug
+      FROM biens b
+      JOIN acteurs a ON a.id = b.acteur_id
+      WHERE b.is_active = true
+        AND LOWER(b.commune) = LOWER(${communeName})
+      ORDER BY b.is_featured DESC, b.created_at DESC
+      LIMIT 6
+    `;
+    return rows.map((r: Record<string, unknown>) => ({
+      ...r,
+      photos: typeof r.photos === 'string' ? JSON.parse(r.photos as string) : (r.photos ?? []),
+    }));
+  } catch {
+    return [];
+  }
+}
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -16,6 +39,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `Immobilier à ${commune.name} — Prix, transactions DVF | Terrimo`,
     description: `Découvrez le marché immobilier de ${commune.name} : prix au m², transactions DVF, agences locales. ${commune.tagline}`,
+    alternates: { canonical: `https://terrimo.homes/quartier/${slug}` },
+    openGraph: {
+      title: `Immobilier à ${commune.name} | Terrimo`,
+      description: `Prix immobilier, transactions DVF et biens disponibles à ${commune.name} — Bassin d'Arcachon.`,
+      type: 'website',
+      locale: 'fr_FR',
+      siteName: "Terrimo — Bassin d'Arcachon",
+      url: `https://terrimo.homes/quartier/${slug}`,
+    },
+    twitter: {
+      card: 'summary',
+      title: `Immobilier à ${commune.name} | Terrimo`,
+      description: `Prix au m² et biens à ${commune.name}, Bassin d'Arcachon.`,
+    },
   };
 }
 
@@ -39,6 +76,11 @@ export default async function QuartierPage({ params }: Props) {
   const similarCommunes = COMMUNES.filter(
     (c) => c.slug !== slug && c.tier === commune.tier
   ).slice(0, 3);
+
+  const biens = await fetchBiensCommune(commune.name);
+
+  const fmt = (n: number) =>
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
 
   return (
     <main style={{ background: '#0a1628', minHeight: 'calc(100dvh - 68px)' }}>
@@ -131,6 +173,75 @@ export default async function QuartierPage({ params }: Props) {
             }}>
               <DvfStats dvfName={commune.dvfName} communeName={commune.name} />
             </div>
+
+            {/* ── Biens disponibles ──────────────────────────── */}
+            {biens.length > 0 && (
+              <div style={{
+                background: 'rgba(255,255,255,.03)',
+                border: '1px solid rgba(255,255,255,.06)',
+                borderRadius: 16, padding: '24px 26px',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'white', margin: 0 }}>
+                    🏠 Biens disponibles à {commune.name}
+                  </h3>
+                  <Link href={`/?commune=${slug}&layer=biens`} style={{
+                    fontSize: '.75rem', color: '#7dd3fc', textDecoration: 'none', fontWeight: 600,
+                  }}>
+                    Voir tous →
+                  </Link>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+                  {(biens as Array<{
+                    id: number; type_annonce: string; type_bien: string;
+                    titre?: string; prix?: number; surface?: number;
+                    pieces?: number; photos: Array<{ url: string }>;
+                    acteur_name: string; acteur_slug?: string;
+                  }>).map((b) => (
+                    <Link key={b.id} href={`/bien/${b.id}`} style={{ textDecoration: 'none' }}>
+                      <div style={{
+                        background: 'rgba(255,255,255,.04)',
+                        border: '1px solid rgba(255,255,255,.08)',
+                        borderRadius: 12, overflow: 'hidden',
+                        transition: 'border-color .15s',
+                      }}>
+                        {/* Photo ou placeholder */}
+                        <div style={{
+                          position: 'relative',
+                          height: 110, background: 'rgba(255,255,255,.04)',
+                          backgroundImage: b.photos[0] ? `url(${b.photos[0].url})` : undefined,
+                          backgroundSize: 'cover', backgroundPosition: 'center',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          {!b.photos[0] && <span style={{ fontSize: '1.75rem', opacity: .3 }}>🏠</span>}
+                          <span style={{
+                            position: 'absolute', top: 8, left: 8,
+                            background: b.type_annonce === 'vente' ? 'rgba(249,115,22,.9)' : 'rgba(14,165,233,.9)',
+                            color: 'white', fontSize: '.6875rem', fontWeight: 700,
+                            padding: '2px 8px', borderRadius: 6,
+                          }}>
+                            {b.type_annonce === 'vente' ? 'VENTE' : 'LOCATION'}
+                          </span>
+                        </div>
+                        <div style={{ padding: '10px 12px' }}>
+                          <div style={{ fontSize: '.8125rem', fontWeight: 600, color: 'rgba(255,255,255,.85)', marginBottom: 3, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                            {b.titre ?? `${b.type_bien}${b.pieces ? ` · ${b.pieces}p` : ''}`}
+                          </div>
+                          {b.prix && (
+                            <div style={{ fontSize: '.875rem', fontWeight: 700, color: '#f97316' }}>
+                              {fmt(b.prix)}
+                            </div>
+                          )}
+                          {b.surface && (
+                            <div style={{ fontSize: '.75rem', color: 'rgba(255,255,255,.35)' }}>{b.surface} m²</div>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* CTA Estimer */}
             <div style={{

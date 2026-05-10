@@ -9,6 +9,49 @@ import { sql } from '@/lib/db';
 export const revalidate = 60; // 1 min cache
 
 // ─────────────────────────────────────────────────────────────
+// Centres approximatifs des communes du Bassin d'Arcachon
+// Fallback si géocodage échoue
+// ─────────────────────────────────────────────────────────────
+const COMMUNE_CENTERS: Record<string, [number, number]> = {
+  'Arcachon':           [44.6587, -1.1683],
+  'La Teste-de-Buch':  [44.6147, -1.1432],
+  'Gujan-Mestras':     [44.6357, -1.0699],
+  'Lège-Cap-Ferret':   [44.7575, -1.1950],
+  'Andernos-les-Bains':[44.7375, -1.0987],
+  'Arès':              [44.7640, -1.1380],
+  'Lanton':            [44.7070, -1.0464],
+  'Audenge':           [44.6851, -1.0198],
+  'Biganos':           [44.6491, -0.9741],
+  'Mios':              [44.5927, -0.9426],
+  'Le Teich':          [44.6368, -1.0222],
+  'Salles':            [44.5523, -0.8674],
+  'Cazaux':            [44.5380, -1.1479],
+  'Biscarrosse':       [44.3944, -1.1665],
+  'Marcheprime':       [44.6726, -0.9022],
+};
+
+// ─────────────────────────────────────────────────────────────
+// Géocodage via api-adresse.data.gouv.fr (France, gratuit, sans clé)
+// ─────────────────────────────────────────────────────────────
+async function geocodeAdresse(adresse: string, commune: string): Promise<[number, number] | null> {
+  try {
+    const q = encodeURIComponent(`${adresse} ${commune}`);
+    const resp = await fetch(
+      `https://api-adresse.data.gouv.fr/search/?q=${q}&limit=1&type=housenumber`,
+      { signal: AbortSignal.timeout(3000) }
+    );
+    if (!resp.ok) return null;
+    const data = await resp.json() as { features?: { geometry?: { coordinates?: [number, number] } }[] };
+    const coords = data.features?.[0]?.geometry?.coordinates;
+    if (!coords) return null;
+    const [lng, lat] = coords; // GeoJSON = [lng, lat]
+    return [lat, lng];
+  } catch {
+    return null;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
 // GET — Liste des biens actifs (avec info agence)
 // ─────────────────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
@@ -147,6 +190,24 @@ export async function POST(request: NextRequest) {
     // Titre auto si absent
     const titre = data.titre || `${type_bien} · ${commune}${surface ? ` · ${surface} m²` : ''}`;
 
+    // Géocodage automatique si lat/lng absents
+    let finalLat = data.lat ?? null;
+    let finalLng = data.lng ?? null;
+    if (!finalLat || !finalLng) {
+      if (data.adresse) {
+        const coords = await geocodeAdresse(data.adresse, commune);
+        if (coords) {
+          [finalLat, finalLng] = coords;
+        }
+      }
+      // Fallback → centre de la commune (légèrement aléatoire pour éviter les doublons)
+      if (!finalLat && COMMUNE_CENTERS[commune]) {
+        const [clat, clng] = COMMUNE_CENTERS[commune];
+        finalLat  = clat  + (Math.random() - 0.5) * 0.01;
+        finalLng  = clng  + (Math.random() - 0.5) * 0.01;
+      }
+    }
+
     const result = await sql`
       INSERT INTO biens (
         acteur_id, type_annonce, type_bien, titre, description, reference,
@@ -175,8 +236,8 @@ export async function POST(request: NextRequest) {
         ${commune},
         ${data.adresse ?? null},
         ${data.code_postal ?? null},
-        ${data.lat ?? null},
-        ${data.lng ?? null},
+        ${finalLat},
+        ${finalLng},
         ${JSON.stringify(data.photos ?? [])}
       )
       RETURNING id, titre, type_annonce, type_bien, prix, commune
