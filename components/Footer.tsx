@@ -22,10 +22,19 @@ const PRO = [
 
 const DECOUVRIR = [
   { label: 'Carte interactive', href: '/' },
+  { label: 'Prix du marché DVF', href: '/marche' },
   { label: 'Arcachon', href: '/quartier/arcachon' },
   { label: 'La Teste-de-Buch', href: '/quartier/la-teste-de-buch' },
   { label: 'Andernos-les-Bains', href: '/quartier/andernos-les-bains' },
   { label: 'Lège-Cap Ferret', href: '/quartier/lege-cap-ferret' },
+];
+
+const RESSOURCES = [
+  { label: 'Blog immobilier', href: '/blog' },
+  { label: 'Prix immobilier 2025', href: '/blog/prix-immobilier-arcachon-2025' },
+  { label: 'Guide achat Bassin', href: '/blog/guide-achat-immobilier-bassin-arcachon' },
+  { label: 'Contact', href: '/contact' },
+  { label: 'Tarifs Pro', href: '/tarifs' },
 ];
 
 export default function Footer() {
@@ -117,6 +126,23 @@ export default function Footer() {
           </p>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {DECOUVRIR.map(({ label, href }) => (
+              <li key={href}>
+                <Link href={href} style={{ color: '#b0bec5', textDecoration: 'none' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+                  onMouseLeave={e => (e.currentTarget.style.color = '#b0bec5')}
+                >{label}</Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Ressources */}
+        <div>
+          <p style={{ color: '#fff', fontWeight: 600, marginBottom: 14, fontSize: '0.8125rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Ressources
+          </p>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {RESSOURCES.map(({ label, href }) => (
               <li key={href}>
                 <Link href={href} style={{ color: '#b0bec5', textDecoration: 'none' }}
                   onMouseEnter={e => (e.currentTarget.style.color = '#fff')}

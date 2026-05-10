@@ -1026,7 +1026,7 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
           padding: '10px 14px', borderTop: '1px solid rgba(255,255,255,.07)',
           display: 'flex', gap: '8px', flexShrink: 0,
         }}>
-          <Link href="/proprietaire" style={{
+          <Link href="/evaluer" style={{
             flex: 1, textAlign: 'center', textDecoration: 'none',
             background: '#10b981', color: 'white',
             fontWeight: 700, fontSize: '.9375rem', padding: '10px 8px',
@@ -1035,7 +1035,7 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#059669'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#10b981'; }}
           >🏡 J&apos;ai un bien</Link>
-          <Link href="/rechercher" style={{
+          <Link href="/acquereur" style={{
             flex: 1, textAlign: 'center', textDecoration: 'none',
             background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.75)',
             fontWeight: 600, fontSize: '.9375rem', padding: '10px 8px',

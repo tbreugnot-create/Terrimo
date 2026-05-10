@@ -506,7 +506,7 @@ export default function BienPageClient({
 
             {/* Lien retour carte */}
             <div style={{ marginTop: '12px', textAlign: 'center' }}>
-              <Link href="/?layer=biens" style={{ color: '#6366f1', fontSize: '.875rem', textDecoration: 'none', fontWeight: 500 }}>
+              <Link href="/?ouvre-carte=1" style={{ color: '#6366f1', fontSize: '.875rem', textDecoration: 'none', fontWeight: 500 }}>
                 ← Voir tous les biens sur la carte
               </Link>
             </div>

@@ -206,16 +206,21 @@ export default function Home() {
       <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 68px)', overflow: 'hidden' }}>
         <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
           <Suspense><TerrimoMap autoScrollZoom autoDrawMode={mapDrawMode} /></Suspense>
+          {/* Bouton retour — à GAUCHE pour ne pas conflictuer avec les contrôles Leaflet */}
           <button
             onClick={() => { setMapFullscreen(false); setMapDrawMode(false); }}
             style={{
-              position: 'absolute', top: 16, right: 16, zIndex: 1000,
-              background: 'white', border: 'none', borderRadius: 10,
-              padding: '8px 16px', fontSize: '.875rem', fontWeight: 600,
-              color: '#0f1923', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,.15)',
+              position: 'absolute', top: 16, left: 16, zIndex: 1001,
+              background: 'rgba(12,26,46,.92)', backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,.15)',
+              borderRadius: 12, padding: '10px 18px',
+              fontSize: '.9rem', fontWeight: 700,
+              color: 'white', cursor: 'pointer',
+              boxShadow: '0 2px 12px rgba(0,0,0,.35)',
+              display: 'flex', alignItems: 'center', gap: 8,
             }}
           >
-            ← Retour
+            🏠 Accueil
           </button>
         </div>
       </div>
