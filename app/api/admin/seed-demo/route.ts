@@ -192,6 +192,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Étendre le constraint type_bien pour inclure toutes les valeurs nécessaires
+    await sql`ALTER TABLE biens DROP CONSTRAINT IF EXISTS biens_type_bien_check`;
+    await sql`ALTER TABLE biens ADD CONSTRAINT biens_type_bien_check CHECK (type_bien IN ('maison', 'appartement', 'villa', 'terrain', 'autre'))`;
+
     // Vérifier si des biens démo existent déjà
     const existing = await sql`SELECT COUNT(*) as cnt FROM biens`;
     const count = parseInt(existing[0].cnt as string, 10);
