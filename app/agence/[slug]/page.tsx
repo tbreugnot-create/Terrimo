@@ -28,6 +28,21 @@ async function fetchActeur(slug: string, types: string[]): Promise<ActeurDetail 
   }
 }
 
+async function fetchAvisStats(acteurId: number): Promise<{ total: number; moyenne: number } | null> {
+  try {
+    const rows = await sql`
+      SELECT COUNT(*)::int AS total, ROUND(AVG(note)::numeric, 1) AS moyenne
+      FROM avis_acteurs
+      WHERE acteur_id = ${acteurId} AND is_approved = true
+    `;
+    const r = rows[0];
+    if (!r || !r.total) return null;
+    return { total: r.total as number, moyenne: parseFloat(r.moyenne as string) };
+  } catch {
+    return null;
+  }
+}
+
 async function fetchBiens(acteurId: number): Promise<BienPreview[]> {
   try {
     const rows = await sql`
@@ -86,7 +101,17 @@ export default async function AgencePage({ params }: { params: Promise<{ slug: s
   const acteur = await fetchActeur(slug, ['agence']);
   if (!acteur) notFound();
 
-  const biens = await fetchBiens(acteur.id);
+  const [biens, avisStats] = await Promise.all([
+    fetchBiens(acteur.id),
+    fetchAvisStats(acteur.id),
+  ]);
+
+  // AggregateRating : on préfère les avis natifs Terrimo si disponibles, sinon Google
+  const aggregateRating = avisStats
+    ? { '@type': 'AggregateRating', ratingValue: avisStats.moyenne, reviewCount: avisStats.total, bestRating: 5 }
+    : acteur.google_rating
+      ? { '@type': 'AggregateRating', ratingValue: acteur.google_rating, reviewCount: acteur.google_reviews ?? 1, bestRating: 5 }
+      : undefined;
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -104,14 +129,7 @@ export default async function AgencePage({ params }: { params: Promise<{ slug: s
       addressLocality: acteur.commune ?? 'Bassin d\'Arcachon',
       addressCountry: 'FR',
     },
-    ...(acteur.google_rating ? {
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: acteur.google_rating,
-        reviewCount: acteur.google_reviews ?? 1,
-        bestRating: 5,
-      },
-    } : {}),
+    ...(aggregateRating ? { aggregateRating } : {}),
     ...(acteur.meta?.logo ? { logo: acteur.meta.logo } : {}),
     areaServed: { '@type': 'Place', name: 'Bassin d\'Arcachon' },
   };

@@ -25,6 +25,21 @@ async function fetchConciergerie(slug: string): Promise<ActeurDetail | null> {
   }
 }
 
+async function fetchAvisStats(acteurId: number): Promise<{ total: number; moyenne: number } | null> {
+  try {
+    const rows = await sql`
+      SELECT COUNT(*)::int AS total, ROUND(AVG(note)::numeric, 1) AS moyenne
+      FROM avis_acteurs
+      WHERE acteur_id = ${acteurId} AND is_approved = true
+    `;
+    const r = rows[0];
+    if (!r || !r.total) return null;
+    return { total: r.total as number, moyenne: parseFloat(r.moyenne as string) };
+  } catch {
+    return null;
+  }
+}
+
 async function fetchBiensGeres(acteurId: number): Promise<BienPreview[]> {
   try {
     const rows = await sql`
@@ -77,7 +92,16 @@ export default async function ConciergiePage({ params }: { params: Promise<{ slu
   const conciergerie = await fetchConciergerie(slug);
   if (!conciergerie) notFound();
 
-  const biensGeres = await fetchBiensGeres(conciergerie.id);
+  const [biensGeres, avisStats] = await Promise.all([
+    fetchBiensGeres(conciergerie.id),
+    fetchAvisStats(conciergerie.id),
+  ]);
+
+  const aggregateRating = avisStats
+    ? { '@type': 'AggregateRating', ratingValue: avisStats.moyenne, reviewCount: avisStats.total, bestRating: 5 }
+    : conciergerie.google_rating
+      ? { '@type': 'AggregateRating', ratingValue: conciergerie.google_rating, reviewCount: conciergerie.google_reviews ?? 1, bestRating: 5 }
+      : undefined;
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -95,14 +119,7 @@ export default async function ConciergiePage({ params }: { params: Promise<{ slu
       addressLocality: conciergerie.commune ?? 'Bassin d\'Arcachon',
       addressCountry: 'FR',
     },
-    ...(conciergerie.google_rating ? {
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: conciergerie.google_rating,
-        reviewCount: conciergerie.google_reviews ?? 1,
-        bestRating: 5,
-      },
-    } : {}),
+    ...(aggregateRating ? { aggregateRating } : {}),
     areaServed: { '@type': 'Place', name: 'Bassin d\'Arcachon' },
   };
 

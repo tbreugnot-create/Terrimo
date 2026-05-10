@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { ActeurDetail, BienPreview } from '@/lib/terrimo-types';
+import AvisSection from '@/components/AvisSection';
 
 const formatPrix = (n: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
@@ -327,6 +328,11 @@ export default function ConciergiePageClient({
               </div>
             )}
           </div>
+        </div>
+
+        {/* Section avis Terrimo */}
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <AvisSection acteurId={conciergerie.id} acteurName={conciergerie.name} />
         </div>
 
         {/* Back */}

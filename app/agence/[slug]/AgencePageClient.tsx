@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { ActeurDetail, BienPreview } from '@/lib/terrimo-types';
+import AvisSection from '@/components/AvisSection';
 
 const formatPrix = (n: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
@@ -213,6 +214,11 @@ export default function AgencePageClient({
             </div>
           </div>
         )}
+
+        {/* Section avis Terrimo */}
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <AvisSection acteurId={acteur.id} acteurName={acteur.name} />
+        </div>
 
         {/* Back */}
         <div className="mt-12 pt-8 border-t border-gray-200 text-center">
