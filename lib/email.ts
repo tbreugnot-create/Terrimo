@@ -348,3 +348,116 @@ export async function emailNouveauBienZone(params: {
       </div>`,
   });
 }
+
+// ── Email : confirmation création bien pro ──────────────────────
+export async function emailBienPubilé(data: {
+  email: string;
+  acteurName: string;
+  bienId: number;
+  titre: string;
+  commune: string;
+  typeAnnonce: string;
+  prix?: number;
+  dashboardToken: string;
+}): Promise<void> {
+  const { email, acteurName, bienId, titre, commune, typeAnnonce, prix, dashboardToken } = data;
+  const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://terrimo.homes';
+  const bienUrl = `${SITE}/bien/${bienId}`;
+  const dashboardUrl = `${SITE}/pro/dashboard/${dashboardToken}`;
+  const typeLabel = typeAnnonce === 'vente' ? '💰 Vente' : typeAnnonce === 'location' ? '🔑 Location' : typeAnnonce;
+  const prixStr = prix ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(prix) : '';
+
+  await sendEmail({
+    to: email,
+    subject: `✅ Votre bien est publié sur Terrimo — ${titre}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1e293b">
+        <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:24px 32px;border-radius:12px 12px 0 0">
+          <h1 style="color:white;margin:0;font-size:22px">Terrimo</h1>
+          <p style="color:rgba(255,255,255,.75);margin:4px 0 0;font-size:13px">Bassin d'Arcachon · Espace Pro</p>
+        </div>
+        <div style="background:white;padding:28px 32px;border:1px solid #e2e8f0;border-top:none">
+          <p style="font-size:16px;font-weight:700;margin:0 0 6px">Bonjour ${acteurName},</p>
+          <p style="font-size:14px;color:#475569;margin:0 0 20px">
+            Votre bien est maintenant visible sur la carte Terrimo et indexé par les moteurs de recherche.
+          </p>
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin:0 0 20px">
+            <div style="font-weight:700;font-size:15px;margin:0 0 6px">${titre}</div>
+            <div style="font-size:13px;color:#64748b">${typeLabel}${prixStr ? ` · ${prixStr}` : ''} · ${commune}</div>
+          </div>
+          <div style="display:flex;gap:12px;margin:20px 0 0">
+            <a href="${bienUrl}" style="flex:1;text-align:center;display:inline-block;background:#4f46e5;color:white;text-decoration:none;padding:11px 20px;border-radius:10px;font-weight:700;font-size:13px">
+              Voir la fiche →
+            </a>
+            <a href="${dashboardUrl}" style="flex:1;text-align:center;display:inline-block;background:#f1f5f9;color:#475569;text-decoration:none;padding:11px 20px;border-radius:10px;font-weight:600;font-size:13px;border:1px solid #e2e8f0">
+              Mon dashboard
+            </a>
+          </div>
+        </div>
+        <div style="padding:14px 32px;font-size:11px;color:#94a3b8;text-align:center;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px">
+          Terrimo · Bassin d'Arcachon · <a href="${dashboardUrl}" style="color:#94a3b8">Gérer mes biens</a>
+        </div>
+      </div>`,
+  });
+}
+
+// ── Email : onboarding pro J0 (bienvenue) ──────────────────────
+export async function emailOnboardingPro(data: {
+  email: string;
+  name: string;
+  plan: string;
+  dashboardToken: string;
+}): Promise<void> {
+  const { email, name, plan, dashboardToken } = data;
+  const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://terrimo.homes';
+  const dashboardUrl = `${SITE}/pro/dashboard/${dashboardToken}`;
+  const planLabel = plan === 'premium' ? 'Premium 💎' : plan === 'pro' ? 'Pro ⭐' : 'Vitrine 🆓';
+  const isPaid = plan !== 'free';
+
+  await sendEmail({
+    to: email,
+    subject: `🎉 Bienvenue sur Terrimo, ${name} !`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1e293b">
+        <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:32px 32px 28px;border-radius:12px 12px 0 0">
+          <h1 style="color:white;margin:0;font-size:24px">Bienvenue sur Terrimo 🏡</h1>
+          <p style="color:rgba(255,255,255,.8);margin:8px 0 0;font-size:14px">La carte immobilière du Bassin d'Arcachon</p>
+        </div>
+        <div style="background:white;padding:28px 32px;border:1px solid #e2e8f0;border-top:none">
+          <p style="font-size:15px;margin:0 0 8px">Bonjour <strong>${name}</strong>,</p>
+          <p style="font-size:14px;color:#475569;margin:0 0 20px">
+            Votre fiche professionnelle <strong>${planLabel}</strong> est créée. Voici vos prochaines étapes pour maximiser votre visibilité sur le Bassin.
+          </p>
+
+          <div style="border-left:3px solid #6366f1;padding:8px 0 8px 16px;margin:0 0 12px">
+            <div style="font-weight:700;font-size:13px">① Compléter votre profil</div>
+            <div style="font-size:13px;color:#64748b;margin:3px 0 0">Photo, description, spécialités, zones d'intervention.</div>
+          </div>
+          ${isPaid ? `
+          <div style="border-left:3px solid #10b981;padding:8px 0 8px 16px;margin:0 0 12px">
+            <div style="font-weight:700;font-size:13px">② Ajouter vos biens</div>
+            <div style="font-size:13px;color:#64748b;margin:3px 0 0">Ils apparaissent comme pins orange sur la carte.</div>
+          </div>
+          <div style="border-left:3px solid #f59e0b;padding:8px 0 8px 16px;margin:0 0 20px">
+            <div style="font-weight:700;font-size:13px">③ Consulter les acquéreurs</div>
+            <div style="font-size:13px;color:#64748b;margin:3px 0 0">Profils et mandats de recherche de votre commune.</div>
+          </div>
+          ` : `
+          <div style="border-left:3px solid #10b981;padding:8px 0 8px 16px;margin:0 0 20px">
+            <div style="font-weight:700;font-size:13px">② Passer en Pro pour débloquer les leads</div>
+            <div style="font-size:13px;color:#64748b;margin:3px 0 0">49€/mois — biens illimités, profils acquéreurs, analytics.</div>
+          </div>
+          `}
+
+          <div style="text-align:center;margin:8px 0 0">
+            <a href="${dashboardUrl}" style="display:inline-block;background:linear-gradient(135deg,#4f46e5,#6366f1);color:white;text-decoration:none;padding:13px 32px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:0 4px 16px rgba(99,102,241,.35)">
+              Accéder à mon espace Pro →
+            </a>
+          </div>
+        </div>
+        <div style="padding:14px 32px;font-size:11px;color:#94a3b8;text-align:center;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px">
+          Terrimo · Bassin d'Arcachon · <a href="mailto:contact@terrimo.homes" style="color:#94a3b8">Nous contacter</a>
+        </div>
+      </div>`,
+  });
+}

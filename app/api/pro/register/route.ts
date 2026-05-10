@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-import { emailProMagicLink } from '@/lib/email';
+import { emailProMagicLink, emailOnboardingPro } from '@/lib/email';
 
 interface RegisterBody {
   type:           string;
@@ -230,13 +230,21 @@ export async function POST(request: NextRequest) {
     const tokenRows = await sql`SELECT access_token FROM acteurs WHERE id = ${acteurId}`;
     const token = tokenRows[0]?.access_token as string | null;
 
-    // Email magic link au pro
+    // Email magic link + onboarding au pro
     if (token) {
       emailProMagicLink({
         pro_email: email,
         pro_name:  name,
         plan,
         token,
+      }).catch(() => {});
+
+      // Email d'onboarding bienvenue J0
+      emailOnboardingPro({
+        email,
+        name,
+        plan,
+        dashboardToken: token,
       }).catch(() => {});
     }
 

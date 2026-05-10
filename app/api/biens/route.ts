@@ -5,6 +5,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { emailBienPubilé } from '@/lib/email';
 
 export const revalidate = 60; // 1 min cache
 
@@ -162,7 +163,7 @@ export async function POST(request: NextRequest) {
 
     // Vérifier le token et récupérer l'acteur
     const actors = await sql`
-      SELECT id, plan FROM acteurs
+      SELECT id, plan, name, email, access_token FROM acteurs
       WHERE access_token = ${token} AND is_active = true
       LIMIT 1
     `;
@@ -243,7 +244,23 @@ export async function POST(request: NextRequest) {
       RETURNING id, titre, type_annonce, type_bien, prix, commune
     `;
 
-    return NextResponse.json({ success: true, bien: result[0] }, { status: 201 });
+    const bien = result[0];
+
+    // Email de confirmation + récupération du token dashboard (fire & forget)
+    if (acteur.email && acteur.access_token) {
+      emailBienPubilé({
+        email: acteur.email,
+        acteurName: acteur.name ?? '',
+        bienId: bien.id,
+        titre: bien.titre,
+        commune: bien.commune,
+        typeAnnonce: bien.type_annonce,
+        prix: bien.prix ?? undefined,
+        dashboardToken: acteur.access_token,
+      }).catch(() => {});
+    }
+
+    return NextResponse.json({ success: true, bien }, { status: 201 });
   } catch (err) {
     console.error('[POST /api/biens]', err);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
