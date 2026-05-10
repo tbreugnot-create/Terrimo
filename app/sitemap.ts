@@ -10,8 +10,9 @@ const COMMUNES = [
 ];
 
 const STATIC: MetadataRoute.Sitemap = [
-  { url: BASE,             lastModified: new Date(), changeFrequency: 'daily',   priority: 1.0 },
-  { url: `${BASE}/evaluer`, lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
+  { url: BASE,                    lastModified: new Date(), changeFrequency: 'daily',   priority: 1.0 },
+  { url: `${BASE}/evaluer`,       lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
+  { url: `${BASE}/tarifs`,        lastModified: new Date(), changeFrequency: 'monthly', priority: 0.85 },
   { url: `${BASE}/pro/rejoindre`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
   ...COMMUNES.map(slug => ({
     url: `${BASE}/quartier/${slug}`,

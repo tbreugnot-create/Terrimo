@@ -1480,6 +1480,17 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                 </a>
               )}
             </div>
+            {/* CTA passer en Pro — visible seulement pour les fiches free */}
+            {selectedActeur.plan === 'free' && (
+              <a href="/tarifs" target="_blank" rel="noopener noreferrer" style={{
+                display: 'block', textAlign: 'center', textDecoration: 'none',
+                marginTop: '10px', padding: '8px 12px', borderRadius: '10px',
+                background: 'rgba(245,158,11,.1)', border: '1px solid rgba(245,158,11,.25)',
+                color: '#fbbf24', fontSize: '.8125rem', fontWeight: 600,
+              }}>
+                💎 Fiche basique — Passer en Pro pour plus de visibilité
+              </a>
+            )}
             {/* Directions */}
             {selectedActeur.lat && selectedActeur.lng && (
               <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>

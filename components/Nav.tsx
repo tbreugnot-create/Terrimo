@@ -79,6 +79,12 @@ const PRO_ITEMS = [
     label: 'Notaire',
     desc: 'Succession, transactions, estimation officielle',
   },
+  {
+    href: '/tarifs',
+    icon: '💎',
+    label: 'Voir les tarifs',
+    desc: 'Free · Pro 49€ · Premium 149€/mois',
+  },
 ];
 
 // ─── Styles inline partagés ──────────────────────────────
