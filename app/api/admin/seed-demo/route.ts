@@ -13,7 +13,7 @@ const SEED_SECRET = process.env.SEED_SECRET ?? 'TERRIMO_SEED_2026';
 const DEMO_BIENS = [
   // ── Arcachon ──────────────────────────────────────────────
   {
-    type_annonce: 'vente', type_bien: 'Villa', commune: 'Arcachon',
+    type_annonce: 'vente', type_bien: 'maison', commune: 'Arcachon',
     titre: 'Villa pieds dans l\'eau - Vue panoramique Bassin',
     prix: 1850000, surface: 185, pieces: 6, chambres: 4, dpe: 'C',
     lat: 44.6609, lng: -1.1733,
@@ -21,7 +21,7 @@ const DEMO_BIENS = [
     adresse: 'Boulevard de la Plage',
   },
   {
-    type_annonce: 'vente', type_bien: 'Appartement', commune: 'Arcachon',
+    type_annonce: 'vente', type_bien: 'appartement', commune: 'Arcachon',
     titre: 'T3 avec terrasse et vue mer - Résidence standing',
     prix: 520000, surface: 72, pieces: 3, chambres: 2, dpe: 'B',
     lat: 44.6580, lng: -1.1680,
@@ -29,7 +29,7 @@ const DEMO_BIENS = [
     adresse: 'Avenue Gambetta',
   },
   {
-    type_annonce: 'location', type_bien: 'Villa', commune: 'Arcachon',
+    type_annonce: 'location', type_bien: 'maison', commune: 'Arcachon',
     titre: 'Villa Ville d\'Hiver - Charme & caractère',
     prix: 3800, surface: 210, pieces: 7, chambres: 5, dpe: 'D',
     lat: 44.6640, lng: -1.1700,
@@ -37,7 +37,7 @@ const DEMO_BIENS = [
     adresse: 'Allée des Charmilles',
   },
   {
-    type_annonce: 'vente', type_bien: 'Maison', commune: 'Arcachon',
+    type_annonce: 'vente', type_bien: 'maison', commune: 'Arcachon',
     titre: 'Maison de ville rénovée - Quartier Abatilles',
     prix: 780000, surface: 140, pieces: 5, chambres: 3, dpe: 'C',
     lat: 44.6595, lng: -1.1760,
@@ -46,7 +46,7 @@ const DEMO_BIENS = [
   },
   // ── La Teste-de-Buch ──────────────────────────────────────
   {
-    type_annonce: 'vente', type_bien: 'Villa', commune: 'La Teste-de-Buch',
+    type_annonce: 'vente', type_bien: 'maison', commune: 'La Teste-de-Buch',
     titre: 'Villa contemporaine - Vue Dune du Pilat',
     prix: 1250000, surface: 220, pieces: 7, chambres: 5, dpe: 'A',
     lat: 44.6240, lng: -1.1390,
@@ -54,7 +54,7 @@ const DEMO_BIENS = [
     adresse: 'Route de la Dune',
   },
   {
-    type_annonce: 'vente', type_bien: 'Maison', commune: 'La Teste-de-Buch',
+    type_annonce: 'vente', type_bien: 'maison', commune: 'La Teste-de-Buch',
     titre: 'Maison traditionnelle - Terrain 1200m²',
     prix: 680000, surface: 160, pieces: 5, chambres: 3, dpe: 'D',
     lat: 44.6310, lng: -1.1250,
@@ -62,7 +62,7 @@ const DEMO_BIENS = [
     adresse: 'Chemin des Pins',
   },
   {
-    type_annonce: 'location', type_bien: 'Appartement', commune: 'La Teste-de-Buch',
+    type_annonce: 'location', type_bien: 'appartement', commune: 'La Teste-de-Buch',
     titre: 'T2 neuf proche centre - Résidence Les Oyats',
     prix: 900, surface: 48, pieces: 2, chambres: 1, dpe: 'A',
     lat: 44.6290, lng: -1.1210,
@@ -71,7 +71,7 @@ const DEMO_BIENS = [
   },
   // ── Lège-Cap-Ferret ────────────────────────────────────────
   {
-    type_annonce: 'vente', type_bien: 'Villa', commune: 'Lège-Cap-Ferret',
+    type_annonce: 'vente', type_bien: 'maison', commune: 'Lège-Cap-Ferret',
     titre: 'Villa Cap Ferret - Accès direct bassin',
     prix: 3200000, surface: 280, pieces: 8, chambres: 6, dpe: 'C',
     lat: 44.6960, lng: -1.2520,
@@ -79,7 +79,7 @@ const DEMO_BIENS = [
     adresse: 'Allée des Goélands',
   },
   {
-    type_annonce: 'vente', type_bien: 'Maison', commune: 'Lège-Cap-Ferret',
+    type_annonce: 'vente', type_bien: 'maison', commune: 'Lège-Cap-Ferret',
     titre: 'Cabane ostréicole rénovée - Village du Canon',
     prix: 950000, surface: 110, pieces: 4, chambres: 2, dpe: 'E',
     lat: 44.7380, lng: -1.2380,
@@ -87,7 +87,7 @@ const DEMO_BIENS = [
     adresse: 'Port du Canon',
   },
   {
-    type_annonce: 'location', type_bien: 'Villa', commune: 'Lège-Cap-Ferret',
+    type_annonce: 'location', type_bien: 'maison', commune: 'Lège-Cap-Ferret',
     titre: 'Villa Bélisaire - Piscine & vue bassin',
     prix: 5500, surface: 190, pieces: 6, chambres: 4, dpe: 'C',
     lat: 44.7100, lng: -1.2490,
@@ -96,7 +96,7 @@ const DEMO_BIENS = [
   },
   // ── Gujan-Mestras ─────────────────────────────────────────
   {
-    type_annonce: 'vente', type_bien: 'Maison', commune: 'Gujan-Mestras',
+    type_annonce: 'vente', type_bien: 'maison', commune: 'Gujan-Mestras',
     titre: 'Maison d\'architecte - Quartier calme résidentiel',
     prix: 890000, surface: 175, pieces: 6, chambres: 4, dpe: 'B',
     lat: 44.6340, lng: -1.0710,
@@ -104,7 +104,7 @@ const DEMO_BIENS = [
     adresse: 'Avenue de la Gare',
   },
   {
-    type_annonce: 'vente', type_bien: 'Appartement', commune: 'Gujan-Mestras',
+    type_annonce: 'vente', type_bien: 'appartement', commune: 'Gujan-Mestras',
     titre: 'T4 - Résidence Les Ports - Vue port ostréicole',
     prix: 420000, surface: 95, pieces: 4, chambres: 2, dpe: 'C',
     lat: 44.6370, lng: -1.0730,
@@ -112,7 +112,7 @@ const DEMO_BIENS = [
     adresse: 'Rue des Ports',
   },
   {
-    type_annonce: 'location', type_bien: 'Maison', commune: 'Gujan-Mestras',
+    type_annonce: 'location', type_bien: 'maison', commune: 'Gujan-Mestras',
     titre: 'Maison avec jardin - Proche plages lac',
     prix: 1650, surface: 120, pieces: 4, chambres: 3, dpe: 'D',
     lat: 44.6355, lng: -1.0680,
@@ -121,7 +121,7 @@ const DEMO_BIENS = [
   },
   // ── Andernos-les-Bains ────────────────────────────────────
   {
-    type_annonce: 'vente', type_bien: 'Villa', commune: 'Andernos-les-Bains',
+    type_annonce: 'vente', type_bien: 'maison', commune: 'Andernos-les-Bains',
     titre: 'Villa en bord de bassin - Belle luminosité',
     prix: 1100000, surface: 165, pieces: 6, chambres: 4, dpe: 'C',
     lat: 44.7410, lng: -1.0980,
@@ -129,7 +129,7 @@ const DEMO_BIENS = [
     adresse: 'Boulevard du Président Roosevelt',
   },
   {
-    type_annonce: 'vente', type_bien: 'Maison', commune: 'Andernos-les-Bains',
+    type_annonce: 'vente', type_bien: 'maison', commune: 'Andernos-les-Bains',
     titre: 'Charmante maison landaise - Jardin planté',
     prix: 495000, surface: 118, pieces: 4, chambres: 3, dpe: 'E',
     lat: 44.7380, lng: -1.0930,
@@ -138,7 +138,7 @@ const DEMO_BIENS = [
   },
   // ── Biganos ───────────────────────────────────────────────
   {
-    type_annonce: 'vente', type_bien: 'Maison', commune: 'Biganos',
+    type_annonce: 'vente', type_bien: 'maison', commune: 'Biganos',
     titre: 'Maison neuve BBC - Lotissement Les Pins',
     prix: 390000, surface: 105, pieces: 4, chambres: 3, dpe: 'A',
     lat: 44.6490, lng: -0.9780,
@@ -147,7 +147,7 @@ const DEMO_BIENS = [
   },
   // ── Marcheprime ───────────────────────────────────────────
   {
-    type_annonce: 'vente', type_bien: 'Maison', commune: 'Marcheprime',
+    type_annonce: 'vente', type_bien: 'maison', commune: 'Marcheprime',
     titre: 'Belle maison avec piscine - Calme absolu',
     prix: 445000, surface: 140, pieces: 5, chambres: 3, dpe: 'C',
     lat: 44.6950, lng: -0.9270,
@@ -156,7 +156,7 @@ const DEMO_BIENS = [
   },
   // ── Audenge ───────────────────────────────────────────────
   {
-    type_annonce: 'vente', type_bien: 'Maison', commune: 'Audenge',
+    type_annonce: 'vente', type_bien: 'maison', commune: 'Audenge',
     titre: 'Maison de village rénovée - Vue bassin',
     prix: 530000, surface: 130, pieces: 5, chambres: 3, dpe: 'D',
     lat: 44.6840, lng: -1.0190,
@@ -165,7 +165,7 @@ const DEMO_BIENS = [
   },
   // ── Lanton ────────────────────────────────────────────────
   {
-    type_annonce: 'location', type_bien: 'Maison', commune: 'Lanton',
+    type_annonce: 'location', type_bien: 'maison', commune: 'Lanton',
     titre: 'Location longue durée - Maison 4p - Jardin',
     prix: 1400, surface: 100, pieces: 4, chambres: 2, dpe: 'C',
     lat: 44.7010, lng: -1.0420,
@@ -174,7 +174,7 @@ const DEMO_BIENS = [
   },
   // ── Arès ──────────────────────────────────────────────────
   {
-    type_annonce: 'vente', type_bien: 'Villa', commune: 'Arès',
+    type_annonce: 'vente', type_bien: 'maison', commune: 'Arès',
     titre: 'Villa Arès - Rare, 200m bassin, piscine chauffée',
     prix: 1580000, surface: 200, pieces: 7, chambres: 5, dpe: 'B',
     lat: 44.7690, lng: -1.1350,
