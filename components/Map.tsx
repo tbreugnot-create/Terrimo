@@ -1086,6 +1086,74 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
           )}
         </div>
 
+        {/* ── Boutons Draw flottants (toujours visibles) ──────── */}
+        <div style={{
+          position: 'absolute', bottom: '16px', left: '12px', zIndex: 600,
+          display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start',
+        }} className="draw-btns-float">
+          {/* Effacer la zone — visible uniquement quand une zone est sélectionnée */}
+          {zoneIds !== null && (
+            <button
+              onClick={() => {
+                drawLayerRef.current.forEach(l => l.remove());
+                drawLayerRef.current = [];
+                drawModeRef.current = false;
+                drawPtsRef.current = [];
+                setDrawMode(false);
+                setDrawPts([]);
+                setZoneClosed(false);
+                setZoneIds(null);
+              }}
+              style={{
+                padding: '9px 16px',
+                background: 'white', color: '#dc2626',
+                border: '1.5px solid #fca5a5',
+                borderRadius: '12px', cursor: 'pointer',
+                fontSize: '.875rem', fontWeight: 700,
+                boxShadow: '0 2px 14px rgba(0,0,0,.15)',
+                display: 'flex', alignItems: 'center', gap: '6px',
+                minHeight: 'auto', whiteSpace: 'nowrap',
+                transition: 'all .15s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#fef2f2'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'white'; }}
+            >
+              ✕ Effacer la zone
+            </button>
+          )}
+          {/* Dessiner sur la carte — toujours visible (sauf si dessin en cours) */}
+          {!drawMode && (
+            <button
+              onClick={() => {
+                if (layerMode !== 'biens') setLayerMode('biens');
+                drawModeRef.current = true;
+                drawPtsRef.current = [];
+                setDrawMode(true);
+                setDrawPts([]);
+                setZoneClosed(false);
+                setZoneIds(null);
+                setMobileView('map');
+              }}
+              style={{
+                padding: '9px 16px',
+                background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                color: 'white', border: 'none',
+                borderRadius: '12px', cursor: 'pointer',
+                fontSize: '.875rem', fontWeight: 700,
+                boxShadow: '0 4px 16px rgba(99,102,241,.35)',
+                display: 'flex', alignItems: 'center', gap: '7px',
+                minHeight: 'auto', whiteSpace: 'nowrap',
+                transition: 'all .15s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '.85'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+              Dessiner sur la carte
+            </button>
+          )}
+        </div>
+
         {/* ── Draw Search overlay ──────────────────────────────── */}
         {drawMode && (
           <div style={{
@@ -1450,6 +1518,7 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
         @media (max-width: 767px) {
           .map-left-panel { width: 100% !important; }
           .hidden-mobile { display: none !important; }
+          .draw-btns-float { bottom: 72px !important; }
         }
         @media (min-width: 768px) {
           .show-mobile-only { display: none !important; }
