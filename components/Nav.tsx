@@ -8,10 +8,16 @@ import { usePathname } from 'next/navigation';
 // ─── Structure des menus ─────────────────────────────────
 const PROPRIO_ITEMS = [
   {
-    href: '/evaluer',
+    href: '/vendre',
     icon: '🏷️',
-    label: 'Estimer & vendre',
-    desc: 'Fourchette DVF + mise en relation agence',
+    label: 'Vendre mon bien',
+    desc: 'Mise en relation agences + estimation gratuite',
+  },
+  {
+    href: '/evaluer',
+    icon: '📊',
+    label: 'Estimation gratuite',
+    desc: 'Fourchette DVF précise, sans engagement',
   },
   {
     href: '/evaluer?intention=louer',
@@ -25,32 +31,32 @@ const PROPRIO_ITEMS = [
     label: 'Faire diagnostiquer (DPE)',
     desc: 'Obligatoire avant vente ou location',
   },
-  {
-    href: '/evaluer?intention=notaire',
-    icon: '⚖️',
-    label: 'Estimation notariale',
-    desc: 'Succession, donation, vente entre particuliers',
-  },
 ];
 
 const ACQUEREUR_ITEMS = [
   {
-    href: '/rechercher',
+    href: '/acquereur',
     icon: '🔍',
-    label: 'Créer mon alerte de recherche',
-    desc: 'Définissez vos critères, les agences vous contactent',
+    label: 'Déposer ma recherche',
+    desc: 'Les agences vous contactent si un bien correspond',
   },
   {
-    href: '/?ouvre-carte=1',
+    href: '/',
     icon: '🗺️',
     label: 'Explorer la carte',
     desc: 'Biens disponibles, prix au m², quartiers',
   },
   {
-    href: '/rechercher?type=investissement',
-    icon: '📈',
-    label: 'Investissement locatif',
-    desc: 'Rendement saisonnier, conciergeries partenaires',
+    href: '/vente/arcachon',
+    icon: '🏠',
+    label: 'Biens à vendre',
+    desc: 'Maisons & appartements sur le Bassin',
+  },
+  {
+    href: '/location/arcachon',
+    icon: '🌊',
+    label: 'Biens en location',
+    desc: 'Location annuelle et saisonnière',
   },
 ];
 
