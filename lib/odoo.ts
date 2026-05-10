@@ -237,3 +237,73 @@ export async function syncVendeurToOdoo(data: VendeurOdoo): Promise<void> {
     console.error('[syncVendeurToOdoo]', err);
   }
 }
+
+// ─── Alerte zone ──────────────────────────────────────────
+export interface AlerteOdoo {
+  email: string;
+  type_annonce?: string;
+  prix_max?: number;
+  surface_min?: number;
+  alerteId: string;
+}
+
+export async function syncAlerteToOdoo(data: AlerteOdoo): Promise<number | null> {
+  if (!ODOO_API_KEY) return null;
+  try {
+    const uid = await getUid();
+    if (!uid) return null;
+
+    const tagNames = ['Terrimo — Alerte Zone'];
+    if (data.type_annonce === 'vente')    tagNames.push('Terrimo — Acheteur');
+    if (data.type_annonce === 'location') tagNames.push('Terrimo — Locataire');
+
+    const tagIds = (await Promise.all(tagNames.map(t => getOrCreateTag(uid, t)))).filter(Boolean) as number[];
+
+    const filtresStr = [
+      data.type_annonce ? `Type : ${data.type_annonce}` : 'Tous types',
+      data.prix_max     ? `Budget max : ${data.prix_max.toLocaleString('fr-FR')} €` : null,
+      data.surface_min  ? `Surface min : ${data.surface_min} m²` : null,
+    ].filter(Boolean).join(' · ');
+
+    const comment = [
+      `[Terrimo] Alerte zone — Bassin d'Arcachon`,
+      `Filtres : ${filtresStr}`,
+      `ID alerte : ${data.alerteId}`,
+    ].join('\n');
+
+    const vals: Record<string, unknown> = {
+      name:        data.email,
+      is_company:  false,
+      email:       data.email,
+      comment,
+      category_id: [[6, 0, tagIds]],
+      country_id:  75,
+    };
+
+    const existing = await xmlRpc('/xmlrpc/2/object', 'execute_kw', [
+      ODOO_DB, uid, ODOO_API_KEY,
+      'res.partner', 'search_read',
+      [[['email', '=', data.email]]],
+      { fields: ['id'], limit: 1 },
+    ]) as Array<{ id: number }>;
+
+    if (existing?.length) {
+      await xmlRpc('/xmlrpc/2/object', 'execute_kw', [
+        ODOO_DB, uid, ODOO_API_KEY,
+        'res.partner', 'write',
+        [[existing[0].id], vals], {},
+      ]);
+      return existing[0].id;
+    } else {
+      const newId = await xmlRpc('/xmlrpc/2/object', 'execute_kw', [
+        ODOO_DB, uid, ODOO_API_KEY,
+        'res.partner', 'create',
+        [vals], {},
+      ]);
+      return typeof newId === 'number' ? newId : null;
+    }
+  } catch (err) {
+    console.error('[syncAlerteToOdoo]', err);
+    return null;
+  }
+}

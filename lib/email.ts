@@ -217,3 +217,134 @@ export async function emailProMagicLink(params: {
       </div>`,
   });
 }
+
+// ─────────────────────────────────────────────────────────────
+// 4. Confirmation d'inscription à une alerte zone
+// ─────────────────────────────────────────────────────────────
+export async function emailAlerteConfirmation(params: {
+  email: string;
+  type_annonce?: string;
+  prix_max?: number;
+  surface_min?: number;
+  alerteId: string;
+}) {
+  const { email, type_annonce, prix_max, surface_min, alerteId } = params;
+  const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
+
+  const filtres = [
+    type_annonce ? `Type : <strong>${type_annonce === 'vente' ? 'Vente' : type_annonce === 'location' ? 'Location' : 'Location saisonnière'}</strong>` : null,
+    prix_max     ? `Budget max : <strong>${fmt(prix_max)}</strong>` : null,
+    surface_min  ? `Surface min : <strong>${surface_min} m²</strong>` : null,
+  ].filter(Boolean).join(' &nbsp;·&nbsp; ');
+
+  const unsubUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://terrimo.homes'}/api/alertes/unsubscribe?id=${alerteId}`;
+
+  return sendEmail({
+    to: email,
+    subject: '🔔 Votre alerte zone Terrimo est active',
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1e293b">
+        <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:24px 32px;border-radius:12px 12px 0 0">
+          <h1 style="color:white;margin:0;font-size:22px">Terrimo</h1>
+          <p style="color:rgba(255,255,255,.75);margin:4px 0 0;font-size:13px">Bassin d'Arcachon · Alertes zone</p>
+        </div>
+        <div style="background:white;padding:28px 32px;border:1px solid #e2e8f0;border-top:none">
+          <p style="font-size:15px;margin:0 0 16px">Votre alerte est bien activée ✅</p>
+          <p style="color:#475569;font-size:14px;margin:0 0 20px">
+            Vous recevrez un email dès qu'un bien correspondant à votre zone dessinée sera publié sur Terrimo.
+          </p>
+
+          ${filtres ? `
+          <div style="background:#f1f5f9;border-radius:8px;padding:14px 18px;margin:0 0 20px;font-size:13px;color:#475569">
+            <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8">Filtres actifs</p>
+            <p style="margin:0">${filtres}</p>
+          </div>` : `
+          <div style="background:#f1f5f9;border-radius:8px;padding:14px 18px;margin:0 0 20px;font-size:13px;color:#475569">
+            Tous types de biens · Tous budgets
+          </div>`}
+
+          <p style="font-size:13px;color:#94a3b8;margin:0">
+            Pour désactiver cette alerte : <a href="${unsubUrl}" style="color:#6366f1">se désabonner</a>
+          </p>
+        </div>
+        <div style="padding:14px 32px;font-size:11px;color:#94a3b8;text-align:center;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px">
+          Terrimo · Bassin d'Arcachon · <a href="https://terrimo.homes" style="color:#4f46e5">terrimo.homes</a>
+        </div>
+      </div>`,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// 5. Notification "Nouveau bien dans votre zone"
+// ─────────────────────────────────────────────────────────────
+interface BienMatch {
+  id: string;
+  titre?: string;
+  type_bien: string;
+  type_annonce: string;
+  prix?: number;
+  surface?: number;
+  pieces?: number;
+  commune: string;
+  acteur_name?: string;
+}
+
+export async function emailNouveauBienZone(params: {
+  email: string;
+  alerteId: string;
+  biens: BienMatch[];
+}) {
+  const { email, alerteId, biens } = params;
+  const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
+  const unsubUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://terrimo.homes'}/api/alertes/unsubscribe?id=${alerteId}`;
+  const carteUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://terrimo.homes'}/?ouvre-carte=1`;
+
+  const nb = biens.length;
+  const biensHtml = biens.slice(0, 5).map(b => `
+    <div style="border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div>
+          <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#0f172a">
+            ${b.titre ?? `${b.type_bien} · ${b.commune}`}
+          </p>
+          <p style="margin:0;font-size:12px;color:#64748b">
+            ${b.commune}${b.surface ? ` · ${b.surface} m²` : ''}${b.pieces ? ` · ${b.pieces} p.` : ''}
+          </p>
+        </div>
+        ${b.prix ? `<p style="margin:0;font-size:15px;font-weight:700;color:#4f46e5;white-space:nowrap">${fmt(b.prix)}</p>` : ''}
+      </div>
+      ${b.acteur_name ? `<p style="margin:6px 0 0;font-size:11px;color:#94a3b8">Via ${b.acteur_name}</p>` : ''}
+    </div>
+  `).join('');
+
+  return sendEmail({
+    to: email,
+    subject: `🏡 ${nb} nouveau${nb > 1 ? 'x biens' : ' bien'} dans votre zone Terrimo`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1e293b">
+        <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:24px 32px;border-radius:12px 12px 0 0">
+          <h1 style="color:white;margin:0;font-size:22px">Terrimo</h1>
+          <p style="color:rgba(255,255,255,.75);margin:4px 0 0;font-size:13px">Bassin d'Arcachon · Alerte zone</p>
+        </div>
+        <div style="background:white;padding:28px 32px;border:1px solid #e2e8f0;border-top:none">
+          <p style="font-size:16px;font-weight:700;margin:0 0 6px">
+            🔔 ${nb} nouveau${nb > 1 ? 'x biens correspondent' : ' bien correspond'} à votre zone
+          </p>
+          <p style="font-size:14px;color:#475569;margin:0 0 20px">
+            ${nb > 1 ? 'Ces biens viennent' : 'Ce bien vient'} d'être publié${nb > 1 ? 's' : ''} dans la zone que vous avez dessinée.
+          </p>
+
+          ${biensHtml}
+
+          <div style="text-align:center;margin:24px 0 0">
+            <a href="${carteUrl}" style="display:inline-block;background:#4f46e5;color:white;text-decoration:none;padding:12px 28px;border-radius:10px;font-weight:700;font-size:14px">
+              Voir sur la carte →
+            </a>
+          </div>
+        </div>
+        <div style="padding:14px 32px;font-size:11px;color:#94a3b8;text-align:center;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px">
+          Terrimo · <a href="${unsubUrl}" style="color:#94a3b8">Se désabonner</a>
+        </div>
+      </div>`,
+  });
+}

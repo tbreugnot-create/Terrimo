@@ -145,6 +145,15 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
   const [zoneClosed, setZoneClosed] = useState(false);
   const [zoneIds, setZoneIds]       = useState<Set<number> | null>(null);
 
+  // ── Drawer alerte zone ────────────────────────────────────
+  const [alerteDrawer, setAlerteDrawer]       = useState(false);
+  const [alerteEmail, setAlerteEmail]         = useState('');
+  const [alerteType, setAlerteType]           = useState('');
+  const [alertePrixMax, setAlertePrixMax]     = useState('');
+  const [alerteSurface, setAlerteSurface]     = useState('');
+  const [alerteSubmitting, setAlerteSubmitting] = useState(false);
+  const [alerteSuccess, setAlerteSuccess]     = useState(false);
+
   // Garder biensRef synchronisé
   useEffect(() => { biensRef.current = biens; }, [biens]);
 
@@ -1169,6 +1178,11 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                   drawModeRef.current = false;
                   setDrawMode(false);
                   setMobileView('list');
+                  // Ouvrir le drawer d'alerte après un court délai
+                  setTimeout(() => {
+                    setAlerteDrawer(true);
+                    setAlerteSuccess(false);
+                  }, 600);
                   // Zoom automatique sur la zone dessinée
                   if (mapRef.current && leafletRef.current && drawPtsRef.current.length >= 2) {
                     const L = leafletRef.current;
@@ -1514,7 +1528,156 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
         </button>
       </div>
 
+      {/* ═══════════════════ DRAWER ALERTE ZONE ═══════════════════ */}
+      {alerteDrawer && zoneIds !== null && (
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 900,
+          background: 'rgba(10,20,38,.97)', backdropFilter: 'blur(24px)',
+          borderTop: '1px solid rgba(255,255,255,.12)',
+          borderRadius: '20px 20px 0 0',
+          padding: '20px 20px 28px',
+          boxShadow: '0 -8px 40px rgba(0,0,0,.5)',
+          animation: 'slideUp .25s ease both',
+        }}>
+          {/* Handle + close */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.25rem' }}>🔔</span>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '1rem', color: 'white' }}>
+                  Alerte zone
+                </div>
+                <div style={{ fontSize: '.8125rem', color: 'rgba(255,255,255,.45)' }}>
+                  {zoneIds.size > 0 ? `${zoneIds.size} bien${zoneIds.size > 1 ? 's' : ''} actuellement · ` : ''}
+                  Soyez notifié en premier dès qu&apos;un bien correspond
+                </div>
+              </div>
+            </div>
+            <button onClick={() => setAlerteDrawer(false)} style={{
+              background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: '50%',
+              width: '30px', height: '30px', cursor: 'pointer', color: 'rgba(255,255,255,.6)',
+              fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              minHeight: 'auto', flexShrink: 0,
+            }}>×</button>
+          </div>
+
+          {alerteSuccess ? (
+            <div style={{
+              background: 'rgba(16,185,129,.15)', border: '1px solid rgba(16,185,129,.3)',
+              borderRadius: '12px', padding: '16px', textAlign: 'center',
+            }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '6px' }}>✅</div>
+              <div style={{ fontWeight: 700, color: '#34d399', fontSize: '.9375rem' }}>Alerte activée !</div>
+              <div style={{ fontSize: '.8125rem', color: 'rgba(255,255,255,.5)', marginTop: '4px' }}>
+                Vérifiez votre boîte mail pour confirmer.
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={async e => {
+              e.preventDefault();
+              if (!alerteEmail) return;
+              setAlerteSubmitting(true);
+              try {
+                const res = await fetch('/api/alertes', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    email: alerteEmail,
+                    polygon: drawPtsRef.current,
+                    type_annonce: alerteType || undefined,
+                    prix_max: alertePrixMax ? Number(alertePrixMax) : undefined,
+                    surface_min: alerteSurface ? Number(alerteSurface) : undefined,
+                  }),
+                });
+                if (res.ok) {
+                  setAlerteSuccess(true);
+                }
+              } catch { /* silent */ }
+              finally { setAlerteSubmitting(false); }
+            }} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+
+              {/* Email */}
+              <input
+                type="email"
+                required
+                placeholder="votre@email.com"
+                value={alerteEmail}
+                onChange={e => setAlerteEmail(e.target.value)}
+                style={{
+                  width: '100%', padding: '11px 14px', borderRadius: '10px',
+                  border: '1.5px solid rgba(255,255,255,.15)',
+                  background: 'rgba(255,255,255,.07)', color: 'white',
+                  fontSize: '.9375rem', outline: 'none', boxSizing: 'border-box',
+                }}
+              />
+
+              {/* Filtres optionnels — ligne horizontale */}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <select
+                  value={alerteType}
+                  onChange={e => setAlerteType(e.target.value)}
+                  style={{
+                    flex: 1, padding: '9px 10px', borderRadius: '10px',
+                    border: '1.5px solid rgba(255,255,255,.12)',
+                    background: 'rgba(255,255,255,.07)', color: alerteType ? 'white' : 'rgba(255,255,255,.4)',
+                    fontSize: '.8125rem', outline: 'none', cursor: 'pointer',
+                  }}
+                >
+                  <option value="">Tout type</option>
+                  <option value="vente">Vente</option>
+                  <option value="location">Location</option>
+                </select>
+                <input
+                  type="number"
+                  placeholder="Budget max €"
+                  value={alertePrixMax}
+                  onChange={e => setAlertePrixMax(e.target.value)}
+                  style={{
+                    flex: 1, padding: '9px 10px', borderRadius: '10px',
+                    border: '1.5px solid rgba(255,255,255,.12)',
+                    background: 'rgba(255,255,255,.07)', color: 'white',
+                    fontSize: '.8125rem', outline: 'none',
+                  }}
+                />
+                <input
+                  type="number"
+                  placeholder="Surface min m²"
+                  value={alerteSurface}
+                  onChange={e => setAlerteSurface(e.target.value)}
+                  style={{
+                    flex: 1, padding: '9px 10px', borderRadius: '10px',
+                    border: '1.5px solid rgba(255,255,255,.12)',
+                    background: 'rgba(255,255,255,.07)', color: 'white',
+                    fontSize: '.8125rem', outline: 'none',
+                  }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={alerteSubmitting || !alerteEmail}
+                style={{
+                  width: '100%', padding: '12px',
+                  background: alerteSubmitting || !alerteEmail
+                    ? 'rgba(99,102,241,.4)'
+                    : 'linear-gradient(135deg,#6366f1,#4f46e5)',
+                  color: 'white', border: 'none', borderRadius: '12px',
+                  fontWeight: 700, fontSize: '.9375rem', cursor: alerteSubmitting ? 'wait' : 'pointer',
+                  transition: 'all .15s', minHeight: 'auto',
+                }}
+              >
+                {alerteSubmitting ? 'Activation…' : '🔔 Activer l\'alerte pour cette zone'}
+              </button>
+            </form>
+          )}
+        </div>
+      )}
+
       <style>{`
+        @keyframes slideUp {
+          from { transform: translateY(100%); opacity: 0; }
+          to   { transform: translateY(0);    opacity: 1; }
+        }
         @media (max-width: 767px) {
           .map-left-panel { width: 100% !important; }
           .hidden-mobile { display: none !important; }
