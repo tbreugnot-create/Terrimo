@@ -1,9 +1,8 @@
 /**
- * TERRIMO — /api/admin/migrate
+ * TERRIMO — POST /api/admin/migrate
  * Endpoint one-shot pour exécuter les migrations en production.
  * Protégé par ADMIN_SECRET.
- * GET  /api/admin/migrate?secret=XXX&migration=status|stripe|mandats|bien_events|zone_alertes
- * POST /api/admin/migrate  body: { secret, migration }
+ * Supprimer ou désactiver après usage.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -15,23 +14,15 @@ function checkSecret(secret: string | null): boolean {
   return secret === adminSecret;
 }
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const secret = searchParams.get('secret');
-  const migration = searchParams.get('migration') ?? 'status';
-  if (!checkSecret(secret)) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-  return runMigration(migration);
-}
-
 export async function POST(request: NextRequest) {
   const body = await request.json() as { secret: string; migration: string };
-  if (!checkSecret(body.secret)) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-  return runMigration(body.migration);
-}
 
-async function runMigration(migration: string): Promise<NextResponse> {
+  if (!checkSecret(body.secret)) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+  }
+
   try {
-    if (migration === 'stripe') {
+    if (body.migration === 'stripe') {
       await sql`
         ALTER TABLE acteurs
           ADD COLUMN IF NOT EXISTS stripe_customer_id     VARCHAR(100),
@@ -45,7 +36,7 @@ async function runMigration(migration: string): Promise<NextResponse> {
       return NextResponse.json({ ok: true, migration: 'stripe', message: 'Colonnes stripe ajoutées' });
     }
 
-    if (migration === 'mandats') {
+    if (body.migration === 'mandats') {
       await sql`
         CREATE TABLE IF NOT EXISTS mandats_recherche (
           id                  BIGSERIAL PRIMARY KEY,
@@ -93,7 +84,7 @@ async function runMigration(migration: string): Promise<NextResponse> {
       return NextResponse.json({ ok: true, migration: 'mandats', message: 'Table mandats_recherche créée' });
     }
 
-    if (migration === 'bien_events') {
+    if (body.migration === 'bien_events') {
       await sql`
         CREATE TABLE IF NOT EXISTS bien_events (
           id         BIGSERIAL PRIMARY KEY,
@@ -110,7 +101,7 @@ async function runMigration(migration: string): Promise<NextResponse> {
       return NextResponse.json({ ok: true, migration: 'bien_events', message: 'Table bien_events créée' });
     }
 
-    if (migration === 'zone_alertes') {
+    if (body.migration === 'zone_alertes') {
       await sql`
         CREATE TABLE IF NOT EXISTS zone_alertes (
           id          BIGSERIAL PRIMARY KEY,
@@ -129,7 +120,7 @@ async function runMigration(migration: string): Promise<NextResponse> {
       return NextResponse.json({ ok: true, migration: 'zone_alertes', message: 'Table zone_alertes créée' });
     }
 
-    if (migration === 'status') {
+    if (body.migration === 'status') {
       // Vérifier l'état des tables
       const tables = await sql`
         SELECT table_name

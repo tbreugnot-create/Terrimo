@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { sql } from '@/lib/db';
+import { ARTICLES } from './blog/articles';
 
 const BASE = 'https://terrimo.homes';
 
@@ -18,6 +19,13 @@ const STATIC: MetadataRoute.Sitemap = [
   { url: `${BASE}/acquereur`,     lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
   { url: `${BASE}/marche`,        lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.88 },
   { url: `${BASE}/vendre`,        lastModified: new Date(), changeFrequency: 'monthly', priority: 0.85 },
+  { url: `${BASE}/blog`,          lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.82 },
+  ...ARTICLES.map(a => ({
+    url: `${BASE}/blog/${a.slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.75,
+  })),
   ...COMMUNES.map(slug => ({
     url: `${BASE}/quartier/${slug}`,
     lastModified: new Date(),

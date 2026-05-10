@@ -58,12 +58,6 @@ const ACQUEREUR_ITEMS = [
     label: 'Biens en location',
     desc: 'Location annuelle et saisonnière',
   },
-  {
-    href: '/marche',
-    icon: '📊',
-    label: 'Prix du marché DVF',
-    desc: 'Prix m² officiels par commune, évolution annuelle',
-  },
 ];
 
 const PRO_ITEMS = [

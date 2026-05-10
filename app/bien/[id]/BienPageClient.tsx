@@ -1,20 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import type { CSSProperties } from 'react';
-import type { BienDetail, BienSimilaire } from './page';
+import type { BienDetail } from './page';
 
 // ─────────────────────────────────────────────────────────────
 // Config
 // ─────────────────────────────────────────────────────────────
 const ANNONCE_CONFIG = {
-  vente:              { label: 'Vente',      color: '#f97316', bg: '#fff7ed' },
-  location:           { label: 'Location',   color: '#3b82f6', bg: '#eff6ff' },
-  location_saisonniere: { label: 'Saisonnier', color: '#8b5cf6', bg: '#f5f3ff' },
-  viager:             { label: 'Viager',     color: '#8b5cf6', bg: '#f5f3ff' },
-  neuf:               { label: 'Neuf',       color: '#22c55e', bg: '#f0fdf4' },
-  commercial:         { label: 'Commercial', color: '#64748b', bg: '#f8fafc' },
+  vente:      { label: 'Vente',      color: '#f97316', bg: '#fff7ed' },
+  location:   { label: 'Location',   color: '#3b82f6', bg: '#eff6ff' },
+  viager:     { label: 'Viager',     color: '#8b5cf6', bg: '#f5f3ff' },
+  neuf:       { label: 'Neuf',       color: '#22c55e', bg: '#f0fdf4' },
+  commercial: { label: 'Commercial', color: '#64748b', bg: '#f8fafc' },
 } as Record<string, { label: string; color: string; bg: string }>;
 
 const DPE_COLORS: Record<string, string> = {
@@ -26,169 +25,17 @@ const fmt = (n: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
 
 // ─────────────────────────────────────────────────────────────
-// Galerie photo
+// Component
 // ─────────────────────────────────────────────────────────────
-function PhotoGallery({ photos, titre }: { photos: { url: string }[]; titre: string }) {
-  const [idx, setIdx] = useState(0);
-
-  const prev = useCallback(() => setIdx(i => (i - 1 + photos.length) % photos.length), [photos.length]);
-  const next = useCallback(() => setIdx(i => (i + 1) % photos.length), [photos.length]);
-
-  if (!photos.length) return (
-    <div style={{
-      borderRadius: '20px', marginBottom: '24px',
-      background: 'linear-gradient(135deg, #0c1a2e 0%, #1e3a5f 100%)',
-      aspectRatio: '16/7',
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      color: 'rgba(255,255,255,.3)',
-    }}>
-      <div style={{ fontSize: '3rem', marginBottom: '8px' }}>🏡</div>
-      <div style={{ fontSize: '.9375rem' }}>Bassin d&apos;Arcachon</div>
-    </div>
-  );
-
-  return (
-    <div style={{ marginBottom: '24px' }}>
-      {/* Photo principale */}
-      <div style={{
-        borderRadius: '20px', overflow: 'hidden',
-        background: '#0f172a', aspectRatio: '16/7',
-        position: 'relative',
-      }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={photos[idx].url}
-          alt={`${titre} — photo ${idx + 1}`}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-        />
-
-        {/* Boutons prev/next si plusieurs photos */}
-        {photos.length > 1 && (
-          <>
-            <button onClick={prev} aria-label="Photo précédente" style={{
-              position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)',
-              background: 'rgba(255,255,255,.9)', border: 'none', borderRadius: '50%',
-              width: '40px', height: '40px', cursor: 'pointer', fontSize: '1.125rem',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(0,0,0,.2)', minHeight: 'auto',
-              color: '#0f172a',
-            }}>‹</button>
-            <button onClick={next} aria-label="Photo suivante" style={{
-              position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
-              background: 'rgba(255,255,255,.9)', border: 'none', borderRadius: '50%',
-              width: '40px', height: '40px', cursor: 'pointer', fontSize: '1.125rem',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(0,0,0,.2)', minHeight: 'auto',
-              color: '#0f172a',
-            }}>›</button>
-
-            {/* Compteur */}
-            <div style={{
-              position: 'absolute', bottom: '12px', right: '14px',
-              background: 'rgba(0,0,0,.55)', color: 'white',
-              fontSize: '.8125rem', fontWeight: 600, padding: '3px 10px', borderRadius: '20px',
-            }}>
-              {idx + 1} / {photos.length}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Miniatures */}
-      {photos.length > 1 && (
-        <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-          {photos.map((p, i) => (
-            <button key={i} onClick={() => setIdx(i)} style={{
-              border: i === idx ? '2.5px solid #6366f1' : '2px solid transparent',
-              borderRadius: '10px', overflow: 'hidden',
-              width: '80px', height: '56px', cursor: 'pointer', padding: 0,
-              flexShrink: 0, minHeight: 'auto', background: 'none',
-              opacity: i === idx ? 1 : 0.6,
-              transition: 'opacity .15s, border-color .15s',
-            }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.url} alt={`Miniature ${i + 1}`}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// Card bien similaire
-// ─────────────────────────────────────────────────────────────
-function SimilaireCard({ b }: { b: BienSimilaire }) {
-  const cfg = ANNONCE_CONFIG[b.type_annonce] ?? ANNONCE_CONFIG.vente;
-  const titre = b.titre ?? `${b.type_bien} · ${b.commune}`;
-  const photo = b.photos?.[0]?.url;
-
-  return (
-    <Link href={`/bien/${b.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-      <div style={{
-        background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0',
-        overflow: 'hidden', transition: 'box-shadow .15s',
-      }}
-        onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,.08)')}
-        onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
-      >
-        {/* Image */}
-        <div style={{ aspectRatio: '4/3', background: '#f1f5f9', position: 'relative', overflow: 'hidden' }}>
-          {photo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={photo} alt={titre}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-          ) : (
-            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: '#cbd5e1' }}>🏡</div>
-          )}
-          <span style={{
-            position: 'absolute', top: '8px', left: '8px',
-            fontSize: '.75rem', fontWeight: 700, padding: '3px 8px',
-            borderRadius: '6px', background: cfg.bg, color: cfg.color,
-          }}>{cfg.label}</span>
-        </div>
-        {/* Content */}
-        <div style={{ padding: '12px' }}>
-          <p style={{ fontWeight: 700, fontSize: '.9375rem', color: '#0f172a', margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {titre}
-          </p>
-          {b.prix && (
-            <p style={{ fontWeight: 800, color: '#6366f1', fontSize: '1.0625rem', margin: '0 0 4px' }}>
-              {fmt(b.prix)}
-            </p>
-          )}
-          <p style={{ fontSize: '.8125rem', color: '#94a3b8', margin: 0 }}>
-            {b.surface ? `${b.surface} m²` : ''}
-            {b.pieces ? ` · ${b.pieces} p.` : ''}
-            {b.commune ? ` · ${b.commune}` : ''}
-          </p>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// Component principal
-// ─────────────────────────────────────────────────────────────
-export default function BienPageClient({
-  bien,
-  similaires = [],
-}: {
-  bien: BienDetail;
-  similaires?: BienSimilaire[];
-}) {
+export default function BienPageClient({ bien }: { bien: BienDetail }) {
   const [contactOpen, setContactOpen] = useState(false);
   const [copied,      setCopied]      = useState(false);
 
   const cfg        = ANNONCE_CONFIG[bien.type_annonce] ?? ANNONCE_CONFIG.vente;
   const typeLabel  = bien.type_annonce === 'vente' ? 'à vendre' :
-                     bien.type_annonce === 'location' ? 'à louer' :
-                     bien.type_annonce === 'location_saisonniere' ? 'en location saisonnière' : bien.type_annonce;
+                     bien.type_annonce === 'location' ? 'à louer' : bien.type_annonce;
   const titre      = bien.titre ?? `${bien.type_bien} ${typeLabel} — ${bien.commune}`;
+  const hasPhotos  = bien.photos?.length > 0;
 
   function copyLink() {
     navigator.clipboard.writeText(window.location.href).then(() => {
@@ -227,8 +74,33 @@ export default function BienPageClient({
 
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px 20px 48px' }}>
 
-        {/* ── Galerie photo ── */}
-        <PhotoGallery photos={bien.photos ?? []} titre={titre} />
+        {/* ── Photo hero ── */}
+        {hasPhotos ? (
+          <div style={{
+            borderRadius: '20px', overflow: 'hidden', marginBottom: '24px',
+            background: '#0f172a', aspectRatio: '16/7',
+          }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={bien.photos[0].url} alt={titre}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+        ) : (
+          <div style={{
+            borderRadius: '20px', marginBottom: '24px',
+            background: 'linear-gradient(135deg, #0c1a2e 0%, #1e3a5f 100%)',
+            aspectRatio: '16/7',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            color: 'rgba(255,255,255,.3)',
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '8px' }}>
+              {bien.type_bien === 'Appartement' ? '🏢' :
+               bien.type_bien === 'Terrain' ? '🌿' :
+               bien.type_bien === 'Commerce' ? '🏪' : '🏡'}
+            </div>
+            <div style={{ fontSize: '.9375rem' }}>{bien.commune ?? 'Bassin d\'Arcachon'}</div>
+          </div>
+        )}
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px', alignItems: 'start' }}
           className="bien-grid">
@@ -286,9 +158,6 @@ export default function BienPageClient({
                   {bien.type_annonce === 'location' && (
                     <span style={{ fontSize: '.9375rem', color: '#94a3b8' }}>/mois</span>
                   )}
-                  {bien.type_annonce === 'location_saisonniere' && (
-                    <span style={{ fontSize: '.9375rem', color: '#94a3b8' }}>/sem.</span>
-                  )}
                 </div>
               )}
             </div>
@@ -297,7 +166,7 @@ export default function BienPageClient({
             <div style={{
               background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0',
               padding: '20px', marginBottom: '16px',
-              display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '16px',
+              display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '16px',
             }}>
               {bien.surface && (
                 <div style={{ textAlign: 'center' }}>
@@ -474,17 +343,6 @@ export default function BienPageClient({
                 </a>
               )}
 
-              {bien.acteur_slug && (
-                <Link href={`/agence/${bien.acteur_slug}`} style={{
-                  display: 'block', textAlign: 'center', textDecoration: 'none',
-                  background: '#f8fafc', color: '#64748b',
-                  fontWeight: 500, fontSize: '.875rem', padding: '10px',
-                  borderRadius: '14px', border: '1.5px solid #e2e8f0', marginBottom: '8px',
-                }}>
-                  Voir la fiche agence →
-                </Link>
-              )}
-
               {bien.acteur_website && (
                 <a href={bien.acteur_website} target="_blank" rel="noopener noreferrer" style={{
                   display: 'block', textAlign: 'center', textDecoration: 'none',
@@ -513,27 +371,6 @@ export default function BienPageClient({
 
           </div>
         </div>
-
-        {/* ── Biens similaires ── */}
-        {similaires.length > 0 && (
-          <div style={{ marginTop: '48px' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '20px' }}>
-              Biens similaires
-            </h2>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: '16px',
-            }}
-              className="similaires-grid"
-            >
-              {similaires.map(s => (
-                <SimilaireCard key={s.id} b={s} />
-              ))}
-            </div>
-          </div>
-        )}
-
       </div>
 
       {/* ── Modal contact ── */}
@@ -595,9 +432,6 @@ export default function BienPageClient({
         @media (max-width: 640px) {
           .bien-grid {
             grid-template-columns: 1fr !important;
-          }
-          .similaires-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
           }
         }
       `}</style>

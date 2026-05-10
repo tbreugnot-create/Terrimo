@@ -131,45 +131,6 @@ export async function generateMetadata(
 }
 
 // ─────────────────────────────────────────────────────────────
-// Fetch biens similaires
-// ─────────────────────────────────────────────────────────────
-export interface BienSimilaire {
-  id: number;
-  type_annonce: string;
-  type_bien: string;
-  titre?: string;
-  prix?: number;
-  surface?: number;
-  pieces?: number;
-  commune?: string;
-  photos: { url: string }[];
-  acteur_name: string;
-}
-
-async function fetchSimilaires(bienId: number, acteurId: number, commune: string, typeAnnonce: string): Promise<BienSimilaire[]> {
-  try {
-    const rows = await sql`
-      SELECT b.id, b.type_annonce, b.type_bien, b.titre, b.prix, b.surface, b.pieces, b.commune, b.photos,
-             a.name AS acteur_name
-      FROM biens b
-      JOIN acteurs a ON a.id = b.acteur_id
-      WHERE b.is_active = true
-        AND b.id != ${bienId}
-        AND b.type_annonce = ${typeAnnonce}
-        AND (b.acteur_id = ${acteurId} OR b.commune ILIKE ${commune})
-      ORDER BY b.is_featured DESC, b.created_at DESC
-      LIMIT 4
-    `;
-    return rows.map(r => ({
-      ...r,
-      photos: typeof r.photos === 'string' ? JSON.parse(r.photos) : (r.photos ?? []),
-    })) as BienSimilaire[];
-  } catch {
-    return [];
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
 // Page
 // ─────────────────────────────────────────────────────────────
 export default async function BienPage({ params }: { params: Promise<{ id: string }> }) {
@@ -224,15 +185,13 @@ export default async function BienPage({ params }: { params: Promise<{ id: strin
     },
   };
 
-  const similaires = await fetchSimilaires(id, bien.acteur_id, bien.commune ?? '', bien.type_annonce);
-
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <BienPageClient bien={bien} similaires={similaires} />
+      <BienPageClient bien={bien} />
     </>
   );
 }
