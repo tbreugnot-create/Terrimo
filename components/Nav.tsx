@@ -422,10 +422,43 @@ export default function Nav() {
             </div>
           </div>
 
-          {/* ── CTA unique ── */}
-          <div className="hide-mobile" style={{ flexShrink: 0 }}>
+          {/* ── CTAs desktop ── */}
+          <div className="hide-mobile" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* Se connecter — pour les pros */}
             <Link
-              href="/evaluer"
+              href="/pro/connexion"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '10px 18px',
+                borderRadius: '12px',
+                fontSize: '.9rem',
+                fontWeight: 600,
+                color: 'rgba(255,255,255,.8)',
+                background: 'transparent',
+                border: '1px solid rgba(255,255,255,.2)',
+                textDecoration: 'none',
+                transition: 'all .15s ease',
+                minHeight: '44px',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.08)';
+                (e.currentTarget as HTMLElement).style.color = 'white';
+                (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,.35)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.background = 'transparent';
+                (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,.8)';
+                (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,.2)';
+              }}
+            >
+              Se connecter
+            </Link>
+            {/* Rejoindre — pour les nouveaux pros */}
+            <Link
+              href="/pro/rejoindre"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -451,7 +484,7 @@ export default function Nav() {
                 (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
               }}
             >
-              🏡 Estimer gratuitement
+              Rejoindre →
             </Link>
           </div>
 
@@ -559,9 +592,31 @@ export default function Nav() {
           {/* Séparateur */}
           <div style={{ height: '1px', background: 'rgba(255,255,255,.08)', margin: '12px 0' }} />
 
-          {/* CTA mobile */}
+          {/* CTAs mobile */}
           <Link
-            href="/evaluer"
+            href="/pro/connexion"
+            onClick={() => setMenuOpen(false)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              padding: '16px',
+              borderRadius: '14px',
+              fontSize: '1.0625rem',
+              fontWeight: 600,
+              color: 'rgba(255,255,255,.85)',
+              background: 'rgba(255,255,255,.08)',
+              border: '1px solid rgba(255,255,255,.15)',
+              textDecoration: 'none',
+              minHeight: '52px',
+              marginBottom: '10px',
+            }}
+          >
+            Se connecter (espace pro)
+          </Link>
+          <Link
+            href="/pro/rejoindre"
             onClick={() => setMenuOpen(false)}
             style={{
               display: 'flex',
@@ -578,7 +633,7 @@ export default function Nav() {
               minHeight: '56px',
             }}
           >
-            🏡 Estimer mon bien gratuitement
+            Rejoindre Terrimo Pro →
           </Link>
         </div>
       )}
