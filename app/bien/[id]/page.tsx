@@ -106,6 +106,8 @@ export async function generateMetadata(
     ? bien.description.slice(0, 160)
     : `${bien.type_bien} ${typeLabel} à ${bien.commune}${prixStr ? ` — ${prixStr}` : ''}${bien.surface ? ` · ${bien.surface} m²` : ''}. Découvrez ce bien sur Terrimo, la carte immobilière du Bassin d'Arcachon.`;
 
+  const firstPhoto = bien.photos?.[0]?.url;
+
   return {
     title: `${titre} — Terrimo`,
     description: desc,
@@ -114,8 +116,17 @@ export async function generateMetadata(
       description: desc,
       type: 'website',
       locale: 'fr_FR',
-      siteName: 'Terrimo — Bassin d\'Arcachon',
+      siteName: "Terrimo — Bassin d'Arcachon",
+      url: `https://terrimo.homes/bien/${id}`,
+      ...(firstPhoto ? { images: [{ url: firstPhoto, width: 1200, height: 630, alt: titre }] } : {}),
     },
+    twitter: {
+      card: firstPhoto ? 'summary_large_image' : 'summary',
+      title: `${titre} — Terrimo`,
+      description: desc,
+      ...(firstPhoto ? { images: [firstPhoto] } : {}),
+    },
+    alternates: { canonical: `https://terrimo.homes/bien/${id}` },
   };
 }
 
@@ -130,5 +141,57 @@ export default async function BienPage({ params }: { params: Promise<{ id: strin
   const bien = await fetchBien(id);
   if (!bien) notFound();
 
-  return <BienPageClient bien={bien} />;
+  // ── JSON-LD schema.org RealEstateListing ──────────────────
+  const typeLabel = bien.type_annonce === 'vente' ? 'à vendre' :
+                    bien.type_annonce === 'location' ? 'à louer' : bien.type_annonce;
+  const titre = bien.titre ?? `${bien.type_bien} ${typeLabel} — ${bien.commune}`;
+  const jsonLd: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'RealEstateListing',
+    '@id': `https://terrimo.homes/bien/${id}`,
+    url: `https://terrimo.homes/bien/${id}`,
+    name: titre,
+    description: bien.description ?? `${bien.type_bien} ${typeLabel} à ${bien.commune}`,
+    datePosted: bien.created_at,
+    image: bien.photos?.map((p) => p.url) ?? [],
+    ...(bien.prix ? { price: bien.prix, priceCurrency: 'EUR' } : {}),
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: bien.commune,
+      postalCode: bien.code_postal ?? '',
+      addressCountry: 'FR',
+    },
+    ...(bien.surface ? { floorSize: { '@type': 'QuantitativeValue', value: bien.surface, unitCode: 'MTK' } } : {}),
+    ...(bien.pieces ? { numberOfRooms: bien.pieces } : {}),
+    ...(bien.chambres ? { numberOfBedrooms: bien.chambres } : {}),
+    ...(bien.sdb ? { numberOfBathroomsTotal: bien.sdb } : {}),
+    ...(bien.annee_construction ? { yearBuilt: bien.annee_construction } : {}),
+    ...(bien.lat && bien.lng ? { geo: { '@type': 'GeoCoordinates', latitude: bien.lat, longitude: bien.lng } } : {}),
+    offeredBy: {
+      '@type': 'RealEstateAgent',
+      name: bien.acteur_name,
+      ...(bien.acteur_phone ? { telephone: bien.acteur_phone } : {}),
+      ...(bien.acteur_email ? { email: bien.acteur_email } : {}),
+      ...(bien.acteur_website ? { url: bien.acteur_website } : {}),
+      ...(bien.acteur_address ? { address: bien.acteur_address } : {}),
+    },
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Terrimo', item: 'https://terrimo.homes' },
+        { '@type': 'ListItem', position: 2, name: bien.commune ?? 'Bassin d\'Arcachon', item: bien.commune ? `https://terrimo.homes/quartier/${encodeURIComponent(bien.commune.toLowerCase().replace(/ /g, '-'))}` : 'https://terrimo.homes' },
+        { '@type': 'ListItem', position: 3, name: titre, item: `https://terrimo.homes/bien/${id}` },
+      ],
+    },
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <BienPageClient bien={bien} />
+    </>
+  );
 }

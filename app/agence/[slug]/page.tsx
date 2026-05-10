@@ -57,15 +57,25 @@ export async function generateMetadata(
   const desc = acteur.meta?.description
     ?? `${acteur.name} — Agence immobilière à ${acteur.commune ?? 'Bassin d\'Arcachon'}. Mandats de vente, estimation, accompagnement sur le Bassin d\'Arcachon.`;
 
+  const logo = acteur.meta?.logo as string | undefined;
+
   return {
     title: `${acteur.name} — Agence immobilière | Terrimo`,
     description: desc.slice(0, 160),
+    alternates: { canonical: `https://terrimo.homes/agence/${slug}` },
     openGraph: {
       title: `${acteur.name} — Agence immobilière`,
       description: desc.slice(0, 160),
       type: 'website',
       locale: 'fr_FR',
       siteName: "Terrimo — Bassin d'Arcachon",
+      url: `https://terrimo.homes/agence/${slug}`,
+      ...(logo ? { images: [{ url: logo, width: 400, height: 400, alt: acteur.name }] } : {}),
+    },
+    twitter: {
+      card: 'summary',
+      title: `${acteur.name} — Agence | Terrimo`,
+      description: desc.slice(0, 160),
     },
   };
 }
@@ -78,5 +88,38 @@ export default async function AgencePage({ params }: { params: Promise<{ slug: s
 
   const biens = await fetchBiens(acteur.id);
 
-  return <AgencePageClient acteur={acteur} biens={biens} />;
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'RealEstateAgent',
+    '@id': `https://terrimo.homes/agence/${slug}`,
+    url: `https://terrimo.homes/agence/${slug}`,
+    name: acteur.name,
+    description: acteur.meta?.description ?? `Agence immobilière à ${acteur.commune ?? 'Bassin d\'Arcachon'}`,
+    ...(acteur.phone ? { telephone: acteur.phone } : {}),
+    ...(acteur.email ? { email: acteur.email } : {}),
+    ...(acteur.website ? { sameAs: [acteur.website] } : {}),
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: acteur.address ?? '',
+      addressLocality: acteur.commune ?? 'Bassin d\'Arcachon',
+      addressCountry: 'FR',
+    },
+    ...(acteur.google_rating ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: acteur.google_rating,
+        reviewCount: acteur.google_reviews ?? 1,
+        bestRating: 5,
+      },
+    } : {}),
+    ...(acteur.meta?.logo ? { logo: acteur.meta.logo } : {}),
+    areaServed: { '@type': 'Place', name: 'Bassin d\'Arcachon' },
+  };
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <AgencePageClient acteur={acteur} biens={biens} />
+    </>
+  );
 }

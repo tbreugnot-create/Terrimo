@@ -161,6 +161,10 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
   const [alerteSubmitting, setAlerteSubmitting] = useState(false);
   const [alerteSuccess, setAlerteSuccess]     = useState(false);
 
+  // Share / clipboard feedback
+  const [copiedBien, setCopiedBien]     = useState(false);
+  const [copiedActeur, setCopiedActeur] = useState(false);
+
   // Garder biensRef synchronisé
   useEffect(() => { biensRef.current = biens; }, [biens]);
 
@@ -1377,6 +1381,26 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                 </a>
               )}
             </div>
+            {/* Bouton partager */}
+            <button
+              onClick={() => {
+                const url = `${window.location.origin}/bien/${selectedBien.id}`;
+                navigator.clipboard.writeText(url).then(() => {
+                  setCopiedBien(true);
+                  setTimeout(() => setCopiedBien(false), 2000);
+                });
+              }}
+              style={{
+                width: '100%', marginTop: '8px', padding: '8px',
+                background: copiedBien ? 'rgba(16,185,129,.15)' : 'rgba(255,255,255,.05)',
+                border: `1px solid ${copiedBien ? 'rgba(16,185,129,.4)' : 'rgba(255,255,255,.1)'}`,
+                borderRadius: '10px', color: copiedBien ? '#34d399' : 'rgba(255,255,255,.45)',
+                fontSize: '.8125rem', fontWeight: 600, cursor: 'pointer',
+                transition: 'all .2s',
+              }}
+            >
+              {copiedBien ? '✓ Lien copié !' : '🔗 Partager cette annonce'}
+            </button>
           </div>
         )}
 
@@ -1522,6 +1546,32 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                 </a>
               </div>
             )}
+            {/* Bouton partager fiche acteur */}
+            {(() => {
+              const slug = selectedActeur.slug;
+              const type = selectedActeur.type;
+              const path = type === 'conciergerie' ? `/conciergerie/${slug}` : `/agence/${slug}`;
+              return slug ? (
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}${path}`).then(() => {
+                      setCopiedActeur(true);
+                      setTimeout(() => setCopiedActeur(false), 2000);
+                    });
+                  }}
+                  style={{
+                    width: '100%', marginTop: '8px', padding: '8px',
+                    background: copiedActeur ? 'rgba(16,185,129,.15)' : 'rgba(255,255,255,.05)',
+                    border: `1px solid ${copiedActeur ? 'rgba(16,185,129,.4)' : 'rgba(255,255,255,.1)'}`,
+                    borderRadius: '10px', color: copiedActeur ? '#34d399' : 'rgba(255,255,255,.45)',
+                    fontSize: '.8125rem', fontWeight: 600, cursor: 'pointer',
+                    transition: 'all .2s',
+                  }}
+                >
+                  {copiedActeur ? '✓ Lien copié !' : '🔗 Partager cette fiche'}
+                </button>
+              ) : null;
+            })()}
           </div>
         )}
       </div>

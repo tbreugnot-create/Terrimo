@@ -58,13 +58,16 @@ export async function generateMetadata(
   return {
     title: `${c.name} — Conciergerie | Terrimo`,
     description: desc.slice(0, 160),
+    alternates: { canonical: `https://terrimo.homes/conciergerie/${slug}` },
     openGraph: {
       title: `${c.name} — Conciergerie`,
       description: desc.slice(0, 160),
       type: 'website',
       locale: 'fr_FR',
       siteName: "Terrimo — Bassin d'Arcachon",
+      url: `https://terrimo.homes/conciergerie/${slug}`,
     },
+    twitter: { card: 'summary', title: `${c.name} — Conciergerie | Terrimo`, description: desc.slice(0, 160) },
   };
 }
 
@@ -76,5 +79,37 @@ export default async function ConciergiePage({ params }: { params: Promise<{ slu
 
   const biensGeres = await fetchBiensGeres(conciergerie.id);
 
-  return <ConciergiePageClient conciergerie={conciergerie} biensGeres={biensGeres} />;
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    '@id': `https://terrimo.homes/conciergerie/${slug}`,
+    url: `https://terrimo.homes/conciergerie/${slug}`,
+    name: conciergerie.name,
+    description: conciergerie.meta?.description ?? `Conciergerie locative à ${conciergerie.commune ?? 'Bassin d\'Arcachon'}`,
+    ...(conciergerie.phone ? { telephone: conciergerie.phone } : {}),
+    ...(conciergerie.email ? { email: conciergerie.email } : {}),
+    ...(conciergerie.website ? { sameAs: [conciergerie.website] } : {}),
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: conciergerie.address ?? '',
+      addressLocality: conciergerie.commune ?? 'Bassin d\'Arcachon',
+      addressCountry: 'FR',
+    },
+    ...(conciergerie.google_rating ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: conciergerie.google_rating,
+        reviewCount: conciergerie.google_reviews ?? 1,
+        bestRating: 5,
+      },
+    } : {}),
+    areaServed: { '@type': 'Place', name: 'Bassin d\'Arcachon' },
+  };
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <ConciergiePageClient conciergerie={conciergerie} biensGeres={biensGeres} />
+    </>
+  );
 }
