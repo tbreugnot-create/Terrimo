@@ -88,6 +88,20 @@ const TYPE_CONFIG: Record<ActeurType, { label: string; emoji: string; color: str
 };
 
 // ============================================================
+// UTILITAIRE — Point dans polygone (ray casting)
+// ============================================================
+function ptInPoly(lat: number, lng: number, poly: [number, number][]): boolean {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [yi, xi] = poly[i], [yj, xj] = poly[j];
+    const intersect = ((yi > lat) !== (yj > lat)) &&
+      (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+// ============================================================
 // MAP COMPONENT
 // ============================================================
 export default function TerrimoMap({ initialCommune }: { initialCommune?: string }) {
@@ -119,6 +133,20 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
   const [selectedBien, setSelectedBien]        = useState<Bien | null>(null);
   const [layerMode, setLayerMode]              = useState<LayerMode>('pros');
   const [loadingBiens, setLoadingBiens]        = useState(false);
+
+  // ── Draw Search ───────────────────────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const drawLayerRef  = useRef<any[]>([]);
+  const drawModeRef   = useRef(false);
+  const drawPtsRef    = useRef<[number, number][]>([]);
+  const biensRef      = useRef<Bien[]>([]);
+  const [drawMode, setDrawMode]     = useState(false);
+  const [drawPts, setDrawPts]       = useState<[number, number][]>([]);
+  const [zoneClosed, setZoneClosed] = useState(false);
+  const [zoneIds, setZoneIds]       = useState<Set<number> | null>(null);
+
+  // Garder biensRef synchronisé
+  useEffect(() => { biensRef.current = biens; }, [biens]);
 
   // --------------------------------------------------------
   // Inject CSS
@@ -331,6 +359,15 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
         const z = map.getZoom();
         villageMarkers.forEach(m => m.setOpacity(z >= 13 ? 1 : 0));
       });
+
+      // ── Draw Search : clic sur la carte ──────────────────
+      map.on('click', (e: any) => {
+        if (!drawModeRef.current) return;
+        const pt: [number, number] = [e.latlng.lat, e.latlng.lng];
+        const newPts = [...drawPtsRef.current, pt];
+        drawPtsRef.current = newPts;
+        setDrawPts([...newPts]);
+      });
     };
 
     initMap();
@@ -449,6 +486,42 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
     }
   }, [mobileView]);
 
+  // ── Draw Search : visualisation du polygone ────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    const L = leafletRef.current;
+    if (!map || !L) return;
+    // Supprimer les anciens calques dessinés
+    drawLayerRef.current.forEach(l => l.remove());
+    drawLayerRef.current = [];
+    if (drawPts.length === 0) return;
+    // Points (cercles)
+    drawPts.forEach((pt, i) => {
+      const c = L.circleMarker(pt, {
+        radius: i === 0 ? 7 : 5,
+        color: '#6366f1', fillColor: '#6366f1',
+        fillOpacity: i === 0 ? 1 : 0.7, weight: 2,
+      }).addTo(map);
+      drawLayerRef.current.push(c);
+    });
+    // Polyligne
+    if (drawPts.length >= 2) {
+      const pts = zoneClosed ? [...drawPts, drawPts[0]] : drawPts;
+      const line = L.polyline(pts, {
+        color: '#6366f1', weight: 2.5, dashArray: zoneClosed ? undefined : '6 4',
+      }).addTo(map);
+      drawLayerRef.current.push(line);
+    }
+    // Polygone rempli si fermé
+    if (zoneClosed && drawPts.length >= 3) {
+      const poly = L.polygon(drawPts, {
+        color: '#6366f1', fillColor: '#6366f1',
+        fillOpacity: 0.1, weight: 2,
+      }).addTo(map);
+      drawLayerRef.current.push(poly);
+    }
+  }, [drawPts, zoneClosed]);
+
   // --------------------------------------------------------
   // Helpers
   // --------------------------------------------------------
@@ -463,6 +536,7 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
   });
 
   const filteredBiens = biens.filter(b => {
+    if (zoneIds !== null && !zoneIds.has(b.id)) return false;
     if (communeObj && b.commune !== communeObj.name) return false;
     if (searchTerm && !b.titre?.toLowerCase().includes(searchTerm) && !b.commune?.toLowerCase().includes(searchTerm) && !b.type_bien?.toLowerCase().includes(searchTerm)) return false;
     return true;
@@ -582,18 +656,58 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
         {/* ══ MODE BIENS ══ */}
         {layerMode === 'biens' ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {/* Header compteur */}
-            <div style={{ padding: '4px 14px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              {communeObj && (
-                <button onClick={() => setSelectedCommune(null)} style={{
-                  background: 'none', border: 'none', cursor: 'pointer', fontSize: '.8125rem',
-                  color: '#f97316', fontWeight: 600, padding: 0, minHeight: 'auto',
-                }}>← Toutes les communes</button>
-              )}
-              <span style={{ fontSize: '.8125rem', color: '#94a3b8', fontWeight: 500, marginLeft: 'auto' }}>
-                {loadingBiens ? 'Chargement…' : `${filteredBiens.length} bien${filteredBiens.length > 1 ? 's' : ''}`}
-                {communeObj ? ` · ${communeObj.name}` : ''}
-              </span>
+            {/* Header compteur + Draw zone */}
+            <div style={{ padding: '4px 14px 10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                {communeObj && (
+                  <button onClick={() => setSelectedCommune(null)} style={{
+                    background: 'none', border: 'none', cursor: 'pointer', fontSize: '.8125rem',
+                    color: '#f97316', fontWeight: 600, padding: 0, minHeight: 'auto',
+                  }}>← Toutes les communes</button>
+                )}
+                <span style={{ fontSize: '.8125rem', color: '#94a3b8', fontWeight: 500, marginLeft: communeObj ? '0' : 'auto' }}>
+                  {loadingBiens ? 'Chargement…' : `${filteredBiens.length} bien${filteredBiens.length > 1 ? 's' : ''}`}
+                  {communeObj ? ` · ${communeObj.name}` : ''}
+                  {zoneIds !== null ? ' · zone' : ''}
+                </span>
+              </div>
+              {/* Bouton Dessiner une zone */}
+              <button
+                onClick={() => {
+                  if (zoneIds !== null) {
+                    // Effacer la zone
+                    drawLayerRef.current.forEach(l => l.remove());
+                    drawLayerRef.current = [];
+                    drawModeRef.current = false;
+                    drawPtsRef.current = [];
+                    setDrawMode(false);
+                    setDrawPts([]);
+                    setZoneClosed(false);
+                    setZoneIds(null);
+                    setMobileView('map');
+                  } else {
+                    drawModeRef.current = true;
+                    drawPtsRef.current = [];
+                    setDrawMode(true);
+                    setDrawPts([]);
+                    setZoneClosed(false);
+                    setZoneIds(null);
+                    setMobileView('map');
+                  }
+                }}
+                style={{
+                  width: '100%', padding: '8px 12px',
+                  background: zoneIds !== null ? '#fef2f2' : '#eef2ff',
+                  border: `1.5px solid ${zoneIds !== null ? '#fca5a5' : '#a5b4fc'}`,
+                  borderRadius: '10px', cursor: 'pointer',
+                  fontSize: '.8125rem', fontWeight: 700,
+                  color: zoneIds !== null ? '#dc2626' : '#6366f1',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  minHeight: 'auto', transition: 'all .15s',
+                }}
+              >
+                {zoneIds !== null ? '✕ Effacer la zone' : '✏️ Dessiner une zone'}
+              </button>
             </div>
             {/* Liste biens */}
             <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain' }}>
@@ -964,6 +1078,62 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
           )}
         </div>
 
+        {/* ── Draw Search overlay ──────────────────────────────── */}
+        {drawMode && (
+          <div style={{
+            position: 'absolute', top: '16px', left: '50%', transform: 'translateX(-50%)',
+            zIndex: 800, background: '#6366f1', color: 'white',
+            borderRadius: '16px', padding: '10px 20px',
+            boxShadow: '0 4px 20px rgba(99,102,241,.35)',
+            display: 'flex', alignItems: 'center', gap: '12px',
+            fontSize: '.875rem', fontWeight: 600, whiteSpace: 'nowrap',
+            maxWidth: 'calc(100% - 32px)',
+          }}>
+            <span>✏️ {drawPts.length < 3 ? `Cliquez sur la carte pour délimiter la zone (${drawPts.length} point${drawPts.length > 1 ? 's' : ''})` : 'Continuez ou validez'}</span>
+            {drawPts.length >= 3 && (
+              <button
+                onClick={() => {
+                  // Fermer le polygone et filtrer
+                  setZoneClosed(true);
+                  const ids = new Set(biensRef.current
+                    .filter(b => ptInPoly(b.lat, b.lng, drawPtsRef.current))
+                    .map(b => b.id));
+                  setZoneIds(ids);
+                  drawModeRef.current = false;
+                  setDrawMode(false);
+                  setMobileView('list');
+                }}
+                style={{
+                  background: 'white', color: '#6366f1', border: 'none',
+                  borderRadius: '10px', padding: '6px 14px', fontWeight: 700,
+                  fontSize: '.8125rem', cursor: 'pointer', minHeight: 'auto',
+                }}
+              >
+                ✓ Valider
+              </button>
+            )}
+            <button
+              onClick={() => {
+                drawLayerRef.current.forEach(l => l.remove());
+                drawLayerRef.current = [];
+                drawModeRef.current = false;
+                drawPtsRef.current = [];
+                setDrawMode(false);
+                setDrawPts([]);
+                setZoneClosed(false);
+                setZoneIds(null);
+              }}
+              style={{
+                background: 'rgba(255,255,255,.25)', color: 'white', border: 'none',
+                borderRadius: '8px', padding: '5px 10px', fontWeight: 700,
+                fontSize: '.8125rem', cursor: 'pointer', minHeight: 'auto',
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* ── Légende (dynamique selon layerMode) ── */}
         <div style={{
           position: 'absolute', bottom: '70px', right: '12px', zIndex: 400,
@@ -1019,8 +1189,19 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
                 <div style={{ fontWeight: 700, fontSize: '1rem', color: '#0f172a', lineHeight: 1.3 }}>
                   {selectedBien.titre ?? `${selectedBien.type_bien} · ${selectedBien.commune}`}
                 </div>
+                {/* Localisation protégée — Précision Progressive Niveau 0 */}
                 {selectedBien.commune && (
-                  <div style={{ fontSize: '.875rem', color: '#64748b', marginTop: '2px' }}>📍 {selectedBien.commune}</div>
+                  <div style={{
+                    marginTop: '6px', padding: '7px 10px',
+                    background: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a',
+                  }}>
+                    <div style={{ fontSize: '.8125rem', fontWeight: 700, color: '#92400e', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      🔒 <span>Zone ~200m · {selectedBien.commune}</span>
+                    </div>
+                    <div style={{ fontSize: '.75rem', color: '#b45309', marginTop: '2px' }}>
+                      Adresse exacte · <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Créez un compte gratuit</span>
+                    </div>
+                  </div>
                 )}
                 {/* Prix */}
                 {selectedBien.prix && (
