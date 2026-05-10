@@ -1178,6 +1178,12 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                   drawModeRef.current = false;
                   setDrawMode(false);
                   setMobileView('list');
+                  // Zoom automatique sur la zone dessinée
+                  if (mapRef.current && leafletRef.current && drawPtsRef.current.length >= 2) {
+                    const L = leafletRef.current;
+                    const bounds = L.latLngBounds(drawPtsRef.current);
+                    mapRef.current.fitBounds(bounds, { padding: [48, 48], maxZoom: 16 });
+                  }
                 }}
                 style={{
                   background: 'white', color: '#6366f1', border: 'none',
