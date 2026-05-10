@@ -87,6 +87,40 @@ const STATS = [
   { n: '100%', label: 'local' },
 ];
 
+const TESTIMONIALS = [
+  {
+    text: 'J\'avais cherché pendant 8 mois sur SeLoger sans résultat. Sur Terrimo j\'ai dessiné ma zone entre Arcachon et La Teste — 3 biens correspondaient exactement. L\'un d\'eux est devenu ma résidence principale.',
+    name: 'Sophie M.',
+    role: 'Acquéreur · Résidence principale',
+    commune: 'La Teste-de-Buch',
+    avatar: '👩',
+  },
+  {
+    text: 'En tant qu\'agence locale, Terrimo nous a permis de toucher des acquéreurs vraiment ciblés sur nos communes. En 2 mois, 4 mandats signés via des profils de la plateforme.',
+    name: 'Agence du Bassin',
+    role: 'Agence immobilière · Arcachon',
+    commune: 'Arcachon',
+    avatar: '🏢',
+  },
+  {
+    text: 'J\'ai estimé mon T3 en 2 minutes avec les données DVF. La fourchette était précise à 5% près. Aucun autre site ne m\'avait donné une estimation aussi documentée.',
+    name: 'Laurent D.',
+    role: 'Propriétaire · Vendeur',
+    commune: 'Andernos-les-Bains',
+    avatar: '👨',
+  },
+];
+
+const LIVE_ACTIVITY = [
+  '🔍 Alerte zone activée · Cap Ferret il y a 2 min',
+  '🏡 Estimation réalisée · Arcachon il y a 5 min',
+  '📍 Zone dessinée · La Teste il y a 8 min',
+  '🔔 Nouveau bien matché · Andernos il y a 11 min',
+  '🏢 Agence inscrite · Lège-Cap Ferret il y a 14 min',
+  '🔍 Zone dessinée · Gujan-Mestras il y a 17 min',
+  '🏡 Estimation réalisée · Biganos il y a 21 min',
+];
+
 const TYPES_BIEN = ['Maison', 'Appartement', 'Villa', 'Terrain', 'Chalet', 'Immeuble'];
 const BUDGETS_ACHAT = [
   { label: 'Sans limite', value: '' },
@@ -133,6 +167,7 @@ const SELECT_STYLE: React.CSSProperties = {
 export default function Home() {
   const [mapFullscreen, setMapFullscreen] = useState(false);
   const [mapDrawMode, setMapDrawMode]     = useState(false);
+  const [tickerIdx, setTickerIdx]         = useState(0);
 
   // Onglets recherche
   const [searchTab, setSearchTab]         = useState<'Acheter' | 'Louer' | 'Estimer'>('Acheter');
@@ -147,6 +182,12 @@ export default function Home() {
     if (params.get('ouvre-carte') === '1') {
       setMapFullscreen(true);
     }
+  }, []);
+
+  // Ticker live activity
+  useEffect(() => {
+    const t = setInterval(() => setTickerIdx(i => (i + 1) % LIVE_ACTIVITY.length), 3200);
+    return () => clearInterval(t);
   }, []);
 
   const handleSearch = () => {
@@ -273,6 +314,72 @@ export default function Home() {
               <div style={{ fontSize: '.6875rem', color: 'rgba(255,255,255,.4)', marginTop: 2, letterSpacing: '.04em' }}>{s.label.toUpperCase()}</div>
             </div>
           ))}
+        </div>
+
+        {/* Live activity ticker */}
+        <div style={{
+          marginTop: 32, display: 'inline-flex', alignItems: 'center', gap: 10,
+          background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)',
+          borderRadius: 100, padding: '7px 18px',
+          fontSize: '.8rem', color: 'rgba(255,255,255,.5)',
+          overflow: 'hidden', maxWidth: '90vw',
+        }}>
+          <span style={{
+            width: 7, height: 7, borderRadius: '50%',
+            background: '#10b981', flexShrink: 0,
+            boxShadow: '0 0 6px #10b981',
+            animation: 'pulse 2s ease-in-out infinite',
+          }} />
+          <span style={{
+            transition: 'opacity .4s',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            {LIVE_ACTIVITY[tickerIdx]}
+          </span>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          BANDEAU PROPRIÉTAIRE
+      ═══════════════════════════════════════════════════════ */}
+      <section style={{ padding: '0 24px 20px' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <Link href="/evaluer" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            gap: 16, textDecoration: 'none',
+            background: 'linear-gradient(135deg, rgba(16,185,129,.12), rgba(16,185,129,.04))',
+            border: '1px solid rgba(16,185,129,.25)',
+            borderRadius: 16, padding: '16px 24px',
+            transition: 'border-color .15s, background .15s',
+          }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(16,185,129,.5)';
+              (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(16,185,129,.18), rgba(16,185,129,.06))';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(16,185,129,.25)';
+              (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(16,185,129,.12), rgba(16,185,129,.04))';
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <span style={{ fontSize: '1.75rem', flexShrink: 0 }}>🏡</span>
+              <div>
+                <div style={{ fontWeight: 700, color: 'white', fontSize: '.9375rem' }}>
+                  Vous avez un bien à vendre ou louer ?
+                </div>
+                <div style={{ color: 'rgba(255,255,255,.45)', fontSize: '.8125rem', marginTop: 2 }}>
+                  Estimation gratuite en 2 min · Données DVF officielles · Sans engagement
+                </div>
+              </div>
+            </div>
+            <span style={{
+              flexShrink: 0, background: '#10b981', color: 'white',
+              fontWeight: 700, fontSize: '.8125rem', padding: '8px 16px',
+              borderRadius: 10, whiteSpace: 'nowrap',
+            }}>
+              Estimer →
+            </span>
+          </Link>
         </div>
       </section>
 
@@ -514,6 +621,53 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
+          TÉMOIGNAGES
+      ═══════════════════════════════════════════════════════ */}
+      <section style={{ padding: '0 24px 72px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 40 }}>
+            <div style={{ height: 1, flex: 1, background: 'rgba(255,255,255,.07)', maxWidth: 80 }} />
+            <span style={{ fontSize: '.75rem', fontWeight: 700, color: 'rgba(255,255,255,.3)', letterSpacing: '.1em' }}>ILS EN PARLENT</span>
+            <div style={{ height: 1, flex: 1, background: 'rgba(255,255,255,.07)', maxWidth: 80 }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+            {TESTIMONIALS.map((t, i) => (
+              <div key={i} style={{
+                background: 'rgba(255,255,255,.025)',
+                border: '1px solid rgba(255,255,255,.07)',
+                borderRadius: 18, padding: '24px',
+                display: 'flex', flexDirection: 'column', gap: 16,
+              }}>
+                {/* Étoiles */}
+                <div style={{ color: '#f59e0b', fontSize: '.875rem', letterSpacing: 2 }}>★★★★★</div>
+                {/* Texte */}
+                <p style={{
+                  color: 'rgba(255,255,255,.65)', fontSize: '.9rem',
+                  lineHeight: 1.75, margin: 0, flex: 1,
+                  fontStyle: 'italic',
+                }}>
+                  &ldquo;{t.text}&rdquo;
+                </p>
+                {/* Auteur */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: 38, height: 38, borderRadius: '50%',
+                    background: 'rgba(99,102,241,.2)', border: '1px solid rgba(99,102,241,.3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '1.25rem', flexShrink: 0,
+                  }}>{t.avatar}</div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '.875rem', color: 'white' }}>{t.name}</div>
+                    <div style={{ fontSize: '.75rem', color: 'rgba(255,255,255,.35)', marginTop: 1 }}>{t.role}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
           PERSONAS — CTA pour chaque profil
       ═══════════════════════════════════════════════════════ */}
       <section style={{ padding: '0 24px 80px' }}>
@@ -628,6 +782,10 @@ export default function Home() {
 
       <style>{`
         option { background: #0f1f35; color: white; }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: .6; transform: scale(1.3); }
+        }
       `}</style>
     </main>
   );

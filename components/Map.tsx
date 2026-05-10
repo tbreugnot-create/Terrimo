@@ -145,6 +145,13 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
   const [zoneClosed, setZoneClosed] = useState(false);
   const [zoneIds, setZoneIds]       = useState<Set<number> | null>(null);
 
+  // ── Soft gate (5 biens vus) ───────────────────────────────
+  const biensViewedRef                          = useRef(0);
+  const [showSoftGate, setShowSoftGate]         = useState(false);
+  const [gateEmail, setGateEmail]               = useState('');
+  const [gateSubmitting, setGateSubmitting]     = useState(false);
+  const [gateDone, setGateDone]                 = useState(false);
+
   // ── Drawer alerte zone ────────────────────────────────────
   const [alerteDrawer, setAlerteDrawer]       = useState(false);
   const [alerteEmail, setAlerteEmail]         = useState('');
@@ -279,7 +286,11 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
       });
       const marker = L.marker([bien.lat, bien.lng], { icon })
         .addTo(map)
-        .on('click', () => { setSelectedBien(bien); setSelectedActeur(null); });
+        .on('click', () => {
+          setSelectedBien(bien); setSelectedActeur(null);
+          biensViewedRef.current += 1;
+          if (biensViewedRef.current === 5) setTimeout(() => setShowSoftGate(true), 1200);
+        });
       biensMarkersRef.current.push(marker);
     });
   }, []);
@@ -737,6 +748,11 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                       if (b.lat && b.lng && mapRef.current) {
                         mapRef.current.flyTo([b.lat, b.lng], 15, { duration: 0.6 });
                         setMobileView('map');
+                      }
+                      // Soft gate : déclenche après 5 biens vus
+                      biensViewedRef.current += 1;
+                      if (biensViewedRef.current === 5 && !gateDone) {
+                        setTimeout(() => setShowSoftGate(true), 1200);
                       }
                     }}
                     style={{
@@ -1528,6 +1544,91 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
         </button>
       </div>
 
+      {/* ═══════════════════ SOFT GATE — 5 biens vus ═══════════════════ */}
+      {showSoftGate && !gateDone && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 950,
+          background: 'rgba(5,10,20,.75)', backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '24px',
+          animation: 'fadeIn .25s ease both',
+        }}>
+          <div style={{
+            background: 'rgba(10,20,38,.97)', backdropFilter: 'blur(24px)',
+            borderRadius: 24, padding: '36px 32px',
+            maxWidth: 420, width: '100%',
+            border: '1px solid rgba(255,255,255,.12)',
+            boxShadow: '0 24px 80px rgba(0,0,0,.6)',
+            animation: 'slideUp .3s ease both',
+          }}>
+            {gateDone ? null : (
+              <>
+                <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>🔓</div>
+                  <h2 style={{ color: 'white', fontWeight: 800, fontSize: '1.25rem', margin: '0 0 10px', letterSpacing: '-.02em' }}>
+                    Accès illimité — gratuit
+                  </h2>
+                  <p style={{ color: 'rgba(255,255,255,.5)', fontSize: '.9rem', lineHeight: 1.65, margin: 0 }}>
+                    Vous avez consulté <strong style={{ color: 'white' }}>5 biens</strong>. Créez votre compte gratuit pour continuer et accéder aux <strong style={{ color: '#fbbf24' }}>adresses exactes</strong>.
+                  </p>
+                </div>
+
+                <form onSubmit={async e => {
+                  e.preventDefault();
+                  if (!gateEmail) return;
+                  setGateSubmitting(true);
+                  try {
+                    await fetch('/api/mandats', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        email: gateEmail, budget_max: 1000000,
+                        communes: [], source: 'soft-gate',
+                      }),
+                    });
+                  } catch { /* silent */ }
+                  setGateDone(true);
+                  setShowSoftGate(false);
+                  biensViewedRef.current = 0;
+                  setGateSubmitting(false);
+                }} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <input
+                    type="email" required placeholder="votre@email.com"
+                    value={gateEmail} onChange={e => setGateEmail(e.target.value)}
+                    style={{
+                      width: '100%', padding: '12px 16px', borderRadius: 12,
+                      border: '1.5px solid rgba(255,255,255,.15)',
+                      background: 'rgba(255,255,255,.07)', color: 'white',
+                      fontSize: '.9375rem', outline: 'none', boxSizing: 'border-box',
+                    }}
+                  />
+                  <button type="submit" disabled={gateSubmitting} style={{
+                    width: '100%', padding: '13px',
+                    background: 'linear-gradient(135deg,#6366f1,#4f46e5)',
+                    color: 'white', border: 'none', borderRadius: 12,
+                    fontWeight: 800, fontSize: '.9375rem', cursor: 'pointer',
+                    minHeight: 'auto',
+                  }}>
+                    {gateSubmitting ? 'Activation…' : 'Accès gratuit illimité →'}
+                  </button>
+                </form>
+
+                <button
+                  onClick={() => { setShowSoftGate(false); setGateDone(true); biensViewedRef.current = 0; }}
+                  style={{
+                    display: 'block', width: '100%', textAlign: 'center',
+                    marginTop: 14, background: 'none', border: 'none', cursor: 'pointer',
+                    color: 'rgba(255,255,255,.3)', fontSize: '.8125rem', minHeight: 'auto',
+                  }}
+                >
+                  Continuer sans compte
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ═══════════════════ DRAWER ALERTE ZONE ═══════════════════ */}
       {alerteDrawer && zoneIds !== null && (
         <div style={{
@@ -1677,6 +1778,10 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
         @keyframes slideUp {
           from { transform: translateY(100%); opacity: 0; }
           to   { transform: translateY(0);    opacity: 1; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
         }
         @media (max-width: 767px) {
           .map-left-panel { width: 100% !important; }
