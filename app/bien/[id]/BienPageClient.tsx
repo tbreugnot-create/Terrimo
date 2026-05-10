@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useCallback } from 'react';
 import type { CSSProperties } from 'react';
 import type { BienDetail, BienSimilaire } from './page';
+import { useFavoris } from '@/lib/useFavoris';
 
 // ─────────────────────────────────────────────────────────────
 // Config
@@ -183,6 +184,8 @@ export default function BienPageClient({
 }) {
   const [contactOpen, setContactOpen] = useState(false);
   const [copied,      setCopied]      = useState(false);
+  const { isFavori, toggle: toggleFavori } = useFavoris();
+  const favori = isFavori(bien.id);
 
   const cfg        = ANNONCE_CONFIG[bien.type_annonce] ?? ANNONCE_CONFIG.vente;
   const typeLabel  = bien.type_annonce === 'vente' ? 'à vendre' :
@@ -250,14 +253,32 @@ export default function BienPageClient({
                 }}>
                   {cfg.label.toUpperCase()}
                 </span>
-                <button onClick={copyLink} style={{
-                  border: '1.5px solid #e2e8f0', background: 'white', borderRadius: '10px',
-                  padding: '6px 14px', fontSize: '.8125rem', color: '#64748b',
-                  cursor: 'pointer', fontWeight: 500, minHeight: 'auto',
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                }}>
-                  {copied ? '✓ Copié !' : '🔗 Partager'}
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => toggleFavori(bien.id)}
+                    title={favori ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                    style={{
+                      border: `1.5px solid ${favori ? '#fca5a5' : '#e2e8f0'}`,
+                      background: favori ? '#fef2f2' : 'white',
+                      borderRadius: '10px',
+                      padding: '6px 14px', fontSize: '.8125rem',
+                      color: favori ? '#ef4444' : '#64748b',
+                      cursor: 'pointer', fontWeight: 600, minHeight: 'auto',
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                      transition: 'all .15s',
+                    }}
+                  >
+                    {favori ? '❤️ Sauvegardé' : '🤍 Sauvegarder'}
+                  </button>
+                  <button onClick={copyLink} style={{
+                    border: '1.5px solid #e2e8f0', background: 'white', borderRadius: '10px',
+                    padding: '6px 14px', fontSize: '.8125rem', color: '#64748b',
+                    cursor: 'pointer', fontWeight: 500, minHeight: 'auto',
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                  }}>
+                    {copied ? '✓ Copié !' : '🔗 Partager'}
+                  </button>
+                </div>
               </div>
 
               {/* Titre */}

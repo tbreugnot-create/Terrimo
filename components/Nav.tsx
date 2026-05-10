@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useFavoris } from '@/lib/useFavoris';
 
 // ─── Structure des menus ─────────────────────────────────
 const PROPRIO_ITEMS = [
@@ -239,6 +240,7 @@ export default function Nav() {
   const [openDropdown,  setOpenDropdown]  = useState<'proprio' | 'pro' | 'acquéreur' | null>(null);
   const [scrolled,      setScrolled]      = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
+  const { count: favCount } = useFavoris();
 
   // Scroll shadow
   useEffect(() => {
@@ -422,6 +424,39 @@ export default function Nav() {
             </div>
           </div>
 
+          {/* ── Favoris desktop ── */}
+          <div className="hide-mobile">
+            <Link
+              href="/favoris"
+              className="nav-link-hover"
+              style={{
+                ...linkStyle(isActive('/favoris')),
+                position: 'relative',
+                padding: '8px 12px',
+              }}
+              title="Mes favoris"
+            >
+              <span style={{ fontSize: '1.1rem' }}>❤️</span>
+              {favCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: 2, right: 2,
+                  background: '#ef4444',
+                  color: '#fff',
+                  fontSize: '.6rem',
+                  fontWeight: 700,
+                  minWidth: 16, height: 16,
+                  borderRadius: '999px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '0 3px',
+                  lineHeight: 1,
+                }}>
+                  {favCount > 9 ? '9+' : favCount}
+                </span>
+              )}
+            </Link>
+          </div>
+
           {/* ── CTAs desktop ── */}
           <div className="hide-mobile" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
             {/* Se connecter — pour les pros */}
@@ -560,6 +595,39 @@ export default function Nav() {
           >
             <span style={{ fontSize: '1.25rem' }}>🗺️</span>
             Carte
+          </Link>
+
+          {/* Favoris mobile */}
+          <Link
+            href="/favoris"
+            onClick={() => setMenuOpen(false)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '14px 16px',
+              borderRadius: '12px',
+              fontSize: '1.0625rem',
+              fontWeight: isActive('/favoris') ? 700 : 500,
+              color: 'white',
+              background: isActive('/favoris') ? 'rgba(255,255,255,.1)' : 'transparent',
+              textDecoration: 'none',
+              marginBottom: '4px',
+              minHeight: '52px',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: '1.25rem' }}>❤️</span>
+              Mes favoris
+            </span>
+            {favCount > 0 && (
+              <span style={{
+                background: '#ef4444', color: '#fff',
+                fontSize: '.7rem', fontWeight: 700,
+                padding: '2px 7px', borderRadius: '999px',
+              }}>{favCount}</span>
+            )}
           </Link>
 
           {/* Séparateur */}
