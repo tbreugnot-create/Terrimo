@@ -104,7 +104,7 @@ function ptInPoly(lat: number, lng: number, poly: [number, number][]): boolean {
 // ============================================================
 // MAP COMPONENT
 // ============================================================
-export default function TerrimoMap({ initialCommune }: { initialCommune?: string }) {
+export default function TerrimoMap({ initialCommune, autoScrollZoom }: { initialCommune?: string; autoScrollZoom?: boolean }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef     = useRef<any>(null);
   const mapDivRef  = useRef<HTMLDivElement>(null);
@@ -298,10 +298,12 @@ export default function TerrimoMap({ initialCommune }: { initialCommune?: string
         center: BASSIN_CENTER,
         zoom: BASSIN_ZOOM,
         zoomControl: true,
-        scrollWheelZoom: false,   // ← désactivé par défaut
+        scrollWheelZoom: autoScrollZoom ? true : false,   // activé automatiquement en fullscreen
         dragging: true,
         tap: true,
+        touchZoom: true,  // pinch-to-zoom mobile/tablette
       });
+      if (autoScrollZoom) { setMapActive(true); setShowHint(false); }
 
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '© OpenStreetMap © CARTO', maxZoom: 19,

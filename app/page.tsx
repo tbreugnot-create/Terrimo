@@ -91,7 +91,7 @@ export default function Home() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 68px)', overflow: 'hidden' }}>
         <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-          <Suspense><TerrimoMap /></Suspense>
+          <Suspense><TerrimoMap autoScrollZoom /></Suspense>
           <button
             onClick={() => setMapFullscreen(false)}
             style={{
