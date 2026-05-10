@@ -22,6 +22,18 @@ const STATIC: MetadataRoute.Sitemap = [
     changeFrequency: 'weekly' as const,
     priority: 0.8,
   })),
+  ...COMMUNES.map(slug => ({
+    url: `${BASE}/vente/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.85,
+  })),
+  ...COMMUNES.map(slug => ({
+    url: `${BASE}/location/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.82,
+  })),
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
