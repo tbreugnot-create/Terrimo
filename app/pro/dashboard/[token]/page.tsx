@@ -105,6 +105,14 @@ export default function ProDashboard() {
   const [acqTotal,    setAcqTotal]    = useState(0);
   const [acqLoading,  setAcqLoading]  = useState(false);
 
+  // Stats
+  const [stats, setStats] = useState<{
+    biens?: { actifs: number; total: number; featured: number; recents_30j: number };
+    leads?: { total_90j: number; total_30j: number; non_lus: number };
+    mandats_actifs?: number;
+    alertes_zone?: number;
+  } | null>(null);
+
   // Form édition fiche
   const [editForm, setEditForm] = useState({
     name: '', phone: '', email: '', website: '', address: '', commune: '', description: '',
@@ -130,6 +138,15 @@ export default function ProDashboard() {
       })
       .catch(() => setError('Impossible de charger votre fiche'))
       .finally(() => setLoading(false));
+  }, [token]);
+
+  // Charger les stats
+  useEffect(() => {
+    if (!token) return;
+    fetch(`/api/pro/stats?token=${token}`)
+      .then(r => r.json())
+      .then(d => { if (!d.error) setStats(d); })
+      .catch(() => {});
   }, [token]);
 
   // Charger les acquéreurs
@@ -247,6 +264,56 @@ export default function ProDashboard() {
             Voir sur la carte →
           </Link>
         </div>
+
+        {/* ── Stats strip ─────────────────────────────────────── */}
+        {stats && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            {[
+              {
+                icon: '🏠',
+                label: 'Biens actifs',
+                value: stats.biens?.actifs ?? 0,
+                sub: stats.biens?.recents_30j ? `+${stats.biens.recents_30j} ce mois` : undefined,
+                color: 'text-indigo-600',
+              },
+              {
+                icon: '🔔',
+                label: 'Leads 30 jours',
+                value: stats.leads?.total_30j ?? 0,
+                sub: stats.leads?.non_lus ? `${stats.leads.non_lus} non lus` : undefined,
+                color: plan === 'free' ? 'text-slate-300' : 'text-emerald-600',
+                locked: plan === 'free',
+              },
+              {
+                icon: '🔍',
+                label: 'Acquéreurs actifs',
+                value: stats.mandats_actifs ?? 0,
+                sub: 'dans votre commune',
+                color: 'text-amber-600',
+              },
+              {
+                icon: '🗺️',
+                label: 'Alertes zone',
+                value: stats.alertes_zone ?? 0,
+                sub: 'alertes sur la carte',
+                color: 'text-purple-600',
+              },
+            ].map(s => (
+              <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-4 relative overflow-hidden">
+                {s.locked && (
+                  <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-10">
+                    <span className="text-lg mb-1">🔒</span>
+                    <span className="text-xs text-slate-500 font-medium">Plan Pro</span>
+                  </div>
+                )}
+                <div className="text-2xl mb-1">{s.icon}</div>
+                <div className={`text-2xl font-bold ${s.color}`}>{s.value.toLocaleString('fr-FR')}</div>
+                <div className="text-xs font-semibold text-slate-700 mt-0.5">{s.label}</div>
+                {s.sub && <div className="text-xs text-slate-400 mt-0.5">{s.sub}</div>}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Plan Free → CTA upgrade */}
         {plan === 'free' && (
@@ -600,21 +667,48 @@ export default function ProDashboard() {
                 ) : (
                   <div className="space-y-3">
                     {biens.map(b => (
-                      <div key={b.id} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between">
-                        <div>
-                          <div className="font-medium text-slate-900">{b.titre ?? `${b.type_bien} · ${b.commune}`}</div>
-                          <div className="text-sm text-slate-500">
+                      <div key={b.id} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-slate-900 truncate">{b.titre ?? `${b.type_bien} · ${b.commune}`}</div>
+                          <div className="text-sm text-slate-500 mt-0.5">
                             {b.type_annonce === 'vente' ? '💰 Vente' : '🔑 Location'}
                             {b.prix ? ` · ${fmt(b.prix)}` : ''}
                             {b.surface ? ` · ${b.surface} m²` : ''}
                             {b.pieces ? ` · ${b.pieces} pièces` : ''}
                           </div>
+                          <div className="text-xs text-slate-400 mt-0.5">{fmtDate(b.created_at)}</div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {b.is_featured && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">⭐ Mis en avant</span>}
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${b.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
-                            {b.is_active ? 'Actif' : 'Inactif'}
-                          </span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {b.is_featured && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">⭐</span>}
+                          {/* Toggle actif/inactif */}
+                          <button
+                            onClick={async () => {
+                              const res = await fetch(`/api/biens/${b.id}?token=${token}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ is_active: !b.is_active }),
+                              });
+                              if (res.ok) {
+                                setActeur(a => a ? {
+                                  ...a,
+                                  biens: (a.biens ?? []).map(x => x.id === b.id ? { ...x, is_active: !x.is_active } : x),
+                                } : a);
+                              }
+                            }}
+                            className={`text-xs px-2.5 py-1 rounded-full font-medium border transition cursor-pointer ${
+                              b.is_active
+                                ? 'bg-green-50 text-green-700 border-green-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
+                                : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-green-50 hover:text-green-700 hover:border-green-200'
+                            }`}
+                            title={b.is_active ? 'Cliquer pour désactiver' : 'Cliquer pour activer'}
+                          >
+                            {b.is_active ? '● Actif' : '○ Inactif'}
+                          </button>
+                          {/* Lien vers la fiche publique */}
+                          <a href={`/bien/${b.id}`} target="_blank" rel="noopener noreferrer"
+                            className="text-xs text-indigo-600 hover:underline px-1" title="Voir la fiche">
+                            ↗
+                          </a>
                         </div>
                       </div>
                     ))}
