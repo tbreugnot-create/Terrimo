@@ -48,11 +48,8 @@ export default function BlogPage() {
           <div style={{
             background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0',
             overflow: 'hidden', display: 'grid', gridTemplateColumns: '1fr 1fr',
-            transition: 'box-shadow .15s',
           }}
             className="featured-card"
-            onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,.08)')}
-            onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
           >
             {/* Image */}
             <div style={{ background: featured.color, minHeight: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '5rem' }}>
@@ -87,10 +84,8 @@ export default function BlogPage() {
             <Link key={article.slug} href={`/blog/${article.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
               <div style={{
                 background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0',
-                overflow: 'hidden', height: '100%', transition: 'box-shadow .15s',
+                overflow: 'hidden', height: '100%',
               }}
-                onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,.08)')}
-                onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
               >
                 <div style={{
                   background: article.color, height: '120px',

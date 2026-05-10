@@ -183,10 +183,8 @@ export default async function BlogArticlePage({ params }: Props) {
               <Link href={`/blog/${prev.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div style={{
                   background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px',
-                  padding: '16px', transition: 'box-shadow .15s',
+                  padding: '16px',
                 }}
-                  onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,.08)')}
-                  onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
                 >
                   <div style={{ fontSize: '.75rem', color: '#94a3b8', marginBottom: '6px' }}>← Article précédent</div>
                   <div style={{ fontSize: '.9rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.3 }}>{prev.title}</div>
@@ -197,10 +195,8 @@ export default async function BlogArticlePage({ params }: Props) {
               <Link href={`/blog/${next.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div style={{
                   background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px',
-                  padding: '16px', textAlign: 'right', transition: 'box-shadow .15s',
+                  padding: '16px', textAlign: 'right',
                 }}
-                  onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,.08)')}
-                  onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
                 >
                   <div style={{ fontSize: '.75rem', color: '#94a3b8', marginBottom: '6px' }}>Article suivant →</div>
                   <div style={{ fontSize: '.9rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.3 }}>{next.title}</div>
