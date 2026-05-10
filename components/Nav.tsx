@@ -407,7 +407,7 @@ export default function Nav() {
           {/* ── CTA unique ── */}
           <div className="hide-mobile" style={{ flexShrink: 0 }}>
             <Link
-              href="/proprietaire"
+              href="/evaluer"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -543,7 +543,7 @@ export default function Nav() {
 
           {/* CTA mobile */}
           <Link
-            href="/proprietaire"
+            href="/evaluer"
             onClick={() => setMenuOpen(false)}
             style={{
               display: 'flex',
