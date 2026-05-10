@@ -14,6 +14,7 @@ const STATIC: MetadataRoute.Sitemap = [
   { url: `${BASE}/evaluer`,       lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
   { url: `${BASE}/tarifs`,        lastModified: new Date(), changeFrequency: 'monthly', priority: 0.85 },
   { url: `${BASE}/pro/rejoindre`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+  { url: `${BASE}/contact`,       lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
   ...COMMUNES.map(slug => ({
     url: `${BASE}/quartier/${slug}`,
     lastModified: new Date(),

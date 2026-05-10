@@ -111,6 +111,7 @@ export default function ProDashboard() {
     leads?: { total_90j: number; total_30j: number; non_lus: number };
     mandats_actifs?: number;
     alertes_zone?: number;
+    analytics?: { views_30j: number; contacts_30j: number; phones_30j: number; shares_30j: number };
   } | null>(null);
 
   // Form édition fiche
@@ -313,6 +314,24 @@ export default function ProDashboard() {
               </div>
             ))}
           </div>
+
+          {/* ── Analytics events strip (pro+ seulement) ────────── */}
+          {stats?.analytics && plan !== 'free' && (
+            <div className="grid grid-cols-4 gap-3 mb-6">
+              {[
+                { icon: '👁️', label: 'Vues fiches (30j)',    value: stats.analytics.views_30j,    color: 'text-slate-700' },
+                { icon: '✉️', label: 'Clics email (30j)',     value: stats.analytics.contacts_30j, color: 'text-indigo-600' },
+                { icon: '📞', label: 'Clics tél. (30j)',      value: stats.analytics.phones_30j,   color: 'text-emerald-600' },
+                { icon: '🔗', label: 'Partages (30j)',         value: stats.analytics.shares_30j,   color: 'text-purple-600' },
+              ].map(a => (
+                <div key={a.label} className="bg-indigo-50 border border-indigo-100 rounded-xl p-3">
+                  <div className="text-xl mb-0.5">{a.icon}</div>
+                  <div className={`text-xl font-bold ${a.color}`}>{a.value.toLocaleString('fr-FR')}</div>
+                  <div className="text-xs text-slate-500 mt-0.5 leading-tight">{a.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
         )}
 
         {/* Plan Free → CTA upgrade */}

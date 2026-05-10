@@ -461,3 +461,65 @@ export async function emailOnboardingPro(data: {
       </div>`,
   });
 }
+
+// ── Email : formulaire de contact ──────────────────────────────
+export async function sendContactEmail(data: {
+  nom: string;
+  email: string;
+  sujet: string;
+  message: string;
+}): Promise<void> {
+  const { nom, email, sujet, message } = data;
+  const now = new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });
+
+  // Notif admin
+  await sendEmail({
+    to: ADMIN_EMAIL,
+    subject: `[Terrimo Contact] ${sujet} — ${nom}`,
+    replyTo: email,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1e293b">
+        <div style="background:#1e293b;padding:20px 28px;border-radius:10px 10px 0 0">
+          <h2 style="color:white;margin:0;font-size:16px">📬 Nouveau message — Terrimo</h2>
+          <p style="color:#94a3b8;margin:4px 0 0;font-size:12px">${now}</p>
+        </div>
+        <div style="background:white;border:1px solid #e2e8f0;border-top:none;padding:24px 28px;border-radius:0 0 10px 10px">
+          <table style="width:100%;font-size:14px;border-collapse:collapse">
+            <tr><td style="padding:6px 0;color:#64748b;width:80px">Nom</td><td style="padding:6px 0;font-weight:600">${nom}</td></tr>
+            <tr><td style="padding:6px 0;color:#64748b">Email</td><td style="padding:6px 0"><a href="mailto:${email}" style="color:#4f46e5">${email}</a></td></tr>
+            <tr><td style="padding:6px 0;color:#64748b">Sujet</td><td style="padding:6px 0">${sujet}</td></tr>
+          </table>
+          <div style="margin:16px 0 0;padding:16px;background:#f8fafc;border-radius:8px;font-size:14px;line-height:1.65;color:#334155;white-space:pre-wrap">${message}</div>
+          <div style="margin:16px 0 0">
+            <a href="mailto:${email}?subject=Re: ${encodeURIComponent(sujet)}" style="display:inline-block;background:#4f46e5;color:white;text-decoration:none;padding:10px 22px;border-radius:8px;font-weight:700;font-size:13px">
+              Répondre →
+            </a>
+          </div>
+        </div>
+      </div>`,
+  });
+
+  // Accusé réception à l'expéditeur
+  await sendEmail({
+    to: email,
+    subject: `Votre message a bien été reçu — Terrimo`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;color:#1e293b">
+        <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:24px 28px;border-radius:10px 10px 0 0">
+          <h1 style="color:white;margin:0;font-size:20px">Terrimo</h1>
+        </div>
+        <div style="background:white;border:1px solid #e2e8f0;border-top:none;padding:24px 28px;border-radius:0 0 10px 10px">
+          <p style="font-size:15px;font-weight:700;margin:0 0 8px">Bonjour ${nom},</p>
+          <p style="font-size:14px;color:#475569;margin:0 0 16px;line-height:1.65">
+            Votre message concernant "<strong>${sujet}</strong>" a bien été reçu. Nous vous répondrons sous 24h ouvrées.
+          </p>
+          <p style="font-size:13px;color:#94a3b8;margin:0">
+            Pour toute urgence : <a href="mailto:contact@terrimo.homes" style="color:#6366f1">contact@terrimo.homes</a>
+          </p>
+        </div>
+        <div style="padding:12px 28px;font-size:11px;color:#94a3b8;text-align:center">
+          Terrimo · Bassin d'Arcachon
+        </div>
+      </div>`,
+  });
+}

@@ -81,6 +81,29 @@ export async function GET(request: NextRequest) {
       parType = typeRows;
     }
 
+    // ── Events analytics (bien_events) ──────────────────────
+    let analytics = { views_30j: 0, contacts_30j: 0, phones_30j: 0, shares_30j: 0 };
+    try {
+      const evRows = await sql`
+        SELECT
+          COUNT(*) FILTER (WHERE event_type = 'view')          AS views_30j,
+          COUNT(*) FILTER (WHERE event_type = 'contact_click') AS contacts_30j,
+          COUNT(*) FILTER (WHERE event_type = 'phone_click')   AS phones_30j,
+          COUNT(*) FILTER (WHERE event_type = 'share')         AS shares_30j
+        FROM bien_events
+        WHERE acteur_id = ${acteurId}
+          AND created_at >= NOW() - INTERVAL '30 days'
+      `;
+      if (evRows.length) {
+        analytics = {
+          views_30j:    Number(evRows[0].views_30j)    || 0,
+          contacts_30j: Number(evRows[0].contacts_30j) || 0,
+          phones_30j:   Number(evRows[0].phones_30j)   || 0,
+          shares_30j:   Number(evRows[0].shares_30j)   || 0,
+        };
+      }
+    } catch { /* table pas encore créée */ }
+
     return NextResponse.json({
       plan,
       commune,
@@ -89,6 +112,7 @@ export async function GET(request: NextRequest) {
       mandats_actifs: mandatsCount,
       alertes_zone: alertesCount,
       par_type: parType,
+      analytics,
     });
 
   } catch (error) {

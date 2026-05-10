@@ -165,6 +165,22 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
   const [copiedBien, setCopiedBien]     = useState(false);
   const [copiedActeur, setCopiedActeur] = useState(false);
 
+  // Analytics helper (fire & forget, silencieux)
+  const trackEvent = useCallback((bienId: number, acteurId: number | undefined, type: string) => {
+    const sessionId = (() => {
+      try {
+        let s = sessionStorage.getItem('terrimo_sid');
+        if (!s) { s = crypto.randomUUID(); sessionStorage.setItem('terrimo_sid', s); }
+        return s;
+      } catch { return undefined; }
+    })();
+    fetch('/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bien_id: bienId, acteur_id: acteurId, event_type: type, session_id: sessionId }),
+    }).catch(() => {});
+  }, []);
+
   // Garder biensRef synchronisé
   useEffect(() => { biensRef.current = biens; }, [biens]);
 
@@ -292,6 +308,7 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
         .addTo(map)
         .on('click', () => {
           setSelectedBien(bien); setSelectedActeur(null);
+          trackEvent(bien.id, bien.acteur_id, 'view');
           biensViewedRef.current += 1;
           if (biensViewedRef.current === 5) setTimeout(() => setShowSoftGate(true), 1200);
         });
@@ -753,6 +770,8 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                         mapRef.current.flyTo([b.lat, b.lng], 15, { duration: 0.6 });
                         setMobileView('map');
                       }
+                      // Analytics
+                      trackEvent(b.id, b.acteur_id, 'view');
                       // Soft gate : déclenche après 5 biens vus
                       biensViewedRef.current += 1;
                       if (biensViewedRef.current === 5 && !gateDone) {
@@ -1361,22 +1380,26 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
             {/* CTA contact agence */}
             <div style={{ display: 'flex', gap: '8px', marginTop: '14px' }}>
               {selectedBien.acteur_phone && (
-                <a href={`tel:${selectedBien.acteur_phone}`} style={{
-                  flex: 1, textAlign: 'center', textDecoration: 'none',
-                  background: '#f97316', color: 'white',
-                  fontWeight: 700, fontSize: '.9375rem', padding: '10px',
-                  borderRadius: '12px',
-                }}>
+                <a href={`tel:${selectedBien.acteur_phone}`}
+                  onClick={() => trackEvent(selectedBien.id, selectedBien.acteur_id, 'phone_click')}
+                  style={{
+                    flex: 1, textAlign: 'center', textDecoration: 'none',
+                    background: '#f97316', color: 'white',
+                    fontWeight: 700, fontSize: '.9375rem', padding: '10px',
+                    borderRadius: '12px',
+                  }}>
                   📞 Contacter
                 </a>
               )}
               {selectedBien.acteur_email && (
-                <a href={`mailto:${selectedBien.acteur_email}`} style={{
-                  flex: 1, textAlign: 'center', textDecoration: 'none',
-                  background: 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.8)',
-                  fontWeight: 600, fontSize: '.9375rem', padding: '10px',
-                  borderRadius: '12px', border: '1.5px solid rgba(255,255,255,.15)',
-                }}>
+                <a href={`mailto:${selectedBien.acteur_email}`}
+                  onClick={() => trackEvent(selectedBien.id, selectedBien.acteur_id, 'contact_click')}
+                  style={{
+                    flex: 1, textAlign: 'center', textDecoration: 'none',
+                    background: 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.8)',
+                    fontWeight: 600, fontSize: '.9375rem', padding: '10px',
+                    borderRadius: '12px', border: '1.5px solid rgba(255,255,255,.15)',
+                  }}>
                   ✉️ Email
                 </a>
               )}
@@ -1388,6 +1411,7 @@ export default function TerrimoMap({ initialCommune, autoScrollZoom, autoDrawMod
                 navigator.clipboard.writeText(url).then(() => {
                   setCopiedBien(true);
                   setTimeout(() => setCopiedBien(false), 2000);
+                  trackEvent(selectedBien.id, selectedBien.acteur_id, 'share');
                 });
               }}
               style={{
