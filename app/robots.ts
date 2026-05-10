@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/pro/dashboard/', '/api/'],
+        disallow: ['/pro/dashboard/', '/api/', '/admin/'],
       },
     ],
     sitemap: 'https://terrimo.homes/sitemap.xml',
