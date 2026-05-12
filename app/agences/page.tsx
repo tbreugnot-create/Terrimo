@@ -130,17 +130,15 @@ export default async function AgencesPage() {
               )}
 
               {/* Grille agences */}
+              <style>{`.agence-card:hover { border-color: #6366f1 !important; box-shadow: 0 4px 20px rgba(99,102,241,.12); }`}</style>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
                 {agences.map(a => (
                   <Link key={a.id} href={`/agence/${a.slug}`} style={{ textDecoration: 'none' }}>
-                    <div style={{
+                    <div className="agence-card" style={{
                       background: 'white', borderRadius: 16, border: '1px solid #e2e8f0',
                       padding: '20px', transition: 'all .15s',
                       cursor: 'pointer',
-                    }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#6366f1'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 20px rgba(99,102,241,.12)'; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#e2e8f0'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'none'; }}
-                    >
+                    }}>
                       {/* Header */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                         <div style={{

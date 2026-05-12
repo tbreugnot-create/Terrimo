@@ -134,19 +134,18 @@ export default async function ConciergeriePage() {
               </p>
             </div>
           ) : (
+            <>
+            <style>{`.conciergerie-card:hover { border-color: #38bdf8 !important; box-shadow: 0 4px 20px rgba(56,189,248,.12); }`}</style>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
               {conciergeries.map(c => {
                 const zones = (c.meta?.zones_couvertes ?? []).slice(0, 3);
                 const tarif = c.meta?.tarif_gestion;
                 return (
                   <Link key={c.id} href={`/conciergerie/${c.slug}`} style={{ textDecoration: 'none' }}>
-                    <div style={{
+                    <div className="conciergerie-card" style={{
                       background: 'white', borderRadius: 16, border: '1px solid #e2e8f0',
                       padding: '20px', cursor: 'pointer', transition: 'all .15s',
-                    }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#38bdf8'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 20px rgba(56,189,248,.12)'; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#e2e8f0'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'none'; }}
-                    >
+                    }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                         <div style={{
                           width: 44, height: 44, borderRadius: 12, flexShrink: 0,
@@ -191,6 +190,7 @@ export default async function ConciergeriePage() {
                 );
               })}
             </div>
+            </>
           )}
 
           {/* CTA */}
