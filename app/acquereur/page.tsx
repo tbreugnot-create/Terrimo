@@ -48,8 +48,24 @@ const COMMUNES = [
   'Gujan-Mestras', 'Le Teich', 'Audenge', 'Biganos', 'Biscarrosse',
 ];
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: "Déposer une recherche immobilière — Bassin d'Arcachon",
+  url: 'https://terrimo.homes/acquereur',
+  breadcrumb: {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Terrimo', item: 'https://terrimo.homes' },
+      { '@type': 'ListItem', position: 2, name: 'Acquéreurs', item: 'https://terrimo.homes/acquereur' },
+    ],
+  },
+};
+
 export default function AcquereurLandingPage() {
   return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     <div style={{ minHeight: '100vh', background: '#0a1628', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
 
       {/* Nav */}
@@ -208,5 +224,6 @@ export default function AcquereurLandingPage() {
         <Link href="/tarifs" style={{ color: 'rgba(255,255,255,.4)', textDecoration: 'none' }}>Espace pro</Link>
       </footer>
     </div>
+    </>
   );
 }

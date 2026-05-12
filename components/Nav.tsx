@@ -32,6 +32,12 @@ const PROPRIO_ITEMS = [
     label: 'Faire diagnostiquer (DPE)',
     desc: 'Obligatoire avant vente ou location',
   },
+  {
+    href: '/evaluer?intention=notaire',
+    icon: '⚖️',
+    label: 'Consulter un notaire',
+    desc: 'Succession, donation, estimation officielle',
+  },
 ];
 
 const ACQUEREUR_ITEMS = [
@@ -48,13 +54,13 @@ const ACQUEREUR_ITEMS = [
     desc: 'Biens disponibles, prix au m², quartiers',
   },
   {
-    href: '/vente/arcachon',
+    href: '/vente',
     icon: '🏠',
     label: 'Biens à vendre',
     desc: 'Maisons & appartements sur le Bassin',
   },
   {
-    href: '/location/arcachon',
+    href: '/location',
     icon: '🌊',
     label: 'Biens en location',
     desc: 'Location annuelle et saisonnière',
@@ -459,7 +465,7 @@ export default function Nav() {
 
           {/* ── CTAs desktop ── */}
           <div className="hide-mobile" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {/* Se connecter — pour les pros */}
+            {/* Connexion Pro */}
             <Link
               href="/pro/connexion"
               style={{
@@ -489,7 +495,7 @@ export default function Nav() {
                 (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,.2)';
               }}
             >
-              Se connecter
+              Espace Pro
             </Link>
             {/* Rejoindre — pour les nouveaux pros */}
             <Link
@@ -519,7 +525,7 @@ export default function Nav() {
                 (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
               }}
             >
-              Rejoindre →
+              Rejoindre Pro →
             </Link>
           </div>
 
@@ -681,7 +687,7 @@ export default function Nav() {
               marginBottom: '10px',
             }}
           >
-            Se connecter (espace pro)
+            Espace Pro (connexion)
           </Link>
           <Link
             href="/pro/rejoindre"
@@ -701,7 +707,7 @@ export default function Nav() {
               minHeight: '56px',
             }}
           >
-            Rejoindre Terrimo Pro →
+            Rejoindre Pro →
           </Link>
         </div>
       )}

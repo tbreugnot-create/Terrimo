@@ -6,7 +6,7 @@ const CURRENT_YEAR = new Date().getFullYear();
 
 const PROPRIO = [
   { label: 'Estimer mon bien', href: '/evaluer' },
-  { label: 'Je veux vendre', href: '/evaluer?intention=vendre' },
+  { label: 'Je veux vendre', href: '/vendre' },
   { label: 'Je veux louer', href: '/evaluer?intention=louer' },
   { label: 'Faire un DPE', href: '/evaluer?intention=diagnostiquer' },
   { label: 'Consulter un notaire', href: '/evaluer?intention=notaire' },
@@ -20,13 +20,28 @@ const PRO = [
   { label: 'Notaires', href: '/pro/rejoindre?type=notaire' },
 ];
 
+const ACQUEREURS = [
+  { label: 'Déposer ma recherche', href: '/acquereur' },
+  { label: 'Explorer la carte', href: '/' },
+  { label: 'Biens à vendre', href: '/vente' },
+  { label: 'Biens en location', href: '/location' },
+  { label: 'Mes favoris', href: '/favoris' },
+  { label: 'Alertes zone', href: '/acquereur#alertes' },
+];
+
 const DECOUVRIR = [
   { label: 'Carte interactive', href: '/' },
   { label: 'Prix du marché DVF', href: '/marche' },
-  { label: 'Arcachon', href: '/quartier/arcachon' },
-  { label: 'La Teste-de-Buch', href: '/quartier/la-teste-de-buch' },
-  { label: 'Andernos-les-Bains', href: '/quartier/andernos-les-bains' },
-  { label: 'Lège-Cap Ferret', href: '/quartier/lege-cap-ferret' },
+  { label: 'Arcachon', href: '/vente/arcachon' },
+  { label: 'La Teste-de-Buch', href: '/vente/la-teste-de-buch' },
+  { label: 'Andernos-les-Bains', href: '/vente/andernos-les-bains' },
+  { label: 'Lège-Cap Ferret', href: '/vente/lege-cap-ferret' },
+  { label: 'Gujan-Mestras', href: '/vente/gujan-mestras' },
+  { label: 'Le Teich', href: '/vente/le-teich' },
+  { label: 'Audenge', href: '/vente/audenge' },
+  { label: 'Biganos', href: '/vente/biganos' },
+  { label: 'Arès', href: '/vente/ares' },
+  { label: 'Lanton', href: '/vente/lanton' },
 ];
 
 const RESSOURCES = [
@@ -92,6 +107,23 @@ export default function Footer() {
           </p>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {PROPRIO.map(({ label, href }) => (
+              <li key={href}>
+                <Link href={href} style={{ color: '#b0bec5', textDecoration: 'none' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+                  onMouseLeave={e => (e.currentTarget.style.color = '#b0bec5')}
+                >{label}</Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Acquéreurs */}
+        <div>
+          <p style={{ color: '#fff', fontWeight: 600, marginBottom: 14, fontSize: '0.8125rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Acquéreurs
+          </p>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {ACQUEREURS.map(({ label, href }) => (
               <li key={href}>
                 <Link href={href} style={{ color: '#b0bec5', textDecoration: 'none' }}
                   onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
@@ -172,7 +204,7 @@ export default function Footer() {
         <div style={{ display: 'flex', gap: '1.5rem' }}>
           <Link href="/mentions-legales" style={{ color: '#546e7a', textDecoration: 'none' }}>Mentions légales</Link>
           <Link href="/confidentialite" style={{ color: '#546e7a', textDecoration: 'none' }}>Confidentialité</Link>
-          <Link href="/pro/rejoindre" style={{ color: '#5dffd3', textDecoration: 'none', fontWeight: 600 }}>Espace Pro</Link>
+          <Link href="/pro/connexion" style={{ color: '#5dffd3', textDecoration: 'none', fontWeight: 600 }}>Espace Pro</Link>
         </div>
       </div>
     </footer>

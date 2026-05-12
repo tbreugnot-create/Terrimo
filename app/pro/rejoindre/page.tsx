@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { COMMUNES } from '@/lib/communes';
 
@@ -115,10 +116,15 @@ const TYPE_LABELS: Record<string, string> = {
 // ─────────────────────────────────────────────────────────────
 // COMPOSANT PRINCIPAL
 // ─────────────────────────────────────────────────────────────
-export default function ProRejoindre() {
-  const [step, setStep] = useState<0 | 1 | 2 | 3 | 4 | 5>(0);
+function ProRejoindreInner() {
+  const searchParams = useSearchParams();
+  const typeParam = (searchParams.get('type') ?? '') as ProType;
+  const validTypes: ProType[] = ['agence', 'notaire', 'diagnostiqueur', 'conciergerie'];
+  const initialType: ProType = validTypes.includes(typeParam) ? typeParam : '';
+
+  const [step, setStep] = useState<0 | 1 | 2 | 3 | 4 | 5>(initialType ? 1 : 0);
   const [form, setForm] = useState<FormState>({
-    type: '',
+    type: initialType,
     searchQuery: '',
     selectedActeur: null,
     isNewProfile: false,
@@ -800,5 +806,13 @@ export default function ProRejoindre() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ProRejoindre() {
+  return (
+    <Suspense fallback={null}>
+      <ProRejoindreInner />
+    </Suspense>
   );
 }

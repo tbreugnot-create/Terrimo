@@ -67,7 +67,7 @@ interface LeadForm {
   phone: string;
 }
 
-type Intention = 'vendre' | 'louer' | 'diagnostiquer' | 'notaire' | '';
+type Intention = 'vendre' | 'louer' | 'diagnostiquer' | 'notaire' | 'estimer' | '';
 
 interface LocalPro {
   id: number;
@@ -298,7 +298,10 @@ export default function EvaluerPage(){
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const param = params.get('intention') as Intention | null;
-    if (param && INTENTIONS.find(i => i.value === param)) {
+    // 'estimer' est un alias de '' (juste estimation sans intention spécifique)
+    if (param === 'estimer') {
+      setIntentionHint('');
+    } else if (param && INTENTIONS.find(i => i.value === param)) {
       setIntentionHint(param);
     }
     // Pré-sélection commune si passée en paramètre (ex: depuis /quartier/arcachon)
@@ -1115,6 +1118,19 @@ export default function EvaluerPage(){
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Cross-link vendeur — si pas encore passé par intention vendre */}
+        {intention !== 'vendre' && (
+          <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-2xl p-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Estimation en main ?</p>
+              <p className="text-xs text-gray-500 mt-0.5">Trouvez l'agence idéale pour vendre ou louer votre bien sur le Bassin.</p>
+            </div>
+            <Link href="/vendre" className="flex-shrink-0 px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-semibold hover:bg-orange-600 transition-colors whitespace-nowrap">
+              Trouver une agence →
+            </Link>
           </div>
         )}
 
