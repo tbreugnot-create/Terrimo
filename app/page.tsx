@@ -80,7 +80,8 @@ const PERSONAS = [
   },
 ];
 
-const STATS = [
+// STATS sera enrichi dynamiquement depuis /api/stats
+const STATS_DEFAULT = [
   { n: '135+', label: 'agences & notaires' },
   { n: '12',   label: 'communes' },
   { n: 'DVF',  label: 'données officielles' },
@@ -111,7 +112,7 @@ const TESTIMONIALS = [
   },
 ];
 
-const LIVE_ACTIVITY = [
+const LIVE_ACTIVITY_FALLBACK = [
   '🔍 Alerte zone activée · Cap Ferret il y a 2 min',
   '🏡 Estimation réalisée · Arcachon il y a 5 min',
   '📍 Zone dessinée · La Teste il y a 8 min',
@@ -168,6 +169,8 @@ export default function Home() {
   const [mapFullscreen, setMapFullscreen] = useState(false);
   const [mapDrawMode, setMapDrawMode]     = useState(false);
   const [tickerIdx, setTickerIdx]         = useState(0);
+  const [liveStats, setLiveStats]         = useState<{ acteurs: number; biens: number } | null>(null);
+  const [liveActivity, setLiveActivity]   = useState<string[]>(LIVE_ACTIVITY_FALLBACK);
 
   // Onglets recherche
   const [searchTab, setSearchTab]         = useState<'Acheter' | 'Louer' | 'Estimer'>('Acheter');
@@ -186,8 +189,16 @@ export default function Home() {
 
   // Ticker live activity
   useEffect(() => {
-    const t = setInterval(() => setTickerIdx(i => (i + 1) % LIVE_ACTIVITY.length), 3200);
+    const t = setInterval(() => setTickerIdx(i => (i + 1) % liveActivity.length), 3200);
     return () => clearInterval(t);
+  }, [liveActivity.length]);
+
+  // Stats + ticker depuis DB
+  useEffect(() => {
+    fetch('/api/stats').then(r => r.json()).then(setLiveStats).catch(() => {});
+    fetch('/api/ticker').then(r => r.json()).then(d => {
+      if (d.messages?.length >= 3) setLiveActivity(d.messages);
+    }).catch(() => {});
   }, []);
 
   const handleSearch = () => {
@@ -313,7 +324,12 @@ export default function Home() {
           display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '8px 36px',
           marginTop: 56, opacity: .7,
         }}>
-          {STATS.map(s => (
+          {[
+            { n: liveStats ? `${liveStats.acteurs}+` : STATS_DEFAULT[0].n, label: STATS_DEFAULT[0].label },
+            { n: STATS_DEFAULT[1].n, label: STATS_DEFAULT[1].label },
+            { n: STATS_DEFAULT[2].n, label: STATS_DEFAULT[2].label },
+            { n: STATS_DEFAULT[3].n, label: STATS_DEFAULT[3].label },
+          ].map(s => (
             <div key={s.n} style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'white' }}>{s.n}</div>
               <div style={{ fontSize: '.6875rem', color: 'rgba(255,255,255,.4)', marginTop: 2, letterSpacing: '.04em' }}>{s.label.toUpperCase()}</div>
@@ -339,7 +355,7 @@ export default function Home() {
             transition: 'opacity .4s',
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
-            {LIVE_ACTIVITY[tickerIdx]}
+            {liveActivity[tickerIdx % liveActivity.length]}
           </span>
         </div>
       </section>

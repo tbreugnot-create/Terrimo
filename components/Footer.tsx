@@ -7,17 +7,18 @@ const CURRENT_YEAR = new Date().getFullYear();
 const PROPRIO = [
   { label: 'Estimer mon bien', href: '/evaluer' },
   { label: 'Je veux vendre', href: '/vendre' },
-  { label: 'Je veux louer', href: '/evaluer?intention=louer' },
+  { label: 'Je veux louer', href: '/louer' },
   { label: 'Faire un DPE', href: '/evaluer?intention=diagnostiquer' },
   { label: 'Consulter un notaire', href: '/evaluer?intention=notaire' },
 ];
 
 const PRO = [
   { label: 'Rejoindre Terrimo', href: '/pro/rejoindre' },
-  { label: 'Agences immobilières', href: '/pro/rejoindre?type=agence' },
-  { label: 'Conciergeries', href: '/pro/rejoindre?type=conciergerie' },
+  { label: 'Agences immobilières', href: '/agences' },
+  { label: 'Conciergeries', href: '/conciergeries' },
   { label: 'Diagnostiqueurs', href: '/pro/rejoindre?type=diagnostiqueur' },
   { label: 'Notaires', href: '/pro/rejoindre?type=notaire' },
+  { label: 'Tarifs Pro', href: '/tarifs' },
 ];
 
 const ACQUEREURS = [
@@ -25,8 +26,9 @@ const ACQUEREURS = [
   { label: 'Explorer la carte', href: '/' },
   { label: 'Biens à vendre', href: '/vente' },
   { label: 'Biens en location', href: '/location' },
+  { label: 'Biens off-market', href: '/off-market' },
+  { label: 'Investir sur le Bassin', href: '/investir' },
   { label: 'Mes favoris', href: '/favoris' },
-  { label: 'Alertes zone', href: '/acquereur#alertes' },
 ];
 
 const DECOUVRIR = [
@@ -48,8 +50,9 @@ const RESSOURCES = [
   { label: 'Blog immobilier', href: '/blog' },
   { label: 'Prix immobilier 2025', href: '/blog/prix-immobilier-arcachon-2025' },
   { label: 'Guide achat Bassin', href: '/blog/guide-achat-immobilier-bassin-arcachon' },
+  { label: "Investir LMNP", href: '/investir' },
+  { label: 'Prix du marché DVF', href: '/marche' },
   { label: 'Contact', href: '/contact' },
-  { label: 'Tarifs Pro', href: '/tarifs' },
 ];
 
 export default function Footer() {

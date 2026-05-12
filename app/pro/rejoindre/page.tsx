@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { COMMUNES } from '@/lib/communes';
@@ -145,6 +145,11 @@ function ProRejoindreInner() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [liveActeurs, setLiveActeurs] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch('/api/stats').then(r => r.json()).then(d => setLiveActeurs(d.acteurs)).catch(() => {});
+  }, []);
 
   const set = (k: keyof FormState, v: unknown) =>
     setForm(f => ({ ...f, [k]: v }));
@@ -240,7 +245,7 @@ function ProRejoindreInner() {
             Agences, notaires, diagnostiqueurs et conciergeries — rejoignez la plateforme et recevez des leads qualifiés.
           </p>
           <p className="text-slate-400 mb-10 text-sm">
-            135 professionnels déjà référencés · Bassin d'Arcachon · Extension France en 2026
+            {liveActeurs ?? 135}+ professionnels déjà référencés · Bassin d&apos;Arcachon · Extension France en 2026
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
@@ -249,20 +254,20 @@ function ProRejoindreInner() {
             >
               Référencer mon activité →
             </button>
-            <a
-              href="#plans"
+            <Link
+              href="/tarifs"
               className="border border-slate-600 hover:border-slate-400 text-slate-300 hover:text-white px-8 py-4 rounded-xl transition text-lg"
             >
-              Voir les plans
-            </a>
+              Voir les tarifs
+            </Link>
           </div>
         </div>
 
         {/* Stats */}
         <div className="max-w-3xl mx-auto px-6 pb-16 grid grid-cols-3 gap-6 text-center">
           {[
-            { n: '135', l: 'professionnels référencés' },
-            { n: '10',  l: 'communes du Bassin' },
+            { n: `${liveActeurs ?? 135}+`, l: 'professionnels référencés' },
+            { n: '12',  l: 'communes du Bassin' },
             { n: '∞',   l: 'estimations par mois' },
           ].map(s => (
             <div key={s.n} style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)' }} className="rounded-2xl p-6">
@@ -272,47 +277,19 @@ function ProRejoindreInner() {
           ))}
         </div>
 
-        {/* Plans */}
-        <div id="plans" className="max-w-5xl mx-auto px-6 pb-20">
-          <h2 className="text-3xl font-bold text-center mb-3">Choisissez votre plan</h2>
-          <p className="text-slate-400 text-center mb-10">Sans engagement. Changez de plan à tout moment.</p>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {PLANS.map(plan => (
-              <div
-                key={plan.id}
-                style={{ background: 'rgba(255,255,255,.04)' }}
-                className={`relative rounded-2xl border-2 ${plan.color} p-6 flex flex-col`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-                    LE PLUS POPULAIRE
-                  </div>
-                )}
-                <div className={`self-start text-xs font-bold px-2.5 py-1 rounded-full ${plan.badge} mb-4`}>
-                  {plan.name}
-                </div>
-                <div className="text-3xl font-bold mb-0.5">{plan.price}</div>
-                <div className="text-slate-400 text-sm mb-6">{plan.sub}</div>
-                <ul className="space-y-2 mb-8 flex-1">
-                  {plan.features.map(f => (
-                    <li key={f} className={`text-sm ${f.startsWith('❌') ? 'text-slate-500' : 'text-slate-300'}`}>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => { set('plan', plan.id); setStep(1); }}
-                  className={`w-full py-2.5 rounded-xl font-semibold text-sm transition ${
-                    plan.id === 'pro'
-                      ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
-                      : 'bg-slate-700 hover:bg-slate-600 text-white'
-                  }`}
-                >
-                  {plan.cta}
-                </button>
-              </div>
-            ))}
+        {/* Tarifs CTA */}
+        <div className="max-w-3xl mx-auto px-6 pb-20">
+          <div style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.1)' }} className="rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div>
+              <div className="text-lg font-bold mb-1">Free · Pro 49 €/mois · Premium 149 €/mois</div>
+              <p className="text-slate-400 text-sm">Sans engagement. Changez de plan à tout moment. Démarrez gratuitement.</p>
+            </div>
+            <Link
+              href="/tarifs"
+              className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-xl transition text-sm whitespace-nowrap"
+            >
+              Voir tous les tarifs →
+            </Link>
           </div>
         </div>
 

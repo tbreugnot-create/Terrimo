@@ -21,7 +21,7 @@ const PROPRIO_ITEMS = [
     desc: 'Fourchette DVF précise, sans engagement',
   },
   {
-    href: '/evaluer?intention=louer',
+    href: '/louer',
     icon: '🔑',
     label: 'Louer / Mettre en gestion',
     desc: 'Conciergeries & gestion locative saisonnière',
@@ -71,6 +71,18 @@ const ACQUEREUR_ITEMS = [
     label: 'Prix du marché DVF',
     desc: 'Prix m² officiels par commune, évolution annuelle',
   },
+  {
+    href: '/off-market',
+    icon: '🔒',
+    label: 'Biens off-market',
+    desc: 'Accédez aux biens avant leur publication publique',
+  },
+  {
+    href: '/investir',
+    icon: '📈',
+    label: 'Investir sur le Bassin',
+    desc: 'Rendements LMNP, fiscalité, opportunités 2025',
+  },
 ];
 
 const PRO_ITEMS = [
@@ -97,6 +109,18 @@ const PRO_ITEMS = [
     icon: '⚖️',
     label: 'Notaire',
     desc: 'Succession, transactions, estimation officielle',
+  },
+  {
+    href: '/agences',
+    icon: '🏢',
+    label: 'Annuaire agences',
+    desc: 'Toutes les agences du Bassin avec avis clients',
+  },
+  {
+    href: '/conciergeries',
+    icon: '🏡',
+    label: 'Annuaire conciergeries',
+    desc: 'Conciergeries vérifiées pour la location saisonnière',
   },
   {
     href: '/tarifs',

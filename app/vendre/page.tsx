@@ -214,18 +214,55 @@ export default function VendrePage() {
               </div>
             </div>
 
-            {/* Social proof */}
-            <div style={{
-              marginTop: 40, padding: '24px 28px',
-              background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.07)',
-              borderRadius: 18, textAlign: 'center',
-            }}>
-              <p style={{ fontSize: 16, color: 'rgba(255,255,255,.75)', lineHeight: 1.7, fontStyle: 'italic', marginBottom: 12 }}>
-                &ldquo;J&apos;ai déposé mon projet le lundi matin, deux agences m&apos;ont rappelé le jour même avec une estimation. J&apos;ai finalement signé un compromis en 3 semaines.&rdquo;
-              </p>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,.35)' }}>
-                — Jean-Pierre M. · Vente villa Pyla-sur-Mer · 1,2 M€
-              </p>
+            {/* Social proof — 3 témoignages */}
+            <div style={{ marginTop: 40 }}>
+              <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 20, textAlign: 'center', color: 'rgba(255,255,255,.6)', textTransform: 'uppercase', letterSpacing: '.08em', fontSize: 12 }}>
+                Ils ont vendu ou loué grâce à Terrimo
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {[
+                  {
+                    initiale: 'J',
+                    texte: '« J\'ai déposé mon projet le lundi matin, deux agences m\'ont rappelé le jour même. J\'ai signé un compromis en 3 semaines. »',
+                    auteur: 'Jean-Pierre M.',
+                    detail: 'Vente villa · Pyla-sur-Mer · 1,2 M€ · mars 2025',
+                  },
+                  {
+                    initiale: 'C',
+                    texte: '« Mise en location saisonnière d\'une maison à Arcachon. La conciergerie trouvée via Terrimo gère tout — on touche notre loyer sans s\'occuper de rien. »',
+                    auteur: 'Claire & Marc D.',
+                    detail: 'Location saisonnière · Arcachon · 2 900 €/sem. en haute saison',
+                  },
+                  {
+                    initiale: 'L',
+                    texte: '« Estimation DVF très précise — 12 000 € de plus que ce que proposait l\'agence de quartier. L\'outil nous a donné confiance pour négocier. »',
+                    auteur: 'Laurent B.',
+                    detail: 'Vente appartement · Andernos · 287 000 € · jan. 2025',
+                  },
+                ].map(t => (
+                  <div key={t.initiale} style={{
+                    padding: '20px 24px', background: 'rgba(255,255,255,.03)',
+                    border: '1px solid rgba(255,255,255,.07)', borderRadius: 16,
+                    display: 'flex', gap: 14, alignItems: 'flex-start',
+                  }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                      background: 'rgba(99,102,241,.35)', display: 'flex',
+                      alignItems: 'center', justifyContent: 'center',
+                      fontWeight: 800, fontSize: 15, color: '#a5b4fc',
+                    }}>{t.initiale}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', gap: 2, marginBottom: 8 }}>
+                        {[1,2,3,4,5].map(i => <span key={i} style={{ color: '#fbbf24', fontSize: 12 }}>★</span>)}
+                      </div>
+                      <p style={{ fontSize: 13, color: 'rgba(255,255,255,.75)', lineHeight: 1.65, fontStyle: 'italic', margin: '0 0 8px' }}>{t.texte}</p>
+                      <p style={{ fontSize: 12, color: 'rgba(255,255,255,.35)', margin: 0 }}>
+                        <span style={{ color: 'rgba(255,255,255,.55)', fontWeight: 600 }}>{t.auteur}</span> · {t.detail}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         )}

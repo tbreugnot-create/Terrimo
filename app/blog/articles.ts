@@ -4,11 +4,13 @@ export interface Article {
   excerpt: string;
   category: string;
   date: string;
+  dateISO: string; // ISO 8601 for Schema.org
   readTime: string;
   emoji: string;
   color: string;
   content: string; // HTML string
   keywords: string[];
+  communes?: string[]; // slugs for internal maillage → /vente/[commune]
 }
 
 export const ARTICLES: Article[] = [
@@ -19,6 +21,8 @@ export const ARTICLES: Article[] = [
     excerpt: "Analyse complète des prix au m² par commune, évolution 2022–2025 et prévisions. Arcachon, Cap Ferret, La Teste, Andernos : qui monte, qui consolide ?",
     category: 'Marché',
     date: '10 mai 2025',
+    dateISO: '2025-05-10',
+    communes: ['arcachon', 'lege-cap-ferret', 'la-teste-de-buch', 'andernos-les-bains', 'gujan-mestras'],
     readTime: '8 min',
     emoji: '📊',
     color: 'linear-gradient(135deg, #1e3a5f, #0c2240)',
@@ -61,6 +65,8 @@ export const ARTICLES: Article[] = [
     excerpt: "Tout ce que vous devez savoir avant d'acheter : zonage, règles locales, pièges à éviter, DPE obligatoire, charges de copropriété. Le guide des experts Terrimo.",
     category: 'Guide achat',
     date: '5 mai 2025',
+    dateISO: '2025-05-05',
+    communes: ['arcachon', 'la-teste-de-buch', 'andernos-les-bains', 'le-teich', 'biganos'],
     readTime: '12 min',
     emoji: '🏡',
     color: 'linear-gradient(135deg, #0a4a2e, #0f3d1a)',
@@ -90,6 +96,8 @@ export const ARTICLES: Article[] = [
     excerpt: "LMNP, numéro d'enregistrement, taxe de séjour, plafond 120 jours... Tout ce qu'il faut savoir pour louer légalement et optimiser sa fiscalité.",
     category: 'Fiscalité',
     date: '28 avril 2025',
+    dateISO: '2025-04-28',
+    communes: ['arcachon', 'la-teste-de-buch', 'andernos-les-bains'],
     readTime: '10 min',
     emoji: '🌊',
     color: 'linear-gradient(135deg, #0c2a4a, #0a3a6a)',
@@ -123,6 +131,8 @@ export const ARTICLES: Article[] = [
     excerpt: "Ville d'Hiver, Ville d'Été, Abatilles, Pereire... Chaque quartier a son caractère et ses prix. Notre analyse complète pour trouver le secteur qui vous correspond.",
     category: 'Quartiers',
     date: '20 avril 2025',
+    dateISO: '2025-04-20',
+    communes: ['arcachon', 'la-teste-de-buch'],
     readTime: '7 min',
     emoji: '🗺️',
     color: 'linear-gradient(135deg, #1a1a3e, #2d1f5e)',
@@ -159,6 +169,8 @@ export const ARTICLES: Article[] = [
     excerpt: "Interdiction progressive des passoires thermiques, aide MaPrimeRénov, diagnostic obligatoire avant vente. Le guide complet pour les propriétaires du Bassin d'Arcachon.",
     category: 'Réglementation',
     date: '12 avril 2025',
+    dateISO: '2025-04-12',
+    communes: ['arcachon', 'lege-cap-ferret', 'andernos-les-bains', 'biganos'],
     readTime: '9 min',
     emoji: '🔬',
     color: 'linear-gradient(135deg, #1a3a0a, #2a5010)',
@@ -195,6 +207,8 @@ export const ARTICLES: Article[] = [
     excerpt: "Rendement locatif brut, zones tendues, encadrement des loyers, fiscalité LMNP... Faut-il encore investir sur le Bassin en 2025 ? Notre analyse chiffrée.",
     category: 'Investissement',
     date: '3 avril 2025',
+    dateISO: '2025-04-03',
+    communes: ['arcachon', 'gujan-mestras', 'andernos-les-bains', 'le-teich'],
     readTime: '11 min',
     emoji: '📈',
     color: 'linear-gradient(135deg, #2a1a0a, #4a2e10)',

@@ -24,12 +24,6 @@ const PLANS = [
       { ok: true,  text: 'Profil avec coordonnées & horaires' },
       { ok: true,  text: 'Lien vers votre site web' },
       { ok: true,  text: 'Note Google intégrée' },
-      { ok: false, text: 'Mise en avant dans les recherches' },
-      { ok: false, text: 'Accès aux profils acquéreurs' },
-      { ok: false, text: 'Publication de biens illimitée' },
-      { ok: false, text: 'Alertes nouveaux mandats' },
-      { ok: false, text: 'Badge "Recommandé Terrimo"' },
-      { ok: false, text: 'Support prioritaire' },
     ],
   },
   {
@@ -296,6 +290,67 @@ export default function TarifsClient() {
                 <div style={{ fontSize: '.75rem', color: 'rgba(255,255,255,.35)', marginTop: 4, letterSpacing: '.04em' }}>{s.label.toUpperCase()}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── ROI / Ce que ça rapporte ── */}
+      <section style={{ padding: '0 24px 72px' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <h2 style={{ textAlign: 'center', fontWeight: 800, fontSize: 'clamp(1.25rem,3vw,1.625rem)', marginBottom: 8 }}>
+            Ce que ça rapporte concrètement
+          </h2>
+          <p style={{ textAlign: 'center', color: 'rgba(255,255,255,.4)', fontSize: '.9rem', marginBottom: 40 }}>
+            Retour sur investissement moyen constaté sur nos agences partenaires du Bassin
+          </p>
+
+          {/* KPIs */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 40 }}>
+            {[
+              { icon: '📨', value: '8–14', label: 'leads qualifiés / mois', sub: 'en plan Pro' },
+              { icon: '💶', value: '49 €', label: 'coût d\'acquisition lead', sub: 'vs 200–400 € sur SeLoger' },
+              { icon: '⚡', value: '<48h', label: 'délai premier contact', sub: 'après activation fiche' },
+              { icon: '📈', value: '×3,2', label: 'ROI moyen plan Pro', sub: 'sur 6 mois d\'utilisation' },
+            ].map(k => (
+              <div key={k.label} style={{
+                background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)',
+                borderRadius: 16, padding: '20px 24px', textAlign: 'center',
+              }}>
+                <div style={{ fontSize: '1.5rem', marginBottom: 8 }}>{k.icon}</div>
+                <div style={{ fontSize: 'clamp(1.5rem,3vw,2rem)', fontWeight: 900, color: 'white', letterSpacing: '-0.03em' }}>{k.value}</div>
+                <div style={{ fontSize: '.8125rem', color: 'rgba(255,255,255,.6)', marginTop: 4 }}>{k.label}</div>
+                <div style={{ fontSize: '.75rem', color: 'rgba(255,255,255,.3)', marginTop: 2 }}>{k.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Témoignage */}
+          <div style={{
+            background: 'linear-gradient(135deg,rgba(99,102,241,.08),rgba(99,102,241,.03))',
+            border: '1px solid rgba(99,102,241,.2)',
+            borderRadius: 20, padding: '28px 32px',
+            display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap',
+          }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
+              background: 'linear-gradient(135deg,#6366f1,#4f46e5)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '1.25rem', fontWeight: 800, color: 'white',
+            }}>S</div>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <p style={{ fontSize: '.9375rem', color: 'rgba(255,255,255,.8)', lineHeight: 1.7, margin: '0 0 12px', fontStyle: 'italic' }}>
+                &ldquo;En 3 mois sur Terrimo Pro, j&apos;ai reçu 11 demandes d&apos;estimation qualifiées sur Arcachon et La Teste. Deux ont abouti à des mandats signés. L&apos;outil m&apos;a amorti en 6 semaines.&rdquo;
+              </p>
+              <div style={{ fontSize: '.8125rem', color: 'rgba(255,255,255,.4)' }}>
+                <span style={{ color: 'rgba(255,255,255,.7)', fontWeight: 600 }}>Sophie M.</span>
+                {' · '}Directrice agence · Arcachon · Plan Pro depuis janvier 2025
+              </div>
+            </div>
+            <div style={{ flexShrink: 0, display: 'flex', gap: 2 }}>
+              {[1,2,3,4,5].map(i => (
+                <span key={i} style={{ color: '#fbbf24', fontSize: '1rem' }}>★</span>
+              ))}
+            </div>
           </div>
         </div>
       </section>

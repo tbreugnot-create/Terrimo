@@ -45,15 +45,24 @@ export default async function BlogArticlePage({ params }: Props) {
     '@type': 'Article',
     headline: article.title,
     description: article.excerpt,
-    datePublished: article.date,
-    author: { '@type': 'Organization', name: 'Terrimo' },
+    datePublished: article.dateISO ?? article.date,
+    dateModified: article.dateISO ?? article.date,
+    author: {
+      '@type': 'Organization',
+      name: 'Terrimo',
+      url: 'https://terrimo.homes',
+      logo: { '@type': 'ImageObject', url: 'https://terrimo.homes/logo.png' },
+    },
     publisher: {
       '@type': 'Organization',
       name: 'Terrimo',
       url: 'https://terrimo.homes',
+      logo: { '@type': 'ImageObject', url: 'https://terrimo.homes/logo.png' },
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': `https://terrimo.homes/blog/${slug}` },
     keywords: article.keywords.join(', '),
+    articleSection: article.category,
+    inLanguage: 'fr-FR',
   };
 
   const breadcrumb = {
@@ -175,6 +184,46 @@ export default async function BlogArticlePage({ params }: Props) {
             </Link>
           </div>
         </div>
+
+        {/* Maillage interne — annonces par commune */}
+        {article.communes && article.communes.length > 0 && (
+          <div style={{
+            background: 'white', border: '1px solid #e2e8f0', borderRadius: 16,
+            padding: '24px',
+          }}>
+            <p style={{ fontSize: '.75rem', fontWeight: 700, color: '#94a3b8', marginBottom: 14, letterSpacing: '.06em' }}>
+              ANNONCES IMMOBILIÈRES DANS CES COMMUNES
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+              {article.communes.map(slug => {
+                const label = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                return (
+                  <a key={slug} href={`/vente/${slug}`} style={{
+                    padding: '7px 16px', borderRadius: 20,
+                    background: '#f1f5f9', border: '1px solid #e2e8f0',
+                    color: '#475569', fontSize: '.875rem', fontWeight: 500,
+                    textDecoration: 'none',
+                  }}>
+                    🏠 Ventes {label}
+                  </a>
+                );
+              })}
+              {article.communes.map(slug => {
+                const label = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                return (
+                  <a key={`loc-${slug}`} href={`/location/${slug}`} style={{
+                    padding: '7px 16px', borderRadius: 20,
+                    background: '#f0fdf4', border: '1px solid #dcfce7',
+                    color: '#16a34a', fontSize: '.875rem', fontWeight: 500,
+                    textDecoration: 'none',
+                  }}>
+                    🔑 Locations {label}
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Navigation prev/next */}
         {(prev || next) && (
