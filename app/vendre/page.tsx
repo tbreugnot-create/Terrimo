@@ -216,7 +216,7 @@ export default function VendrePage() {
 
             {/* Social proof — 3 témoignages */}
             <div style={{ marginTop: 40 }}>
-              <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 20, textAlign: 'center', color: 'rgba(255,255,255,.6)', textTransform: 'uppercase', letterSpacing: '.08em', fontSize: 12 }}>
+              <h2 style={{ fontSize: 12, fontWeight: 700, marginBottom: 20, textAlign: 'center', color: 'rgba(255,255,255,.6)', textTransform: 'uppercase', letterSpacing: '.08em' }}>
                 Ils ont vendu ou loué grâce à Terrimo
               </h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
