@@ -287,8 +287,7 @@ export default async function MarchePage() {
               <span>Données de référence DGFiP 2024 — connexion base de données en cours d&apos;activation.</span>
             </div>
           )}
-          {true ? (
-            <div style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+          <div style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
               {/* Header */}
               <div style={{
                 display: 'grid',
@@ -359,7 +358,6 @@ export default async function MarchePage() {
                 );
               })}
             </div>
-          )}
 
           {/* ── Note méthodologique ─── */}
           <div style={{
