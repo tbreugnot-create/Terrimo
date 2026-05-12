@@ -122,6 +122,10 @@ function ProRejoindreInner() {
   const validTypes: ProType[] = ['agence', 'notaire', 'diagnostiqueur', 'conciergerie'];
   const initialType: ProType = validTypes.includes(typeParam) ? typeParam : '';
 
+  const planParam = searchParams.get('plan') ?? '';
+  const validPlans: Plan[] = ['free', 'pro', 'premium'];
+  const initialPlan: Plan = validPlans.includes(planParam as Plan) ? (planParam as Plan) : 'free';
+
   const [step, setStep] = useState<0 | 1 | 2 | 3 | 4 | 5>(initialType ? 1 : 0);
   const [form, setForm] = useState<FormState>({
     type: initialType,
@@ -134,7 +138,7 @@ function ProRejoindreInner() {
     website: '',
     address: '',
     commune: '',
-    plan: 'free',
+    plan: initialPlan,
     contact_nom: '',
     contact_prenom: '',
     contact_poste: '',

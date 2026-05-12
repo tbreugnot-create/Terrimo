@@ -27,13 +27,13 @@ const PROPRIO_ITEMS = [
     desc: 'Conciergeries & gestion locative saisonnière',
   },
   {
-    href: '/evaluer?intention=diagnostiquer',
+    href: '/diagnostiqueurs',
     icon: '🔬',
     label: 'Faire diagnostiquer (DPE)',
     desc: 'Obligatoire avant vente ou location',
   },
   {
-    href: '/evaluer?intention=notaire',
+    href: '/notaires',
     icon: '⚖️',
     label: 'Consulter un notaire',
     desc: 'Succession, donation, estimation officielle',

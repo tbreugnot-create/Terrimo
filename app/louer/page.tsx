@@ -327,12 +327,12 @@ export default function LouerPage() {
 
           {/* CTA bas de page */}
           <section style={{ maxWidth: 560, margin: '0 auto', padding: '0 24px 80px', textAlign: 'center' }}>
-            <Link href="/evaluer" style={{
+            <Link href="/conciergeries" style={{
               display: 'inline-block', padding: '11px 22px', borderRadius: 12,
               background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.12)',
               color: 'rgba(255,255,255,.6)', fontSize: 14, textDecoration: 'none',
             }}>
-              📊 D&apos;abord estimer la valeur de mon bien →
+              🏡 Voir les conciergeries partenaires →
             </Link>
           </section>
         </>

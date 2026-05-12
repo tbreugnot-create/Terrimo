@@ -104,7 +104,7 @@ export default function ContactPage() {
                 <input
                   type="email" required value={form.email}
                   onChange={e => set('email', e.target.value)}
-                  placeholder="vous@agence.fr"
+                  placeholder="votre@email.fr"
                   style={{
                     width: '100%', boxSizing: 'border-box',
                     background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)',

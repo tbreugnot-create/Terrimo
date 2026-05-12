@@ -8,8 +8,8 @@ const PROPRIO = [
   { label: 'Estimer mon bien', href: '/evaluer' },
   { label: 'Je veux vendre', href: '/vendre' },
   { label: 'Je veux louer', href: '/louer' },
-  { label: 'Faire un DPE', href: '/evaluer?intention=diagnostiquer' },
-  { label: 'Consulter un notaire', href: '/evaluer?intention=notaire' },
+  { label: 'Faire un DPE', href: '/diagnostiqueurs' },
+  { label: 'Consulter un notaire', href: '/notaires' },
 ];
 
 const PRO = [

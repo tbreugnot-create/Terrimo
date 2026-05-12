@@ -88,7 +88,7 @@ export default async function AgencesPage() {
               <span style={{ color: '#38bdf8' }}>Bassin d&apos;Arcachon</span>
             </h1>
             <p style={{ color: 'rgba(255,255,255,.55)', fontSize: '1rem', margin: '0 0 28px', maxWidth: 500, lineHeight: 1.6 }}>
-              {agences.length > 0 ? `${agences.length} agences référencées` : 'Agences référencées'} sur le Bassin d&apos;Arcachon — vente, location, estimation. Coordonnées et avis clients vérifiés.
+              {agences.length > 0 ? `${agences.length} agences référencées ` : 'Agences référencées '}sur le Bassin d&apos;Arcachon — vente, location, estimation. Coordonnées et avis clients vérifiés.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <Link href="/evaluer" style={{ padding: '10px 20px', borderRadius: 12, background: '#38bdf8', color: '#0a1626', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>

@@ -99,7 +99,7 @@ export default function OffMarketPage() {
               color: '#0a1626', fontWeight: 900, fontSize: '1.0625rem',
               textDecoration: 'none', boxShadow: '0 8px 32px rgba(251,191,36,.3)',
             }}>
-              Accéder aux biens off-market →
+              Déposer mon profil acquéreur →
             </Link>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,.3)', marginTop: 14 }}>
               Gratuit · Sans engagement · Réponse sous 48h
@@ -204,7 +204,7 @@ export default function OffMarketPage() {
                 background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
                 color: '#0a1626', fontWeight: 900, fontSize: '1rem', textDecoration: 'none',
               }}>
-                Accéder aux biens off-market →
+                Déposer mon profil acquéreur →
               </Link>
               <div style={{ marginTop: 16, display: 'flex', gap: 24, justifyContent: 'center', fontSize: '.8125rem', color: 'rgba(255,255,255,.3)' }}>
                 <span>✓ Gratuit</span>

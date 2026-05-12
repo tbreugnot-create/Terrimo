@@ -365,23 +365,14 @@ export default function Home() {
       ═══════════════════════════════════════════════════════ */}
       <section style={{ padding: '0 24px 20px' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <Link href="/evaluer" style={{
+          <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            gap: 16, textDecoration: 'none',
+            gap: 16,
             background: 'linear-gradient(135deg, rgba(16,185,129,.12), rgba(16,185,129,.04))',
             border: '1px solid rgba(16,185,129,.25)',
             borderRadius: 16, padding: '16px 24px',
-            transition: 'border-color .15s, background .15s',
-          }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(16,185,129,.5)';
-              (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(16,185,129,.18), rgba(16,185,129,.06))';
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(16,185,129,.25)';
-              (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(16,185,129,.12), rgba(16,185,129,.04))';
-            }}
-          >
+            flexWrap: 'wrap',
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <span style={{ fontSize: '1.75rem', flexShrink: 0 }}>🏡</span>
               <div>
@@ -393,14 +384,26 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <span style={{
-              flexShrink: 0, background: '#10b981', color: 'white',
-              fontWeight: 700, fontSize: '.8125rem', padding: '8px 16px',
-              borderRadius: 10, whiteSpace: 'nowrap',
-            }}>
-              Estimer →
-            </span>
-          </Link>
+            <div style={{ display: 'flex', gap: 10, flexShrink: 0, flexWrap: 'wrap' }}>
+              <Link href="/evaluer" style={{
+                background: '#10b981', color: 'white',
+                fontWeight: 700, fontSize: '.8125rem', padding: '8px 16px',
+                borderRadius: 10, whiteSpace: 'nowrap', textDecoration: 'none',
+                display: 'inline-block',
+              }}>
+                Estimer mon bien →
+              </Link>
+              <Link href="/louer" style={{
+                background: 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.8)',
+                border: '1px solid rgba(255,255,255,.2)',
+                fontWeight: 700, fontSize: '.8125rem', padding: '8px 16px',
+                borderRadius: 10, whiteSpace: 'nowrap', textDecoration: 'none',
+                display: 'inline-block',
+              }}>
+                Mettre en location →
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
