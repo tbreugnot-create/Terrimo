@@ -77,7 +77,7 @@ export default function DiagnostiqueurPageClient({ acteur }: { acteur: ActeurDet
                   {[1,2,3,4,5].map(i => (
                     <span key={i} className={`text-base ${i <= Math.round(acteur.google_rating!) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
                   ))}
-                  <span className="text-sm font-bold text-gray-800 ml-1">{acteur.google_rating.toFixed(1)}</span>
+                  <span className="text-sm font-bold text-gray-800 ml-1">{Number(acteur.google_rating).toFixed(1)}</span>
                   {acteur.google_reviews && (
                     <span className="text-xs text-gray-400">({acteur.google_reviews} avis Google)</span>
                   )}

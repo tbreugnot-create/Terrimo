@@ -178,7 +178,7 @@ export default async function ConciergeriePage() {
                       {c.google_rating && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '.8125rem', color: '#64748b' }}>
                           <span style={{ color: '#fbbf24' }}>★</span>
-                          <span style={{ fontWeight: 700, color: '#0f172a' }}>{c.google_rating.toFixed(1)}</span>
+                          <span style={{ fontWeight: 700, color: '#0f172a' }}>{Number(c.google_rating).toFixed(1)}</span>
                           {c.google_reviews && <span>({c.google_reviews} avis)</span>}
                         </div>
                       )}

@@ -183,7 +183,7 @@ export default function ConciergiePageClient({
                   {[1,2,3,4,5].map(i => (
                     <span key={i} className={`text-base ${i <= Math.round(conciergerie.google_rating!) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
                   ))}
-                  <span className="text-sm font-bold text-gray-800 ml-1">{conciergerie.google_rating.toFixed(1)}</span>
+                  <span className="text-sm font-bold text-gray-800 ml-1">{Number(conciergerie.google_rating).toFixed(1)}</span>
                   {conciergerie.google_reviews && (
                     <span className="text-xs text-gray-400">({conciergerie.google_reviews} avis Google)</span>
                   )}

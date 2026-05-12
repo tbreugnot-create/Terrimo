@@ -234,7 +234,7 @@ function ProCard({ pro, intention }: { pro: LocalPro; intention: Intention }) {
         {pro.google_rating && (
           <div className="flex items-center gap-1 mt-1">
             <span className="text-yellow-400 text-xs">★</span>
-            <span className="text-xs font-semibold text-gray-700">{pro.google_rating.toFixed(1)}</span>
+            <span className="text-xs font-semibold text-gray-700">{Number(pro.google_rating).toFixed(1)}</span>
             {pro.google_reviews && (
               <span className="text-xs text-gray-400">({pro.google_reviews} avis)</span>
             )}

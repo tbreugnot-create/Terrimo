@@ -183,7 +183,7 @@ export default async function AgencesPage() {
                       {a.google_rating && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '.8125rem', color: '#64748b' }}>
                           <span style={{ color: '#fbbf24' }}>★</span>
-                          <span style={{ fontWeight: 700, color: '#0f172a' }}>{a.google_rating.toFixed(1)}</span>
+                          <span style={{ fontWeight: 700, color: '#0f172a' }}>{Number(a.google_rating).toFixed(1)}</span>
                           {a.google_reviews && <span>({a.google_reviews} avis)</span>}
                         </div>
                       )}
