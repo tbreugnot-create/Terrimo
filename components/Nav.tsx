@@ -99,26 +99,26 @@ const PRO_ITEMS = [
     desc: 'Trouvez des propriétaires à accompagner',
   },
   {
-    href: '/pro/rejoindre?type=diagnostiqueur',
+    href: '/diagnostiqueurs',
     icon: '🔬',
-    label: 'Diagnostiqueur',
-    desc: 'Visibilité locale, leads pré-vente qualifiés',
+    label: 'Diagnostiqueurs',
+    desc: 'Annuaire DPE, amiante, plomb, électricité',
   },
   {
-    href: '/pro/rejoindre?type=notaire',
+    href: '/notaires',
     icon: '⚖️',
-    label: 'Notaire',
-    desc: 'Succession, transactions, estimation officielle',
+    label: 'Notaires',
+    desc: 'Actes de vente, successions, estimations',
   },
   {
     href: '/agences',
-    icon: '🏢',
+    icon: '📋',
     label: 'Annuaire agences',
     desc: 'Toutes les agences du Bassin avec avis clients',
   },
   {
     href: '/conciergeries',
-    icon: '🏡',
+    icon: '📋',
     label: 'Annuaire conciergeries',
     desc: 'Conciergeries vérifiées pour la location saisonnière',
   },
@@ -384,7 +384,7 @@ export default function Nav() {
                 onClick={() => toggleDropdown('proprio')}
                 className="nav-dropdown-btn"
                 style={{
-                  ...linkStyle(openDropdown === 'proprio' || isActive('/evaluer') || isActive('/proprietaire')),
+                  ...linkStyle(openDropdown === 'proprio' || isActive('/evaluer') || isActive('/vendre') || isActive('/louer')),
                   gap: '6px',
                 }}
               >

@@ -20,6 +20,18 @@ const STATIC: MetadataRoute.Sitemap = [
   { url: `${BASE}/marche`,        lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.88 },
   { url: `${BASE}/vendre`,        lastModified: new Date(), changeFrequency: 'monthly', priority: 0.85 },
   { url: `${BASE}/blog`,          lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.82 },
+  { url: `${BASE}/louer`,         lastModified: new Date(), changeFrequency: 'monthly', priority: 0.83 },
+  { url: `${BASE}/investir`,      lastModified: new Date(), changeFrequency: 'monthly', priority: 0.82 },
+  { url: `${BASE}/off-market`,    lastModified: new Date(), changeFrequency: 'monthly', priority: 0.80 },
+  { url: `${BASE}/agences`,       lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.80 },
+  { url: `${BASE}/conciergeries`, lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.80 },
+  { url: `${BASE}/diagnostiqueurs`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.78 },
+  { url: `${BASE}/notaires`,      lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.78 },
+  { url: `${BASE}/vente`,         lastModified: new Date(), changeFrequency: 'daily',   priority: 0.85 },
+  { url: `${BASE}/location`,      lastModified: new Date(), changeFrequency: 'daily',   priority: 0.83 },
+  { url: `${BASE}/favoris`,       lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
+  { url: `${BASE}/mentions-legales`,  lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.2 },
+  { url: `${BASE}/confidentialite`,   lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.2 },
   ...ARTICLES.map(a => ({
     url: `${BASE}/blog/${a.slug}`,
     lastModified: new Date(),
@@ -49,6 +61,8 @@ const STATIC: MetadataRoute.Sitemap = [
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let agences: MetadataRoute.Sitemap = [];
   let conciergeries: MetadataRoute.Sitemap = [];
+  let diagnostiqueurs: MetadataRoute.Sitemap = [];
+  let notaires: MetadataRoute.Sitemap = [];
   let biens: MetadataRoute.Sitemap = [];
 
   try {
@@ -74,6 +88,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: 'weekly' as const,
         priority: 0.75,
       }));
+    diagnostiqueurs = acteurRows
+      .filter((r: Record<string, unknown>) => r.type === 'diagnostiqueur')
+      .map((r: Record<string, unknown>) => ({
+        url: `${BASE}/diagnostiqueur/${r.slug}`,
+        lastModified: r.updated_at ? new Date(r.updated_at as string) : new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      }));
+    notaires = acteurRows
+      .filter((r: Record<string, unknown>) => r.type === 'notaire')
+      .map((r: Record<string, unknown>) => ({
+        url: `${BASE}/notaire/${r.slug}`,
+        lastModified: r.updated_at ? new Date(r.updated_at as string) : new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      }));
 
     const bienRows = await sql`
       SELECT id, updated_at FROM biens
@@ -91,5 +121,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // En cas d'erreur DB, on retourne les URLs statiques
   }
 
-  return [...STATIC, ...agences, ...conciergeries, ...biens];
+  return [...STATIC, ...agences, ...conciergeries, ...diagnostiqueurs, ...notaires, ...biens];
 }

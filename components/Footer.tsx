@@ -16,8 +16,8 @@ const PRO = [
   { label: 'Rejoindre Terrimo', href: '/pro/rejoindre' },
   { label: 'Agences immobilières', href: '/agences' },
   { label: 'Conciergeries', href: '/conciergeries' },
-  { label: 'Diagnostiqueurs', href: '/pro/rejoindre?type=diagnostiqueur' },
-  { label: 'Notaires', href: '/pro/rejoindre?type=notaire' },
+  { label: 'Diagnostiqueurs', href: '/diagnostiqueurs' },
+  { label: 'Notaires', href: '/notaires' },
   { label: 'Tarifs Pro', href: '/tarifs' },
 ];
 
