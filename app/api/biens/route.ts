@@ -60,6 +60,35 @@ export async function GET(request: NextRequest) {
   const commune      = searchParams.get('commune');
   const type_annonce = searchParams.get('type_annonce');
   const acteur_id    = searchParams.get('acteur_id');
+  const acteur_token = searchParams.get('acteur_token');
+
+  // ── Résolution du token particulier ──────────────────────
+  if (acteur_token) {
+    try {
+      const actRows = await sql`
+        SELECT id, name, email, plan, type FROM acteurs
+        WHERE access_token = ${acteur_token} AND is_active = true
+        LIMIT 1
+      `;
+      if (!actRows.length) {
+        return NextResponse.json({ error: 'Token invalide' }, { status: 403 });
+      }
+      const acteur = actRows[0];
+      const biensRows = await sql`
+        SELECT b.id, b.type_annonce, b.type_bien, b.titre, b.prix, b.surface,
+               b.pieces, b.chambres, b.dpe, b.commune, b.adresse,
+               b.lat, b.lng, b.has_piscine, b.has_garage, b.has_terrasse,
+               b.is_active, b.created_at
+        FROM biens b
+        WHERE b.acteur_id = ${acteur.id}
+        ORDER BY b.created_at DESC
+      `;
+      return NextResponse.json({ acteur, biens: biensRows });
+    } catch (err) {
+      console.error('[GET /api/biens acteur_token]', err);
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    }
+  }
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -163,7 +192,7 @@ export async function POST(request: NextRequest) {
 
     // Vérifier le token et récupérer l'acteur
     const actors = await sql`
-      SELECT id, plan, name, email, access_token FROM acteurs
+      SELECT id, plan, type, name, email, access_token FROM acteurs
       WHERE access_token = ${token} AND is_active = true
       LIMIT 1
     `;
@@ -174,9 +203,19 @@ export async function POST(request: NextRequest) {
 
     const acteur = actors[0];
 
-    // Seuls les plans pro/premium peuvent ajouter des biens
+    // Particuliers : plan free autorisé, mais limité à 3 biens actifs
     if (acteur.plan === 'free') {
-      return NextResponse.json({ error: 'Plan Pro requis pour ajouter des biens' }, { status: 403 });
+      if (acteur.type !== 'particulier') {
+        return NextResponse.json({ error: 'Plan Pro requis pour ajouter des biens' }, { status: 403 });
+      }
+      // Compter les biens existants du particulier
+      const countRows = await sql`
+        SELECT COUNT(*) as nb FROM biens WHERE acteur_id = ${acteur.id} AND is_active = true
+      `;
+      const nb = Number(countRows[0]?.nb ?? 0);
+      if (nb >= 3) {
+        return NextResponse.json({ error: 'Limite de 3 annonces gratuites atteinte. Passez en Pro pour continuer.' }, { status: 403 });
+      }
     }
 
     // Validation champs obligatoires
