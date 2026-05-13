@@ -154,7 +154,7 @@ export default function DeposerAnnoncePage() {
         </p>
 
         <Link
-          href="/pro/connexion"
+          href="/proprietaire/auth"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
