@@ -9,6 +9,12 @@ import { useFavoris } from '@/lib/useFavoris';
 // ─── Structure des menus ─────────────────────────────────
 const PROPRIO_ITEMS = [
   {
+    href: '/proprietaire/deposer-annonce',
+    icon: '📝',
+    label: 'Déposer une annonce',
+    desc: 'Publiez gratuitement sur la carte Terrimo',
+  },
+  {
     href: '/vendre',
     icon: '🏷️',
     label: 'Vendre mon bien',
