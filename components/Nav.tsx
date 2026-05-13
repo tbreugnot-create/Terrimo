@@ -275,8 +275,15 @@ export default function Nav() {
   const [menuOpen,      setMenuOpen]      = useState(false);
   const [openDropdown,  setOpenDropdown]  = useState<'proprio' | 'pro' | 'acquéreur' | null>(null);
   const [scrolled,      setScrolled]      = useState(false);
+  const [dashToken,     setDashToken]     = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
   const { count: favCount } = useFavoris();
+
+  // Lire le cookie terrimo_token pour savoir si l'user est connecté
+  useEffect(() => {
+    const match = document.cookie.match(/(?:^|;\s*)terrimo_token=([^;]+)/);
+    setDashToken(match ? decodeURIComponent(match[1]) : null);
+  }, [pathname]); // re-vérifier à chaque changement de route
 
   // Scroll shadow
   useEffect(() => {
@@ -527,36 +534,69 @@ export default function Nav() {
             >
               Espace Pro
             </Link>
-            {/* Rejoindre — pour les nouveaux pros */}
-            <Link
-              href="/pro/rejoindre"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '10px 20px',
-                borderRadius: '12px',
-                fontSize: '.9rem',
-                fontWeight: 700,
-                color: '#0c1a2e',
-                background: 'white',
-                textDecoration: 'none',
-                transition: 'all .15s ease',
-                minHeight: '44px',
-                boxShadow: '0 1px 3px rgba(0,0,0,.2)',
-                whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.background = '#e0f2fe';
-                (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.background = 'white';
-                (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-              }}
-            >
-              Rejoindre Pro →
-            </Link>
+
+            {/* Particulier : Mon espace (connecté) ou Se connecter */}
+            {dashToken ? (
+              <Link
+                href={`/proprietaire/mes-annonces/${dashToken}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '7px',
+                  padding: '10px 20px',
+                  borderRadius: '12px',
+                  fontSize: '.9rem',
+                  fontWeight: 700,
+                  color: '#0c1a2e',
+                  background: 'white',
+                  textDecoration: 'none',
+                  transition: 'all .15s ease',
+                  minHeight: '44px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,.2)',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.background = '#e0f2fe';
+                  (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.background = 'white';
+                  (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+                }}
+              >
+                <span style={{ fontSize: '1rem' }}>👤</span> Mon espace →
+              </Link>
+            ) : (
+              <Link
+                href="/proprietaire/auth"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '7px',
+                  padding: '10px 20px',
+                  borderRadius: '12px',
+                  fontSize: '.9rem',
+                  fontWeight: 700,
+                  color: '#0c1a2e',
+                  background: 'white',
+                  textDecoration: 'none',
+                  transition: 'all .15s ease',
+                  minHeight: '44px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,.2)',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.background = '#e0f2fe';
+                  (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.background = 'white';
+                  (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+                }}
+              >
+                Se connecter
+              </Link>
+            )}
           </div>
 
           {/* ── Hamburger mobile ── */}
@@ -719,26 +759,50 @@ export default function Nav() {
           >
             Espace Pro (connexion)
           </Link>
-          <Link
-            href="/pro/rejoindre"
-            onClick={() => setMenuOpen(false)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              padding: '16px',
-              borderRadius: '14px',
-              fontSize: '1.0625rem',
-              fontWeight: 700,
-              color: '#0c1a2e',
-              background: 'white',
-              textDecoration: 'none',
-              minHeight: '56px',
-            }}
-          >
-            Rejoindre Pro →
-          </Link>
+          {/* Particulier mobile */}
+          {dashToken ? (
+            <Link
+              href={`/proprietaire/mes-annonces/${dashToken}`}
+              onClick={() => setMenuOpen(false)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '16px',
+                borderRadius: '14px',
+                fontSize: '1.0625rem',
+                fontWeight: 700,
+                color: '#0c1a2e',
+                background: 'white',
+                textDecoration: 'none',
+                minHeight: '56px',
+              }}
+            >
+              👤 Mon espace →
+            </Link>
+          ) : (
+            <Link
+              href="/proprietaire/auth"
+              onClick={() => setMenuOpen(false)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '16px',
+                borderRadius: '14px',
+                fontSize: '1.0625rem',
+                fontWeight: 700,
+                color: '#0c1a2e',
+                background: 'white',
+                textDecoration: 'none',
+                minHeight: '56px',
+              }}
+            >
+              Se connecter →
+            </Link>
+          )}
         </div>
       )}
 

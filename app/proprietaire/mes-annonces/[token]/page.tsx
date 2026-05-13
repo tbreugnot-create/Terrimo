@@ -67,21 +67,25 @@ export default function MesAnnoncesPage() {
     has_piscine: false,
     has_terrasse: false,
     description: '',
+    photos: [] as string[],
   });
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const set = (k: string, v: string | boolean) => setForm(f => ({ ...f, [k]: v }));
 
-  // Charger le profil et les biens
+  // Charger le profil et les biens + sauvegarder le cookie de session
   useEffect(() => {
     if (!token) return;
+
+    // Sauvegarder le token dans un cookie (30j) pour la Nav
+    document.cookie = `terrimo_token=${token}; path=/; max-age=${60 * 60 * 24 * 30}; samesite=lax`;
+
     (async () => {
       try {
-        // Vérifier le token en récupérant les biens de cet acteur
         const res = await fetch(`/api/biens?acteur_token=${token}`);
         if (!res.ok) { router.push('/proprietaire/auth'); return; }
         const data = await res.json() as { acteur?: Acteur; biens?: Bien[] } | Bien[];
 
-        // L'API retourne soit { acteur, biens } soit juste les biens selon la version
         if (Array.isArray(data)) {
           setBiens(data);
         } else {
@@ -95,6 +99,36 @@ export default function MesAnnoncesPage() {
       }
     })();
   }, [token, router]);
+
+  // Upload d'une photo
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`/api/upload?token=${token}`, { method: 'POST', body: fd });
+      const json = await res.json() as { url?: string; error?: string };
+      if (!res.ok || !json.url) throw new Error(json.error ?? 'Upload échoué');
+      setForm(f => ({ ...f, photos: [...f.photos, json.url!] }));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erreur upload');
+    } finally {
+      setUploadingPhoto(false);
+      // Reset input pour permettre de re-sélectionner le même fichier
+      e.target.value = '';
+    }
+  }
+
+  function removePhoto(url: string) {
+    setForm(f => ({ ...f, photos: f.photos.filter(p => p !== url) }));
+  }
+
+  function handleLogout() {
+    document.cookie = 'terrimo_token=; path=/; max-age=0';
+    router.push('/proprietaire/auth');
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -114,6 +148,7 @@ export default function MesAnnoncesPage() {
           chambres: form.chambres ? Number(form.chambres) : undefined,
           dpe: form.dpe || undefined,
           adresse: form.adresse || undefined,
+          photos: form.photos,
         }),
       });
       const json = await res.json() as { error?: string };
@@ -161,7 +196,7 @@ export default function MesAnnoncesPage() {
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
-              onClick={() => { setStep('dashboard'); setForm({ type_annonce: 'vente', type_bien: 'Maison', titre: '', prix: '', surface: '', pieces: '', chambres: '', dpe: '', commune: '', adresse: '', has_garage: false, has_piscine: false, has_terrasse: false, description: '' }); }}
+              onClick={() => { setStep('dashboard'); setForm({ type_annonce: 'vente', type_bien: 'Maison', titre: '', prix: '', surface: '', pieces: '', chambres: '', dpe: '', commune: '', adresse: '', has_garage: false, has_piscine: false, has_terrasse: false, description: '', photos: [] }); }}
               style={{ padding: '12px 22px', borderRadius: 12, background: '#38bdf8', color: '#0a1626', fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: 14 }}
             >
               Voir mes annonces
@@ -308,6 +343,64 @@ export default function MesAnnoncesPage() {
             />
           </div>
 
+          {/* Photos */}
+          <div style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 18, padding: '22px 20px', marginBottom: 24 }}>
+            <h3 style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, marginTop: 0 }}>Photos</h3>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,.35)', marginTop: 0, marginBottom: 16 }}>
+              JPG / PNG / WEBP · max 10 Mo par photo · jusqu&apos;à 10 photos
+            </p>
+
+            {/* Grille de miniatures */}
+            {form.photos.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 8, marginBottom: 14 }}>
+                {form.photos.map((url, i) => (
+                  <div key={url} style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', aspectRatio: '4/3', background: 'rgba(255,255,255,.05)' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt={`Photo ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(url)}
+                      style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,.65)', border: 'none', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'white', fontSize: 12, lineHeight: 1 }}
+                    >
+                      ✕
+                    </button>
+                    {i === 0 && (
+                      <span style={{ position: 'absolute', bottom: 4, left: 4, fontSize: 10, background: '#38bdf8', color: '#0a1626', fontWeight: 700, padding: '2px 6px', borderRadius: 4 }}>
+                        Principale
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Bouton ajouter */}
+            {form.photos.length < 10 && (
+              <label style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                padding: '13px', borderRadius: 12, cursor: uploadingPhoto ? 'wait' : 'pointer',
+                border: '1.5px dashed rgba(255,255,255,.2)', background: 'transparent',
+                color: 'rgba(255,255,255,.5)', fontSize: 13, fontWeight: 500, transition: 'all .15s',
+              }}
+              onMouseEnter={e => { if (!uploadingPhoto) { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,.5)'; (e.currentTarget as HTMLElement).style.color = '#38bdf8'; } }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,.2)'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,.5)'; }}
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  disabled={uploadingPhoto}
+                  style={{ display: 'none' }}
+                />
+                {uploadingPhoto ? (
+                  <>⏳ Upload en cours…</>
+                ) : (
+                  <><span style={{ fontSize: '1.2rem' }}>📷</span> {form.photos.length === 0 ? 'Ajouter des photos' : 'Ajouter une photo'}</>
+                )}
+              </label>
+            )}
+          </div>
+
           {formError && (
             <div style={{ background: 'rgba(248,113,113,.1)', border: '1px solid rgba(248,113,113,.3)', borderRadius: 12, padding: '12px 16px', fontSize: 13, color: '#f87171', marginBottom: 16 }}>
               {formError}
@@ -335,8 +428,17 @@ export default function MesAnnoncesPage() {
               Terri<span style={{ color: '#38bdf8' }}>mo</span>
             </span>
           </Link>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,.4)' }}>
-            {acteur?.email ?? 'Espace particulier'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,.4)' }}>
+              {acteur?.email ?? 'Espace particulier'}
+            </div>
+            <button
+              onClick={handleLogout}
+              style={{ fontSize: 12, color: 'rgba(255,255,255,.25)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', borderRadius: 6 }}
+              title="Se déconnecter"
+            >
+              Déconnexion
+            </button>
           </div>
         </div>
       </div>
@@ -382,7 +484,21 @@ export default function MesAnnoncesPage() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {biens.map(b => (
-              <div key={b.id} style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+              <div key={b.id} style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, overflow: 'hidden', display: 'flex', alignItems: 'stretch', gap: 0 }}>
+                {/* Vignette photo */}
+                {Array.isArray((b as Bien & { photos?: string[] }).photos) && (b as Bien & { photos?: string[] }).photos!.length > 0 ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={(b as Bien & { photos?: string[] }).photos![0]}
+                    alt=""
+                    style={{ width: 80, minWidth: 80, objectFit: 'cover', display: 'block' }}
+                  />
+                ) : (
+                  <div style={{ width: 80, minWidth: 80, background: 'rgba(255,255,255,.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
+                    🏠
+                  </div>
+                )}
+                <div style={{ flex: 1, padding: '16px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>
                     {b.titre || `${b.type_bien} · ${b.commune}`}
@@ -402,6 +518,7 @@ export default function MesAnnoncesPage() {
                     Voir →
                   </Link>
                 </div>
+                </div>{/* /flex row intérieur */}
               </div>
             ))}
           </div>

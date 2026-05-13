@@ -60,8 +60,17 @@ export async function GET(request: NextRequest) {
     // 3. Créer ou retrouver l'acteur particulier
     const acteur = await findOrCreateParticulier(user.email, user.name ?? '', user.picture);
 
-    // 4. Rediriger vers le dashboard particulier
-    return NextResponse.redirect(`${base}/proprietaire/mes-annonces/${acteur.access_token}`);
+    // 4. Rediriger vers le dashboard particulier avec cookie de session
+    const destination = `${base}/proprietaire/mes-annonces/${acteur.access_token}`;
+    const response = NextResponse.redirect(destination);
+    response.cookies.set('terrimo_token', acteur.access_token, {
+      path:     '/',
+      maxAge:   60 * 60 * 24 * 30, // 30 jours
+      sameSite: 'lax',
+      httpOnly: false, // lisible côté client pour la Nav
+      secure:   process.env.NODE_ENV === 'production',
+    });
+    return response;
   } catch (err) {
     console.error('[auth/google/callback]', err);
     return NextResponse.redirect(errorRedirect);
